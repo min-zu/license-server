@@ -62,7 +62,7 @@ export default function SignIn(props: any) {
     fetch('/api/login')
       .then(response => response.json())
       .then(data => {
-        console.log('data',data);
+        // console.log('data',data);
         setData(data);
       })
   }, []);
