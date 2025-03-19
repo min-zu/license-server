@@ -1,11 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, CssBaseline, FormLabel, FormControl, Link, TextField, Typography, Stack } from '@mui/material';
+import { Box, Button, CssBaseline, FormLabel, FormControl, TextField, Typography, Stack } from '@mui/material';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { ValidID, ValidPW } from "@/app/api/auth/login/validation"
+import { signIn } from "next-auth/react"
 
 // 임시 로그인 페이지
 
@@ -51,22 +53,32 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignIn(props: any) {
-
+export default function SignIn() {
   const router = useRouter();
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
 
-  const [data, setData] = useState<object>();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // db get test
-  useEffect(() => {
-    fetch('/api/login')
-      .then(response => response.json())
-      .then(data => {
-        // console.log('data',data);
-        setData(data);
-      })
-  }, []);
+    const ID = id.trim();
+    const PW = password.trim();
 
+    const idCheck = ValidID(ID);
+    const pwCheck = ValidPW(PW);
+
+    if (idCheck !== true) {return alert(idCheck)};
+    if (pwCheck !== true) {return alert(pwCheck)};
+    
+    // const result = await signInAction({ id: ID, password: PW });
+    const result = await signIn("credentials", {id: ID, password: PW, redirect: false})
+
+    if (!result || result.error) {
+      const errorMessage = result?.error === "CredentialsSignin" ? "아이디 또는 비밀번호가 일치하지 않습니다." : "로그인 중 오류가 발생했습니다.";
+      return alert(errorMessage);
+    }
+    router.push("/main");
+  };
   return (
     <div>
       <CssBaseline enableColorScheme />
@@ -81,6 +93,7 @@ export default function SignIn(props: any) {
           </Typography>
           <Box
             component="form"
+            onSubmit={handleLogin}
             noValidate
             sx={{
               display: 'flex',
@@ -100,6 +113,7 @@ export default function SignIn(props: any) {
                 required
                 fullWidth
                 variant="outlined"
+                onChange={(e) => setId(e.target.value)}
               />
             </FormControl>
             <FormControl>
@@ -113,30 +127,13 @@ export default function SignIn(props: any) {
                 required
                 fullWidth
                 variant="outlined"
+                onChange={(e) => setPassword(e.target.value)}
               />
             </FormControl>
             <Button
               type="submit"
               fullWidth
               variant="contained"
-            >
-              Sign in
-            </Button>
-            <Link
-              component="button"
-              type="button"
-              variant="body2"
-              sx={{ alignSelf: 'center' }}
-            >
-              Forgot your password?
-            </Link>
-            <Button
-              type="button"
-              fullWidth
-              variant="contained"
-              onClick={() => {
-                router.push('/main');
-              }}
             >
               main
             </Button>
