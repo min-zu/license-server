@@ -42,18 +42,14 @@ export default function Header() {
 
         <ToggleButton value="admin">
         <Link
-          href={'/admin'}
+          href={'/main/admin'}
         >
           <p>Admin</p>
         </Link>
         </ToggleButton>
 
-        <ToggleButton value="admin">
-        <Link
-          href={'/admin'}
-        >
+        <ToggleButton value="logout">
           <p>LogOut</p>
-        </Link>
         </ToggleButton>
       </ToggleButtonGroup>
       </div>
