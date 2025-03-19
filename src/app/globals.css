@@ -22,3 +22,10 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.logo {
+  width: 245px;
+  height: 26px;
+  background: url('../../public/images/logo.png');
+  background-repeat: no-repeat;
+}
