@@ -5,9 +5,9 @@ export async function GET(params:Request) {
   try {
     const rows = await query("SELECT * FROM license;");
 
-    // console.log('rows' , rows)
+    console.log('rows' , rows)
     return NextResponse.json(rows)
   } catch (e) {
-    // console.log('error', e)
+    console.log('error', e)
   }
 }
