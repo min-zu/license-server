@@ -29,3 +29,113 @@ body {
   background: url('../../public/images/logo.png');
   background-repeat: no-repeat;
 }
+
+/* font*/
+/* text size */
+.text-9 {
+  font-size: 9px;
+}
+
+.text-10 {
+  font-size: 10px;
+}
+
+.text-11 {
+  font-size: 11px;
+}
+
+.text-12 {
+  font-size: 12px;
+}
+
+.text-13 {
+  font-size: 13px;
+}
+
+.text-14 {
+  font-size: 14px;
+}
+
+.text-15 {
+  font-size: 15px;
+}
+
+.text-16 {
+  font-size: 16px;
+}
+
+.text-17 {
+  font-size: 17px;
+}
+
+.text-18 {
+  font-size: 18px;
+}
+
+.text-19 {
+  font-size: 19px;
+}
+
+.text-20 {
+  font-size: 20px;
+}
+
+.text-21 {
+  font-size: 21px;
+}
+
+.text-22 {
+  font-size: 22px;
+}
+
+.text-23 {
+  font-size: 23px;
+}
+
+.text-24 {
+  font-size: 24px;
+}
+
+.text-25 {
+  font-size: 25px;
+}
+
+.text-26 {
+  font-size: 26px;
+}
+
+.text-27 {
+  font-size: 27px;
+}
+
+.text-28 {
+  font-size: 28px;
+}
+
+.text-29 {
+  font-size: 29px;
+}
+
+.text-30 {
+  font-size: 30px;
+}
+
+/* color */
+.text-white {
+  color: #ffffff;
+}
+
+
+/* 라이센스 등록 모달 */
+.close-btn {
+  float: right;
+  width: 24px;
+  min-width: 24px !important; 
+  height: 24px!important;
+  padding: 0!important;
+  margin: 2px -5px 0 0!important;
+  color: #fff !important;
+  &:hover {
+    background-color: transparent !important;
+  }
+}

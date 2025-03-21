@@ -1,9 +1,8 @@
 'use client';
 
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, Module } from 'ag-grid-community';
+import { ClientSideRowModelModule, Module, ColDef, ColGroupDef } from 'ag-grid-community';
 import { useEffect, useState } from 'react';
-import { ColDef } from 'ag-grid-community';
 import { Button, FormControl, IconButton, MenuItem, Select, TextField } from '@mui/material';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -85,7 +84,7 @@ export default function LicensePage() {
     console.log('licenses');
     const fetchLicenses = async () => {
       try {
-        const response = await fetch('/api/admin');
+        const response = await fetch('/api/license');
         if (!response.ok) {
           throw new Error('라이센스 데이터를 불러오는데 실패했습니다.');
         }
@@ -103,7 +102,7 @@ export default function LicensePage() {
     console.log('licenses', licenses);
   }, [licenses]);
 
-  const [columnDefs] = useState<ColDef<License>[]>([
+  const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef)[]>([
     { field: 'number', headerName: 'N', checkboxSelection: true },
     { 
       field: 'reg_date', 
@@ -115,8 +114,57 @@ export default function LicensePage() {
         return '';
       }
     },
-    { field: 'hardware_code', headerName: '하드웨어 코드' },
-    { field: 'software_opt', headerName: '소프트웨어 옵션' },
+    { headerName: '하드웨어 코드' },
+    { 
+      headerName: '소프트웨어 옵션',
+      children: [
+        { field: 'license_basic', headerName: 'BASIC', width: 20, 
+          valueGetter: function(params) {
+            return params.data.license_basic === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_fw', headerName: 'FW', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_fw === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_vpn', headerName: 'VPN', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_vpn === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_ssl', headerName: 'SSL', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_ssl === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_ips', headerName: 'IPS', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_ips === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_waf', headerName: 'WAF', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_waf === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_av', headerName: 'AV', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_av === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_as', headerName: 'AS', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_as === '1' ? 'O' : 'X';
+          }
+        },
+        { field: 'license_tracker', headerName: 'Trac ker', width: 20,
+          valueGetter: function(params) {
+            return params.data.license_tracker === '1' ? 'O' : 'X';
+          }
+        },
+      ]
+    },
     { 
       field: 'license_date', 
       headerName: '라이센스 일자',
@@ -130,7 +178,7 @@ export default function LicensePage() {
     { 
       field: 'limit_time_st', 
       headerName: '시작일',
-      valueFormatter: (params: any) => {
+      valueFormatter: (params: any) => { 
         if (params.value) {
           const value = params.value;
           return value.substr(0, 4) + '-' + value.substr(4, 2) + '-' + value.substr(6, 2);
@@ -193,9 +241,11 @@ export default function LicensePage() {
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select defaultValue="number">
                 {columnDefs.map((col) => (
-                  <MenuItem key={col.field} value={col.field}>
-                    {col.headerName}
-                  </MenuItem>
+                  'field' in col && (
+                    <MenuItem key={col.field} value={col.field}>
+                      {col.headerName}
+                    </MenuItem>
+                  )
                 ))}
               </Select>
             </FormControl>
