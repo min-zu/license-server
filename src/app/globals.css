@@ -29,3 +29,119 @@ body {
   background: url('../../public/images/logo.png');
   background-repeat: no-repeat;
 }
+
+/* font*/
+/* text size */
+.text-9 {
+  font-size: 9px !important;
+}
+
+.text-10 {
+  font-size: 10px !important;
+}
+
+.text-11 {
+  font-size: 11px !important;
+}
+
+.text-12 {
+  font-size: 12px !important;
+}
+
+.text-13 {
+  font-size: 13px !important;
+}
+
+.text-14 {
+  font-size: 14px !important;
+}
+
+.text-15 {
+  font-size: 15px !important;
+}
+
+.text-16 {
+  font-size: 16px !important;
+}
+
+.text-17 {
+  font-size: 17px !important;
+}
+
+.text-18 {
+  font-size: 18px !important;
+}
+
+.text-19 {
+  font-size: 19px !important;
+}
+
+.text-20 {
+  font-size: 20px !important;
+}
+
+.text-21 {
+  font-size: 21px !important;
+}
+
+.text-22 {
+  font-size: 22px !important;
+}
+
+.text-23 {
+  font-size: 23px !important;
+}
+
+.text-24 {
+  font-size: 24px !important;
+}
+
+.text-25 {
+  font-size: 25px !important;
+}
+
+.text-26 {
+  font-size: 26px !important;
+}
+
+.text-27 {
+  font-size: 27px !important;
+}
+
+.text-28 {
+  font-size: 28px !important;
+}
+
+.text-29 {
+  font-size: 29px !important;
+}
+
+.text-30 {
+  font-size: 30px !important;
+}
+
+/* color */
+.text-white {
+  color: #ffffff;
+}
+
+/* ag-theme-alpine */
+.ag-header-cell.text-center {
+  .ag-header-cell-label{
+    justify-content: center;
+  }
+}
+
+/* 라이센스 등록 모달 */
+.close-btn {
+  float: right;
+  width: 24px;
+  min-width: 24px !important; 
+  height: 24px!important;
+  padding: 0!important;
+  margin: 2px -5px 0 0!important;
+  color: #fff !important;
+  &:hover {
+    background-color: transparent !important;
+  }
+}
