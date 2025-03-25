@@ -82,15 +82,17 @@ export default function SignIn() {
   return (
     <div>
       <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
-        <Card variant="outlined">
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
-          >
-            Sign in
-          </Typography>
+      <SignInContainer direction="column" alignItems="center">
+        <Card
+          variant="outlined"
+          sx={{
+            backgroundColor: '#D1D5DB',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 400,
+            height: 600
+          }}
+        >
           <Box
             component="form"
             onSubmit={handleLogin}
@@ -102,41 +104,50 @@ export default function SignIn() {
               gap: 2,
             }}
           >
+            <div className='logo mb-5 mx-auto' />
             <FormControl>
-              <FormLabel htmlFor="text">ID</FormLabel>
               <TextField
                 id="id"
                 type="text"
                 name="id"
-                autoComplete="email"
-                autoFocus
-                required
+                label="ID"
                 fullWidth
                 variant="outlined"
                 onChange={(e) => setId(e.target.value)}
+                InputProps={{
+                  sx: {
+                    backgroundColor: '#f0f0f0'
+                  }
+                }}
               />
             </FormControl>
             <FormControl>
-              <FormLabel htmlFor="password">Password</FormLabel>
               <TextField
-                name="password"
-                type="password"
                 id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
+                type="password"
+                name="password"
+                label="PASSWORD"
                 fullWidth
                 variant="outlined"
                 onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                  sx: {
+                    backgroundColor: '#f0f0f0'
+                  }
+                }}
               />
             </FormControl>
             <Button
               type="submit"
-              fullWidth
               variant="contained"
+              sx={{mt: 5}}
             >
-              main
+              LOGIN
             </Button>
+            <Typography variant="body2" gutterBottom sx={{mt: 2}}>
+              ※ 본 시스템은 허가된 사용자만 이용할 수 있습니다.<br />
+              부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, 유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 주의하시기 바랍니다.
+            </Typography>
           </Box>
         </Card>
       </SignInContainer>
