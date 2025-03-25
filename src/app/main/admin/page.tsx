@@ -1,3 +1,6 @@
+import AdminBtn from "@/app/components/adminbtn"
+
+
 export default function Page() {
-  return <h1>Hello, admin Page</h1>
+  return <AdminBtn/>
 }
