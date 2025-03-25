@@ -33,91 +33,91 @@ body {
 /* font*/
 /* text size */
 .text-9 {
-  font-size: 9px;
+  font-size: 9px !important;
 }
 
 .text-10 {
-  font-size: 10px;
+  font-size: 10px !important;
 }
 
 .text-11 {
-  font-size: 11px;
+  font-size: 11px !important;
 }
 
 .text-12 {
-  font-size: 12px;
+  font-size: 12px !important;
 }
 
 .text-13 {
-  font-size: 13px;
+  font-size: 13px !important;
 }
 
 .text-14 {
-  font-size: 14px;
+  font-size: 14px !important;
 }
 
 .text-15 {
-  font-size: 15px;
+  font-size: 15px !important;
 }
 
 .text-16 {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 .text-17 {
-  font-size: 17px;
+  font-size: 17px !important;
 }
 
 .text-18 {
-  font-size: 18px;
+  font-size: 18px !important;
 }
 
 .text-19 {
-  font-size: 19px;
+  font-size: 19px !important;
 }
 
 .text-20 {
-  font-size: 20px;
+  font-size: 20px !important;
 }
 
 .text-21 {
-  font-size: 21px;
+  font-size: 21px !important;
 }
 
 .text-22 {
-  font-size: 22px;
+  font-size: 22px !important;
 }
 
 .text-23 {
-  font-size: 23px;
+  font-size: 23px !important;
 }
 
 .text-24 {
-  font-size: 24px;
+  font-size: 24px !important;
 }
 
 .text-25 {
-  font-size: 25px;
+  font-size: 25px !important;
 }
 
 .text-26 {
-  font-size: 26px;
+  font-size: 26px !important;
 }
 
 .text-27 {
-  font-size: 27px;
+  font-size: 27px !important;
 }
 
 .text-28 {
-  font-size: 28px;
+  font-size: 28px !important;
 }
 
 .text-29 {
-  font-size: 29px;
+  font-size: 29px !important;
 }
 
 .text-30 {
-  font-size: 30px;
+  font-size: 30px !important;
 }
 
 /* color */
@@ -125,6 +125,12 @@ body {
   color: #ffffff;
 }
 
+/* ag-theme-alpine */
+.ag-header-cell.text-center {
+  .ag-header-cell-label{
+    justify-content: center;
+  }
+}
 
 /* 라이센스 등록 모달 */
 .close-btn {

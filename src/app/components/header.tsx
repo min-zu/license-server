@@ -46,16 +46,18 @@ export default function Header() {
             <p className={navState === 'admin' ? 'text-blue-600' : ''}>Admin</p>
           </Link>
           
-          <Button
-            variant="contained"
-            color="primary" 
-            size="small"
-            onClick={() => {
-              setIsModalOpen(true);
-            }}
-          >
-            라이센스 등록
-          </Button>
+          {navState === 'license' && (
+            <Button
+              variant="contained"
+              color="primary" 
+              size="small"
+              onClick={() => {
+                setIsModalOpen(true);
+              }}
+            >
+              라이센스 등록
+            </Button>
+          )}
         </nav>
       </div>
 

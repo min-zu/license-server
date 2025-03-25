@@ -6,7 +6,7 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ValidID, ValidPW } from "@/app/api/auth/login/validation"
+import { ValidID, ValidPW } from "@/app/api/validation"
 import { signIn } from "next-auth/react"
 
 // 임시 로그인 페이지

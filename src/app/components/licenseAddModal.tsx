@@ -1,168 +1,124 @@
-import { Button, FormControl, FormLabel, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Button, FormControl, FormLabel, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+
 
 export default function LicenseAddModal({ close }: { close: () => void }) {
   return (
-    <div className="w-full h-full flex justify-center items-center">
+    <div className="w-full h-full flex justify-center items-center text-13">
       <div className="w-1/2 bg-white rounded-md">
         <div className="flex justify-between items-center p-4 border-b bg-gray-300">
           <h2 className="text-xl font-semibold text-white">라이센스 등록</h2>
           <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
         </div>
-        <div className="flex flex-col gap-4 p-10">
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>장비선택</FormLabel>
-            <ToggleButtonGroup
-              color="primary"
-              exclusive
-              size="small"
-              fullWidth
-            >
-              <ToggleButton value="ITU">ITU</ToggleButton>
-              <ToggleButton value="ITM">ITM</ToggleButton>
-              <ToggleButton value="XTM">XTM</ToggleButton>
-              <ToggleButton value="SMC">SMC</ToggleButton>
-            </ToggleButtonGroup>
-          </div> 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>제품시리얼 번호</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>소프트웨어 옵션</FormLabel>
-            <div className="flex flex-wrap gap-4">
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="FW" />
-                  <label htmlFor="FW">FW</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="VPN" />
-                  <label htmlFor="VPN">VPN</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="SSL" />
-                  <label htmlFor="SSL">SSL</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="IPS" />
-                  <label htmlFor="IPS">IPS</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="WAF" />
-                  <label htmlFor="WAF">WAF</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="AV" />
-                  <label htmlFor="AV">AV</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="AS" />
-                  <label htmlFor="AS">AS</label>
-                </div>
-              </FormControl>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="Tracker" />
-                  <label htmlFor="Tracker">Tracker</label>
-                </div>
-              </FormControl>
-            </div>
-          </div>
+        <div className="flex flex-col gap-4 p-10 text-13">
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              fontSize: '13px'
+            }}
+          >
+            <Box display="flex" alignItems="center">
+              <FormLabel style={{width: 120, textAlign: "left"}}>
+                <span className="text-red-500">*</span> 장비 선택
+              </FormLabel>
+              <ToggleButtonGroup exclusive size="small">
+                <ToggleButton value="ITU">ITU</ToggleButton>
+                <ToggleButton value="ITM">ITM</ToggleButton>
+                <ToggleButton value="XTM">XTM</ToggleButton>
+                <ToggleButton value="SMC">SMC</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
 
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                <span className="text-red-500">*</span> 제품 시리얼 번호
+              </FormLabel>
+              <TextField fullWidth size="small" />
+            </Box>
 
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 120, textAlign: "left"}}>
+                소프트웨어 옵션
+              </FormLabel>
+              <ToggleButtonGroup size="small">
+                <ToggleButton value="FW">FW</ToggleButton>
+                <ToggleButton value="VPN">VPN</ToggleButton>
+                <ToggleButton value="SSL">SSL</ToggleButton>
+                <ToggleButton value="IPS">IPS</ToggleButton>
+                <ToggleButton value="WAF">WAF</ToggleButton>
+                <ToggleButton value="AV">AV</ToggleButton>
+                <ToggleButton value="AS">AS</ToggleButton>
+                <ToggleButton value="Tracker">Tracker</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>유효기간(시작)</FormLabel>
-            <TextField
-              type="date"
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                <span className="text-red-500">*</span> 발급일자(시작)
+              </FormLabel>
+              <TextField
+                fullWidth 
+                size="small"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>유효기간(만료)</FormLabel>
-            <TextField
-              type="date"
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                <span className="text-red-500">*</span> 발급일자(종료)
+              </FormLabel>
+              <TextField 
+                fullWidth 
+                size="small"
+                type="date" 
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>발급자</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                  발급자
+              </FormLabel>
+              <TextField fullWidth size="small" />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>발급요청사(총판사)</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                고객사명
+              </FormLabel>
+              <TextField fullWidth size="small" />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>프로젝트명</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                고객사 E-mail
+              </FormLabel>
+              <TextField fullWidth size="small" type="email" />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>고객사명명</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
+            <Box display="flex" alignItems="center">
+              <FormLabel sx={{width: 140, textAlign: "left"}}>
+                하드웨어 번호
+              </FormLabel>
+              <TextField fullWidth size="small" />
+            </Box>
 
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>고객사 E-mail</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <FormLabel sx={{ minWidth: '150px' }}>하드웨어 인증키</FormLabel>
-            <TextField
-              size="small"
-              variant="outlined"
-              fullWidth
-            />
-          </div>
-        </div>
-
+            <Box display="flex" justifyContent="center" gap={1} mt={2}>
+              <Button variant="contained" color="primary">
+                계속 등록
+              </Button>
+              <Button variant="contained" color="primary">
+                등록
+              </Button>
+              <Button variant="contained" color="inherit" onClick={close}>
+                취소
+              </Button>
+            </Box>
+          </Box>
         </div>
       </div>
+    </div>
   )
 }

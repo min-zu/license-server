@@ -75,33 +75,10 @@ interface License {
 
 export default function LicensePage() {
   const [licenses, setLicenses] = useState<License[]>([]);
-  const modules: Module[] = [ClientSideRowModelModule];
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [gridApi, setGridApi] = useState<any>(null);
   const [searchText, setSearchText] = useState<string>('');
-
-  useEffect(() => {
-    console.log('licenses');
-    const fetchLicenses = async () => {
-      try {
-        const response = await fetch('/api/license');
-        if (!response.ok) {
-          throw new Error('라이센스 데이터를 불러오는데 실패했습니다.');
-        }
-        const data = await response.json();
-        setLicenses(data);
-      } catch (error) {
-        console.error('라이센스 데이터 조회 중 오류 발생:', error);
-      }
-    };
-
-    fetchLicenses();
-  }, []);
- 
-  useEffect(() => {
-    console.log('licenses', licenses);
-  }, [licenses]);
-
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef)[]>([
     { field: 'number', headerName: 'N', checkboxSelection: true },
     { 
@@ -114,7 +91,7 @@ export default function LicensePage() {
         return '';
       }
     },
-    { headerName: '하드웨어 코드' },
+    { field: 'hardware_code', headerName: '하드웨어 코드' },
     { 
       headerName: '소프트웨어 옵션',
       children: [
@@ -202,6 +179,41 @@ export default function LicensePage() {
     { field: 'manager', headerName: '관리자' },
     { field: 'site_nm', headerName: '사이트명' },
   ]);
+
+  const modules: Module[] = [ClientSideRowModelModule];
+
+  useEffect(() => {
+    const fetchLicenses = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/license');
+        if (!response.ok) {
+          throw new Error('라이센스 데이터를 불러오는데 실패했습니다.');
+        }
+        const data = await response.json();
+        setLicenses(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('라이센스 데이터 조회 중 오류 발생:', error);
+        setError(error instanceof Error ? error.message : '데이터 로딩 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLicenses();
+  }, []);
+
+  useEffect(() => {
+    console.log('licenses', licenses);
+  }, [licenses]);
+
+  if (isLoading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div>에러: {error}</div>;
+  }
 
   return (
     <div>
