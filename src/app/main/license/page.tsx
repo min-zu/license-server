@@ -5,6 +5,7 @@ import { ClientSideRowModelModule, Module, ColDef, ColGroupDef } from 'ag-grid-c
 import { useEffect, useState } from 'react';
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
 import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
+import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Pagenation from '@/app/components/pagenation';
@@ -26,16 +27,27 @@ interface License {
 }
 
 export default function LicensePage() {
+  // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [gridApi, setGridApi] = useState<any>(null);
+
+  // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
+
+  // 모달 열기 상태
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null); // 선택된 라이센스 상태 추가
-  const [isDetailModalOpen, setDetailModalOpen] = useState(false); // 모달 열기 상태 추가
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false); // 삭제 모달 열기 상태 추가
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false); // 도움말 모달 열기 상태 추가
+
+  // 페이지 상태
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // 모달 닫기 함수
   const handleClose = () => setDetailModalOpen(false);
 
   const modules: Module[] = [ClientSideRowModelModule];
@@ -202,8 +214,7 @@ export default function LicensePage() {
               variant="contained"
               color="error"
               size="small"
-              // startIcon={<DeleteIcon />}
-              
+              onClick={() => setIsDeleteModalOpen(true)}
             >
               삭제
             </Button>
@@ -216,7 +227,7 @@ export default function LicensePage() {
                 <MenuItem value={100}>100개씩 보기</MenuItem>
               </Select>
             </FormControl>
- 
+
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select defaultValue={'all'}>
                 <MenuItem value={'all'}>전체</MenuItem>
@@ -286,11 +297,14 @@ export default function LicensePage() {
               등록
             </Button>
 
-            <IconButton
-              size="small"
+            <Button
+              variant="contained"
               color="primary"
+              size="small"
+              onClick={() => setIsHelpModalOpen(true)}
             >
-            </IconButton>
+              ?
+            </Button>
           </div>
         </div>
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
@@ -322,19 +336,39 @@ export default function LicensePage() {
           }}
           />
         </footer>
-        
+
+        {/* modal */}
           <Modal
           open={isDetailModalOpen}
           onClose={handleClose}
-        >
-          <span>
-          <LicenseDetailModal 
-            close={handleClose}
-            license={selectedLicense}
-          />
-          </span>
-        </Modal>
+          >
+            <span>
+            <LicenseDetailModal 
+              close={handleClose}
+              license={selectedLicense}
+            />
+            </span>
+          </Modal>
 
+          <AlertModal
+            open={isDeleteModalOpen}
+            close={() => setIsDeleteModalOpen(false)}
+            state="delete"
+            title="삭제"
+            message="선택하신 데이터를 삭제하시겠습니까?"
+          />
+
+          <AlertModal
+            open={isHelpModalOpen}
+            close={() => setIsHelpModalOpen(false)}
+            state="help"
+            title="일괄등록 도움말"
+            message={`파일업로드 형식은 CSV 이며 구성항목은 아래와 같습니다.
+                    \n[시리얼, 유효기간(시작), 유효기간(만료), 발급자, 발급요청사(총판사),
+                    \n고객사명, 프로젝트명, 고객사 E-mail,
+                    \n방화벽, VPN, DPI, AV, AS, 행안부 라이센스 옵션]
+                    \n유효기간(YYYYMMDD 형식), 라이센스 옵션(1: 사용함, 0: 사용안함)`}
+          />
     </div>
   );
 }

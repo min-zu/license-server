@@ -1,1 +1,10 @@
 /* 공통 관련 css */
+
+
+/* 알림창 관련 css */
+.alert-modal-content {
+  padding: 20px 30px !important;
+  font-size: 12px;
+  white-space: pre-wrap;
+  line-height: 1;
+}
