@@ -29,6 +29,24 @@ export default function LogPage() {
     RowSelectionModule,
     CellStyleModule
   ];
+  const [columnDefs] = useState<(ColDef<Log, any>)[]>([
+    { field: 'number', headerName: 'No', width: 120, checkboxSelection: true, headerCheckboxSelection: true, cellStyle: { textAlign: 'center', fontSize: '10px' } },
+    { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, cellStyle: { textAlign: 'center', fontSize: '10px' } },
+    { 
+      field: 'date', 
+      headerName: '라이센스 발급일', 
+      flex: 1,
+      cellStyle: { textAlign: 'center', fontSize: '10px' },
+      valueFormatter: (params: any) => {
+        if (params.value) {
+          return new Date(params.value).toISOString().split('T')[0];
+        }
+        return '';
+      }
+    },
+    { field: 'manager', headerName: '발급요청사(출판사)', flex: 1, cellStyle: { textAlign: 'center', fontSize: '10px' } },
+    { field: 'site_nm', headerName: '고객사명', flex: 1, cellStyle: { textAlign: 'center', fontSize: '10px' } }
+  ]);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -46,7 +64,7 @@ export default function LogPage() {
     };
 
     fetchLogs();
-  }, [pageSize]);
+  }, []);
 
   const handleSearch = async () => {
     try {
@@ -74,33 +92,13 @@ export default function LogPage() {
     console.log('logs', logs);
   }, [logs]); 
 
-
-  const [columnDefs] = useState<(ColDef<Log, any>)[]>([
-    { field: 'number', headerName: 'No', width: 120, checkboxSelection: true, headerCheckboxSelection: true, cellStyle: { textAlign: 'center' }},
-    { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, cellStyle: { textAlign: 'center' } },
-    { 
-      field: 'date', 
-      headerName: '라이센스 발급일', 
-      flex: 1,
-      cellStyle: { textAlign: 'center' },
-      valueFormatter: (params: any) => {
-        if (params.value) {
-          return new Date(params.value).toISOString().split('T')[0];
-        }
-        return '';
-      }
-    },
-    { field: 'manager', headerName: '발급요청사(출판사)', flex: 1, cellStyle: { textAlign: 'center' } },
-    { field: 'site_nm', headerName: '고객사명', flex: 1, cellStyle: { textAlign: 'center' } }
-  ]);
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   // 현재 페이지에 해당하는 데이터만 필터링
   const getCurrentPageData = () => {
-    const startIndex = (currentPage - 1) * pageSize;
+    const startIndex = (currentPage - 1) * pageSize; 
     const endIndex = startIndex + pageSize;
     return logs.slice(startIndex, endIndex);
   };
@@ -155,6 +153,8 @@ export default function LogPage() {
       <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
         <AgGridReact
           rowData={getCurrentPageData()}
+          rowHeight={30}
+          headerHeight={30}
           columnDefs={columnDefs}
           modules={modules}
           theme="legacy"

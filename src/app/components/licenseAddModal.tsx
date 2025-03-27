@@ -1,11 +1,12 @@
 import { Box, Button, FormControl, FormLabel, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-
+import '../style/common.css';
+import '../style/license.css';
 
 export default function LicenseAddModal({ close }: { close: () => void }) {
   return (
     <div className="w-full h-full flex justify-center items-center text-13">
       <div className="w-1/2 bg-white rounded-md">
-        <div className="flex justify-between items-center p-4 border-b bg-gray-300">
+        <div className="flex justify-between items-center p-4 border-b bg-gray-500">
           <h2 className="text-xl font-semibold text-white">라이센스 등록</h2>
           <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
         </div>

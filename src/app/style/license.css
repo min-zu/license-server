@@ -1,0 +1,59 @@
+/* 라이센스 페이지 관련 css */
+
+
+/* 라이센스 등록 모달 */
+.close-btn {
+  float: right;
+  width: 24px;
+  min-width: 24px !important; 
+  height: 24px!important;
+  padding: 0!important;
+  margin: 2px -5px 0 0!important;
+  color: #fff !important;
+  &:hover {
+    background-color: transparent !important;
+  }
+}
+
+/* 라이센스 상세보기 모달 */
+.license-detail-modal-wrap {
+  .css-rizt0-MuiTypography-root {
+    font-size: 13px !important;
+  }
+  .css-l6f5t6-MuiFormLabel-root {
+    font-size: 13px !important;
+  }
+}
+
+.license-detail-modal-wrap .detail-line-box {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.license-detail-modal-wrap .detail-line-box-item {
+  display: flex;
+  align-items: center;
+  width: 30%;
+  margin-bottom: 2px;
+}
+
+.license-detail-modal-wrap .detail-line-box-item-label {
+  width: 110px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.license-detail-modal-wrap .detail-line-box-item-value {
+  flex-grow: 1;
+}
+
+.license-detail-modal-wrap .detail-line-box-item-edit .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input {
+  width: 100%;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}

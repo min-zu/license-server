@@ -131,17 +131,3 @@ body {
     justify-content: center;
   }
 }
-
-/* 라이센스 등록 모달 */
-.close-btn {
-  float: right;
-  width: 24px;
-  min-width: 24px !important; 
-  height: 24px!important;
-  padding: 0!important;
-  margin: 2px -5px 0 0!important;
-  color: #fff !important;
-  &:hover {
-    background-color: transparent !important;
-  }
-}
