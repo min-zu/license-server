@@ -145,6 +145,12 @@ export default function Addadmin({ open, onClose }: ModalProps) {
                   setIsIdAvailable(null);
                 }}
                 onBlur={async () => {
+                  if (id.trim() === "") {
+                    setIdFormatError(null);
+                    setIdDupMessage(null);
+                    setIsIdAvailable(null);
+                    return;
+                  }
                   const format = ValidID(id);
                   if (format !== true) {
                     setIdFormatError(format);
@@ -205,6 +211,10 @@ export default function Addadmin({ open, onClose }: ModalProps) {
                   }
                 }}
                 onBlur={() => {
+                  if (passwd.trim() === "") {
+                    setPasswdError(null);
+                    return;
+                  }
                   const result = ValidPW(passwd);
                   setPasswdError(result === true ? null : result);
                 }}

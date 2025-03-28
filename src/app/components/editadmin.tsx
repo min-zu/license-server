@@ -1,23 +1,26 @@
 'use client'
 
 import React from "react";
+import { useSession } from "next-auth/react";
 import { useState, useEffect } from 'react';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
+import { ValidEmail, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
 
 
-interface ModalProps {
+interface EditModalProps {
     open: boolean;
     onClose: () => void;
+    mode: "self" | "other";
   }
 
-export default function Editadmin({ open, onClose }: ModalProps) {
-  const [id, setId] = useState("");
-  const [idFormatError, setIdFormatError] = useState<string | null>(null);
-  const [idDupMessage, setIdDupMessage] = useState<string | null>(null);
-  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
+export default function Editadmin(props: EditModalProps) {
+  const { open, onClose } = props;
   
-  const [role, setRole] = useState(2);
+  const { data: session } = useSession();
+
+  const [role, setRole] = useState<number>();
+
+  const [id, setId] = useState("");
 
   const [passwd, setPasswd] = useState("");
   const [passwdError, setPasswdError] = useState<string | null>(null);
@@ -36,16 +39,15 @@ export default function Editadmin({ open, onClose }: ModalProps) {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const disableSubmit =
-  id.trim() === "" ||
-  passwd.trim() === "" ||
-  confirmPasswd.trim() === "" ||
-  !!idFormatError ||
-  isIdAvailable !== true ||
-  !!passwdError ||
-  confirmPasswdValid === false ||
-  !!nameError ||
-  !!phoneError ||
-  !!emailError;
+    (passwd !== "" || confirmPasswd !== "") && (
+      passwd.trim() === "" ||
+      confirmPasswd.trim() === "" ||
+      !!passwdError ||
+      confirmPasswdValid === false
+    ) ||
+    !!nameError ||
+    !!phoneError ||
+    !!emailError;
 
   const handleAdminChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -55,13 +57,10 @@ export default function Editadmin({ open, onClose }: ModalProps) {
   };
   
   useEffect(() => {
-    if (open) {
-      setId("");
-      setIdFormatError(null);
-      setIdDupMessage(null);
-      setIsIdAvailable(null);
-  
-      setRole(2);
+    if (open && session?.user) {
+      setRole(session.user.role);
+
+      setId(session.user.id);
   
       setPasswd("");
       setPasswdError(null);
@@ -70,13 +69,13 @@ export default function Editadmin({ open, onClose }: ModalProps) {
       setConfirmPasswdMessage(null);
       setConfirmPasswdValid(null);
   
-      setName("");
+      setName(session.user.name ?? '');
       setNameError(null);
   
-      setPhone("");
+      setPhone(session.user.phone ?? '');
       setPhoneError(null);
   
-      setEmail("");
+      setEmail(session.user.email ?? '');
       setEmailError(null);
     }
   }, [open]);
@@ -179,6 +178,10 @@ export default function Editadmin({ open, onClose }: ModalProps) {
                   }
                 }}
                 onBlur={() => {
+                  if (passwd.trim() === "") {
+                    setPasswdError(null);
+                    return;
+                  }
                   const result = ValidPW(passwd);
                   setPasswdError(result === true ? null : result);
                 }}

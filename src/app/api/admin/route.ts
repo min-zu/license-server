@@ -21,8 +21,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
   }
-  else if (mode === 'xxxx') {
-    // 로직
+  else if (mode === 'list') {
+    try {
+      const results = await query("SELECT * FROM admin");
+      return NextResponse.json(results);
+    } catch (error) {
+      console.error('DB 오류:', error);
+      return NextResponse.json({ error: 'DB 조회 실패' }, { status: 500 });
+    }
   } else {
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
   }

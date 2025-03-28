@@ -15,9 +15,17 @@ declare module "next-auth" {
     login_ts?: string;
   }
 
-  // interface Session {
-  //   user: User
-  // }
+  interface Session {
+    user: {
+      role: number;
+      status: number;
+      id: string;
+      name?: string;
+      phone?: string;
+      email?: string;
+      login_ts?: string;
+    }
+  }
 }
 
 declare module "next-auth/jwt" {
@@ -30,17 +38,13 @@ declare module "next-auth/jwt" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: {
-    strategy: "jwt",
-    maxAge: 900,
-    updateAge: 300,
-  },
   providers: [
     Credentials({
       credentials: {
         id:{},
         password: {},
       },
+      // 로그인 프로세스
       authorize: async (credentials) => {
         const idCheck = ValidID(credentials?.id);
         const pwCheck = ValidPW(credentials?.password);
@@ -76,6 +80,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     })
   ],
+  session: {
+    strategy: "jwt",
+    maxAge: 900,
+    updateAge: 300,
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -83,25 +92,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.status = user.status;
         token.sub = user.id;
         token.name = user.name;
-        token.phone = user.phone
+        token.phone = user.phone;
         token.email = user.email;
         token.login_ts = user.login_ts;
       }
       console.log("JWT", token);
       return token;
     },
+    async session({ session, token }) {
+      session.user.role = token.role;
+      session.user.status = token.status;
+      session.user.id = token.sub!;
+      session.user.name = token.name ?? "";
+      session.user.phone = token.phone ?? "";
+      session.user.email = token.email ?? "";
+      session.user.login_ts = token.login_ts;
+      console.log("Session", session);
+      return session;
+    },
     async redirect({ baseUrl }) {
       return baseUrl + "/main";
-    }
-    // async session({ session, token }) {
-    //   session.user.id = token.sub!;
-    //   session.user.name = token.name;
-    //   session.user.role = token.role;
-    //   session.user.email = token.email ?? "";
-    //   session.user.login_ts = token.login_ts;
-    //   console.log("Session", session);
-    //   return session;
-    // },
+    },
   },
   pages: {
     signIn: "/login",
