@@ -11,8 +11,6 @@ export async function GET(params:Request) {
 }
 
 export async function POST(request: Request) {
-  // console.log('POST 요청이 수신되었습니다.');
-  // console.log('request', request);
   try {
     const { searchField, searchText } = await request.json();
     

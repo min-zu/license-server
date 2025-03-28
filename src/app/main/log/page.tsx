@@ -6,7 +6,10 @@ import { useEffect, useState, useRef } from 'react';
 import { Button, FormControl, MenuItem, Select, TextField } from '@mui/material';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import '../../style/common.css';
+import '../../style/license.css';
 import Pagenation from '@/app/components/pagenation';
+import { fetchLogs, searchLogs } from '@/app/api/log/log'; // API 요청 함수 임포트
 
 interface Log {
   number: number;
@@ -17,26 +20,29 @@ interface Log {
 }
 
 export default function LogPage() {
-  const [logs, setLogs] = useState<Log[]>([]);
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [searchText, setSearchText] = useState<string>('');
-  const [searchField, setSearchField] = useState<string>('hardware_code');
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  // ag-grid 모듈 설정
   const modules: Module[] = [
     ClientSideRowModelModule,
     ValidationModule,
     RowSelectionModule,
     CellStyleModule
   ];
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [searchText, setSearchText] = useState<string>('');
+  const [searchField, setSearchField] = useState<string>('hardware_code');
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
-    { field: 'number', headerName: 'No', width: 120, checkboxSelection: true, headerCheckboxSelection: true, cellStyle: { textAlign: 'center', fontSize: '10px' } },
-    { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, cellStyle: { textAlign: 'center', fontSize: '10px' } },
+    { field: 'number', headerName: 'No', width: 120, checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
     { 
       field: 'date', 
       headerName: '라이센스 발급일', 
       flex: 1,
-      cellStyle: { textAlign: 'center', fontSize: '10px' },
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
       valueFormatter: (params: any) => {
         if (params.value) {
           return new Date(params.value).toISOString().split('T')[0];
@@ -44,18 +50,14 @@ export default function LogPage() {
         return '';
       }
     },
-    { field: 'manager', headerName: '발급요청사(출판사)', flex: 1, cellStyle: { textAlign: 'center', fontSize: '10px' } },
-    { field: 'site_nm', headerName: '고객사명', flex: 1, cellStyle: { textAlign: 'center', fontSize: '10px' } }
+    { field: 'manager', headerName: '발급요청사(출판사)', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'site_nm', headerName: '고객사명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' }
   ]);
 
   useEffect(() => {
-    const fetchLogs = async () => {
+    const loadLogs = async () => {
       try {
-        const response = await fetch('/api/log');
-        if (!response.ok) {
-          throw new Error('로그 데이터를 불러오는데 실패했습니다.');
-        }
-        const data = await response.json();
+        const data = await fetchLogs();
         setLogs(data);
         setTotalPages(Math.ceil(data.length / pageSize));
       } catch (error) {
@@ -63,23 +65,12 @@ export default function LogPage() {
       }
     };
 
-    fetchLogs();
+    loadLogs();
   }, []);
 
   const handleSearch = async () => {
     try {
-      const response = await fetch('/api/log', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ searchField, searchText })
-      });
-      console.log('response', response);
-      if (!response.ok) {
-        throw new Error('검색 중 오류가 발생했습니다.');
-      } 
-      const data = await response.json();
+      const data = await searchLogs(searchField, searchText);
       setLogs(data);
       setTotalPages(Math.ceil(data.length / pageSize));
       setCurrentPage(1);
@@ -95,6 +86,10 @@ export default function LogPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+  
+  useEffect(() => {
+    setTotalPages(Math.ceil(logs.length / pageSize));
+  }, [logs, pageSize]);
 
   // 현재 페이지에 해당하는 데이터만 필터링
   const getCurrentPageData = () => {
@@ -105,11 +100,14 @@ export default function LogPage() {
 
   return (
     <div className="p-4">
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-2 mb-4">
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <Select
             value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setCurrentPage(1);
+            }}
           >
             <MenuItem value={10}>10개</MenuItem>
             <MenuItem value={20}>20개</MenuItem>
@@ -168,14 +166,17 @@ export default function LogPage() {
         />
       </div>
 
-      <footer className="flex justify-center items-center mt-4">
-        <Pagenation 
-          props={{
-            totalPages,
-            currentPage,
-            onChange: handlePageChange
-          }}
-        />
+      <footer className="flex justify-between items-center mt-4">
+        <div className="flex justify-center flex-grow">
+          <Pagenation 
+            props={{
+              totalPages,
+              currentPage,
+              onChange: handlePageChange
+            }}
+          />
+        </div>
+        <span className='text-13'>총 {logs.length}개</span>
       </footer>
     </div>
   );

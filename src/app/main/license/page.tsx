@@ -1,14 +1,15 @@
 'use client';
 
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, Module, ColDef, ColGroupDef } from 'ag-grid-community';
-import { useEffect, useState } from 'react';
+import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule } from 'ag-grid-community';
+import { use, useEffect, useState } from 'react';
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
 import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
 import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Pagenation from '@/app/components/pagenation';
+import { fetchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
 
 interface License {
   number: number;
@@ -27,11 +28,17 @@ interface License {
 }
 
 export default function LicensePage() {
+  // ag-grid 모듈 설정
+  const modules: Module[] = [
+    ClientSideRowModelModule,
+    CellStyleModule,
+    RowSelectionModule
+  ];
+  
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [gridApi, setGridApi] = useState<any>(null);
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
@@ -50,129 +57,64 @@ export default function LicensePage() {
   // 모달 닫기 함수
   const handleClose = () => setDetailModalOpen(false);
 
-  const modules: Module[] = [ClientSideRowModelModule];
-  const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef)[]>([
-    { field: 'number', headerName: 'N', checkboxSelection: true, headerCheckboxSelection: true, cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 120 },
-    { 
-      field: 'reg_date', 
-      headerName: '등록일',
-      cellStyle: { textAlign: 'center', fontSize: '11px' },
+  const softwareOptions = ['license_basic', 'license_fw', 'license_vpn', 'license_ssl', 'license_ips', 'license_waf', 'license_av', 'license_as', 'license_tracker'];
+
+  const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
+    { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style', width: 100 },
+    { field: 'reg_date', headerName: '등록일',cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) {
-          return new Date(params.value).toISOString().split('T')[0];
-        }
+        if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
-      },
-      width: 120,
+      }
     },
-    { field: 'hardware_code', headerName: '하드웨어 코드', cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 300 },
-    { 
-      headerName: '소프트웨어 옵션',
-      cellStyle: { textAlign: 'center', fontSize: '11px' },
-      children: [
-        { field: 'license_basic', headerName: 'BASIC', width: 50, 
-          valueGetter: function(params) {
-            return params.data.license_basic === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_fw', headerName: 'FW', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_fw === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_vpn', headerName: 'VPN', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_vpn === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_ssl', headerName: 'SSL', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_ssl === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_ips', headerName: 'IPS', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_ips === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_waf', headerName: 'WAF', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_waf === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_av', headerName: 'AV', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_av === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_as', headerName: 'AS', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_as === '1' ? 'O' : 'X';
-          }
-        },
-        { field: 'license_tracker', headerName: 'Tracker', width: 50,
-          valueGetter: function(params) {
-            return params.data.license_tracker === '1' ? 'O' : 'X';
-          }
-        },
-      ],
-      flex: 1
-    },
-    { 
-      field: 'license_date', 
-      headerName: '라이센스 일자',
-      cellStyle: { textAlign: 'center', fontSize: '11px' },
+    { field: 'hardware_code', headerName: '하드웨어 코드', headerClass: 'header-style', cellClass: 'cell-style', width: 220 },
+    ...softwareOptions.map((item) => ({
+      field: item as keyof License,
+      headerName: item.split('_')[1].toUpperCase(),
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
+      flex: 1,
+      valueGetter: (params: any) => params.data?.[item] === '1' ? 'O' : 'X',
+    })),
+    { field: 'license_date', headerName: '발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) {
-          return new Date(params.value).toISOString().split('T')[0];
-        }
+        if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
-      },
-      width: 120
+      }
     },
-    { 
-      field: 'limit_time_st', 
-      headerName: '시작일',
-      cellStyle: { textAlign: 'center', fontSize: '11px' },
+    { field: 'limit_time_st', headerName: '시작일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => { 
         if (params.value) {
           const value = params.value;
           return value.substr(0, 4) + '-' + value.substr(4, 2) + '-' + value.substr(6, 2);
         }
         return '';
-      },
-      width: 120
+      }
     },
-    { 
-      field: 'limit_time_end', 
-      headerName: '종료일',
-      cellStyle: { textAlign: 'center', fontSize: '11px' },
+    { field: 'limit_time_end', headerName: '종료일', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         if (params.value) {
           const value = params.value;
           return value.substr(0, 4) + '-' + value.substr(4, 2) + '-' + value.substr(6, 2);
         }
         return '';
-      },
-      width: 120
+      }
     },
-    { field: 'ip', headerName: 'IP', cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 160 },
-    { field: 'issuer', headerName: '발급자', cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 120 },
-    { field: 'manager', headerName: '관리자', cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 120 },
-    { field: 'site_nm', headerName: '사이트명', cellStyle: { textAlign: 'center', fontSize: '11px' }, width: 150 },
+    { field: 'ip', headerName: 'IP', cellClass: 'cell-style', width: 120 },
+    { field: 'issuer', headerName: '발급자', cellClass: 'cell-style', width: 120 },
+    { field: 'manager', headerName: '관리자', cellClass: 'cell-style', width: 120 },
+    { field: 'site_nm', headerName: '사이트명', cellClass: 'cell-style', width: 150 },
   ]);
 
   useEffect(() => {
-    const fetchLicenses = async () => {
+    const loadLicenses = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/license');
-        if (!response.ok) {
-          throw new Error('라이센스 데이터를 불러오는데 실패했습니다.');
-        }
-        const data = await response.json();
+        const data = await fetchLicenses();
         setLicenses(Array.isArray(data) ? data : []);
-        setTotalPages(Math.ceil(data.length / pageSize));
+        if (data.length > 0) {
+          setTotalPages(Math.ceil(data.length / pageSize));
+        }
       } catch (error) {
         console.error('라이센스 데이터 조회 중 오류 발생:', error);
         setError(error instanceof Error ? error.message : '데이터 로딩 중 오류가 발생했습니다.');
@@ -181,7 +123,7 @@ export default function LicensePage() {
       }
     };
 
-    fetchLicenses();
+    loadLicenses();
   }, []);
 
   const handlePageChange = (page: number) => {
@@ -190,7 +132,11 @@ export default function LicensePage() {
 
   useEffect(() => {
     console.log('licenses', licenses);
-  }, [licenses]);
+    console.log('pageSize', pageSize);
+    if (licenses.length > 0) {
+      setTotalPages(Math.ceil(licenses.length / pageSize));
+    }
+  }, [licenses, pageSize]);
 
   const onRowClicked = (event: any) => {
     console.log('event', event);
@@ -206,6 +152,14 @@ export default function LicensePage() {
     return <div>에러: {error}</div>;
   }
 
+  const getCurrentPageData = () => {
+    console.log('currentPage', currentPage);
+    console.log('pageSize', pageSize);
+    const startIndex = (currentPage - 1) * pageSize; 
+    const endIndex = startIndex + pageSize;
+    return licenses.slice(startIndex, endIndex);
+  };
+
   return (
     <div className="p-4">
         <div className="flex justify-between items-center w-full mb-4">
@@ -220,11 +174,17 @@ export default function LicensePage() {
             </Button>
 
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select defaultValue={10}>
-                <MenuItem value={10}>10개씩 보기</MenuItem>
-                <MenuItem value={20}>20개씩 보기</MenuItem> 
-                <MenuItem value={30}>30개씩 보기</MenuItem>
-                <MenuItem value={100}>100개씩 보기</MenuItem>
+            <Select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+                <MenuItem value={10}>10개</MenuItem>
+                <MenuItem value={20}>20개</MenuItem> 
+                <MenuItem value={30}>30개</MenuItem>
+                <MenuItem value={100}>100개</MenuItem>
               </Select>
             </FormControl>
 
@@ -260,11 +220,9 @@ export default function LicensePage() {
             <Button
               variant="contained"
               size="small"
-              onClick={() => {
-                if (gridApi) {
-                  gridApi.setQuickFilter(searchText);
-                }
-              }}
+              // onClick={() => {
+                
+              // }}
             >
               검색
             </Button>
@@ -309,11 +267,10 @@ export default function LicensePage() {
         </div>
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
           <AgGridReact
-            rowData={licenses}
+            rowData={getCurrentPageData()}
             rowHeight={30}
             headerHeight={30}
             columnDefs={columnDefs}
-            onGridReady={(params) => setGridApi(params.api)}
             modules={modules}
             theme="legacy"
             defaultColDef={{
@@ -327,14 +284,17 @@ export default function LicensePage() {
           />
         </div>
 
-        <footer className="flex justify-center items-center mt-4">
-        <Pagenation 
-          props={{
-            totalPages,
-            currentPage,
-            onChange: handlePageChange
-          }}
-          />
+        <footer className="flex justify-between items-center mt-4">
+          <div className="flex justify-center flex-grow">
+            <Pagenation 
+              props={{
+                totalPages,
+                currentPage,
+                onChange: handlePageChange
+              }}
+            />
+          </div>
+          <span className='text-13'>총 {licenses.length}개</span>
         </footer>
 
         {/* modal */}
