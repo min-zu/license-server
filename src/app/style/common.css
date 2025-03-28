@@ -8,3 +8,36 @@
   white-space: pre-wrap;
   line-height: 1;
 }
+
+/* 버튼 공통 css */
+.MuiButtonBase-root {
+  box-shadow: none !important;
+  min-width: 0px !important;
+  /* line-height: 0 !important; */
+  font-size: 13px !important;
+}
+ 
+/* 셀렉트 공통 css */
+.MuiSelect-select {
+  min-height: 0px !important;
+  height: 13px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.MuiNativeSelect-select {
+  border: 1px solid silver !important;
+  border-radius: 4px !important;
+  min-height: 0px !important;
+  height: 13px !important;
+  font-size: 12px !important;
+}
+
+/* input 공통 css */
+.MuiInputBase-input {
+  border: 1px solid silver !important;
+  border-radius: 4px !important;
+  min-height: 0px !important;
+  height: 13px !important;
+  font-size: 12px !important;
+}
