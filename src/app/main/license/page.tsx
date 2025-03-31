@@ -9,7 +9,9 @@ import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Pagenation from '@/app/components/pagenation';
-import { fetchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
+import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
+import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
+import { useToastState } from '@/app/components/useToast';
 
 interface License {
   number: number;
@@ -27,6 +29,8 @@ interface License {
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
 
+
+
 export default function LicensePage() {
   // ag-grid 모듈 설정
   const modules: Module[] = [
@@ -42,22 +46,28 @@ export default function LicensePage() {
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
-
+  const [searchField, setSearchField] = useState('hardware_code');
+  const [hardwareState, setHardwareState] = useState('all');
   // 모달 열기 상태
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null); // 선택된 라이센스 상태 추가
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false); // 삭제 모달 열기 상태 추가
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false); // 도움말 모달 열기 상태 추가
-
+  
   // 페이지 상태
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
+  // 토스트 상태
+  const { open, message, severity, showToast, toastClose } = useToastState();
+
   // 모달 닫기 함수
   const handleClose = () => setDetailModalOpen(false);
 
   const softwareOptions = ['license_basic', 'license_fw', 'license_vpn', 'license_ssl', 'license_ips', 'license_waf', 'license_av', 'license_as', 'license_tracker'];
+
+  const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style', width: 100 },
@@ -67,11 +77,11 @@ export default function LicensePage() {
         return '';
       }
     },
-    { field: 'hardware_code', headerName: '하드웨어 코드', headerClass: 'header-style', cellClass: 'cell-style', width: 220 },
+    { field: 'hardware_code', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-style', width: 220 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
       headerName: item.split('_')[1].toUpperCase(),
-      headerClass: 'header-style',
+      headerStyle: { textAlign: 'center', fontSize: '10px', padding: '0px' },
       cellClass: 'cell-style',
       flex: 1,
       valueGetter: (params: any) => params.data?.[item] === '1' ? 'O' : 'X',
@@ -84,19 +94,13 @@ export default function LicensePage() {
     },
     { field: 'limit_time_st', headerName: '시작일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => { 
-        if (params.value) {
-          const value = params.value;
-          return value.substr(0, 4) + '-' + value.substr(4, 2) + '-' + value.substr(6, 2);
-        }
+        if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
       }
     },
     { field: 'limit_time_end', headerName: '종료일', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) {
-          const value = params.value;
-          return value.substr(0, 4) + '-' + value.substr(4, 2) + '-' + value.substr(6, 2);
-        }
+        if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
       }
     },
@@ -125,21 +129,36 @@ export default function LicensePage() {
 
     loadLicenses();
   }, []);
+  
+  const handleSearch = async () => {
+    if(searchText === '') {
+      console.log('검색어가 입력되지 않았습니다.');
+      showToast('검색어가 입력되지 않았습니다.', 'error');
+      return;
+    }
+
+    try {
+      const data = await searchLicenses(searchField, searchText);
+      setLicenses(data);
+      setTotalPages(Math.ceil(data.length / pageSize));
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('검색 중 오류 발생:', error);
+    }
+  };
+
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   useEffect(() => {
-    console.log('licenses', licenses);
-    console.log('pageSize', pageSize);
     if (licenses.length > 0) {
       setTotalPages(Math.ceil(licenses.length / pageSize));
     }
   }, [licenses, pageSize]);
 
   const onRowClicked = (event: any) => {
-    console.log('event', event);
     setSelectedLicense(event.data); // 클릭한 행의 데이터 저장
     setDetailModalOpen(true); // 모달 열기
   };
@@ -153,8 +172,6 @@ export default function LicensePage() {
   }
 
   const getCurrentPageData = () => {
-    console.log('currentPage', currentPage);
-    console.log('pageSize', pageSize);
     const startIndex = (currentPage - 1) * pageSize; 
     const endIndex = startIndex + pageSize;
     return licenses.slice(startIndex, endIndex);
@@ -168,7 +185,8 @@ export default function LicensePage() {
               variant="contained"
               color="error"
               size="small"
-              onClick={() => setIsDeleteModalOpen(true)}
+              // onClick={() => setIsDeleteModalOpen(true)}
+              onClick={() => showToast('삭제 할 데이터가 없습니다.', 'error')}
             >
               삭제
             </Button>
@@ -189,23 +207,28 @@ export default function LicensePage() {
             </FormControl>
 
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select defaultValue={'all'}>
+              <Select 
+                value={hardwareState} 
+                onChange={(e) => setHardwareState(e.target.value)}>
                 <MenuItem value={'all'}>전체</MenuItem>
                 <MenuItem value={'ITU'}>ITU</MenuItem>
                 <MenuItem value={'ITM'}>ITM</MenuItem> 
-                <MenuItem value={'XTM'}>XTM</MenuItem>
+                <MenuItem value={'XTM'}>XTM</MenuItem> 
                 <MenuItem value={'SMC'}>SMC</MenuItem>
               </Select>
             </FormControl>
 
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select defaultValue="number">
-                {columnDefs.map((col) => (
-                  'field' in col && (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
+              <Select 
+                value={searchField} 
+                onChange={(e) => setSearchField(e.target.value)}>
+                {columnDefs
+                  .filter((item): item is ColDef<License, any> => 'field' in item)
+                  .filter((item) => searchOptions.includes(item.field!))
+                  .map((item) => (
+                    <MenuItem key={item.field} value={item.field ?? ''}>
+                      {item.headerName}
                     </MenuItem>
-                  )
                 ))}
               </Select>
             </FormControl>
@@ -220,9 +243,7 @@ export default function LicensePage() {
             <Button
               variant="contained"
               size="small"
-              // onClick={() => {
-                
-              // }}
+              onClick={() => {handleSearch()}}
             >
               검색
             </Button>
@@ -328,6 +349,13 @@ export default function LicensePage() {
                     \n고객사명, 프로젝트명, 고객사 E-mail,
                     \n방화벽, VPN, DPI, AV, AS, 행안부 라이센스 옵션]
                     \n유효기간(YYYYMMDD 형식), 라이센스 옵션(1: 사용함, 0: 사용안함)`}
+          />
+
+          <ToastAlert
+            open={open}
+            setOpen={toastClose}
+            message={message}
+            severity={severity}
           />
     </div>
   );
