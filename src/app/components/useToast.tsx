@@ -1,20 +1,19 @@
 import { useState } from "react";
 
 export const useToastState = () => {
-  const [open, setOpen] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>("");
+  const [toastOpen, setToastOpen] = useState<boolean>(false);
+  const [toastMsg, setToastMsg] = useState<string>("");
   const [severity, setSeverity] = useState<"success" | "error" | "warning" | "info">("info");
 
   const showToast = (message: string, severity: "success" | "error" | "warning" | "info") => {
     console.log('showToast', message, severity);
-    setMessage(message);
+    setToastMsg(message);
     setSeverity(severity);
-    setOpen(true);
+    setToastOpen(true);
   };
 
   const toastClose = () => {
-    setOpen(false);
+    setToastOpen(false);
   };
 
-  return { open, message, severity, showToast, toastClose };
-};
+  return { toastOpen, toastMsg, severity, showToast, toastClose };};

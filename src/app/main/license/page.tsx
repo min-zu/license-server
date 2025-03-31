@@ -1,15 +1,15 @@
 'use client';
 
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule } from 'ag-grid-community';
-import { use, useEffect, useState } from 'react';
+import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi } from 'ag-grid-community';
+import { use, useEffect, useRef, useState } from 'react';
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
 import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
 import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Pagenation from '@/app/components/pagenation';
-import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
+import { deleteLicenses, fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
 import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
 import { useToastState } from '@/app/components/useToast';
 
@@ -29,8 +29,6 @@ interface License {
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
 
-
-
 export default function LicensePage() {
   // ag-grid 모듈 설정
   const modules: Module[] = [
@@ -38,11 +36,15 @@ export default function LicensePage() {
     CellStyleModule,
     RowSelectionModule
   ];
-  
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 추가 삭제
+  const [selectedRows, setSelectedRows] = useState<License[]>([]);
+  const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
@@ -60,18 +62,17 @@ export default function LicensePage() {
   const [pageSize, setPageSize] = useState<number>(10);
 
   // 토스트 상태
-  const { open, message, severity, showToast, toastClose } = useToastState();
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
 
   // 모달 닫기 함수
   const handleClose = () => setDetailModalOpen(false);
 
   const softwareOptions = ['license_basic', 'license_fw', 'license_vpn', 'license_ssl', 'license_ips', 'license_waf', 'license_av', 'license_as', 'license_tracker'];
-
   const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style', width: 100 },
-    { field: 'reg_date', headerName: '등록일',cellClass: 'cell-style', width: 100,
+    { field: 'reg_date', headerName: '등록일', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
@@ -110,6 +111,7 @@ export default function LicensePage() {
     { field: 'site_nm', headerName: '사이트명', cellClass: 'cell-style', width: 150 },
   ]);
 
+  // 라이센스 데이터 조회
   useEffect(() => {
     const loadLicenses = async () => {
       setIsLoading(true);
@@ -130,9 +132,9 @@ export default function LicensePage() {
     loadLicenses();
   }, []);
   
+  // 검색
   const handleSearch = async () => {
     if(searchText === '') {
-      console.log('검색어가 입력되지 않았습니다.');
       showToast('검색어가 입력되지 않았습니다.', 'error');
       return;
     }
@@ -147,7 +149,7 @@ export default function LicensePage() {
     }
   };
 
-
+  // 페이지 변경
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -163,6 +165,25 @@ export default function LicensePage() {
     setDetailModalOpen(true); // 모달 열기
   };
 
+  // 삭제
+  const selectedRowsRef = useRef<any[]>([]);
+
+  const onSelectionChanged = (e: any) => {
+    const selected = e.api.getSelectedRows();
+    selectedRowsRef.current = selected;
+    setSelectedRows([...selected]);
+  };
+
+  const deleteSelectedRows = () => {
+    console.log('선택된 행 데이터:', selectedRows);
+    if(selectedRows.length === 0) {
+      showToast('삭제할 데이터를 선택해주세요.', 'error');
+      return;
+    }
+    setDeleteIds(selectedRows.map((row) => row.hardware_code));
+    setIsDeleteModalOpen(true);
+  };
+
   if (isLoading) {
     return <div>로딩 중...</div>;
   }
@@ -171,6 +192,7 @@ export default function LicensePage() {
     return <div>에러: {error}</div>;
   }
 
+  // 페이지 데이터 조회
   const getCurrentPageData = () => {
     const startIndex = (currentPage - 1) * pageSize; 
     const endIndex = startIndex + pageSize;
@@ -185,8 +207,7 @@ export default function LicensePage() {
               variant="contained"
               color="error"
               size="small"
-              // onClick={() => setIsDeleteModalOpen(true)}
-              onClick={() => showToast('삭제 할 데이터가 없습니다.', 'error')}
+              onClick={() => deleteSelectedRows()} // 선택된 체크박스 데이터 가져오기
             >
               삭제
             </Button>
@@ -287,7 +308,8 @@ export default function LicensePage() {
           </div>
         </div>
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
-          <AgGridReact
+          {/* <AgGridReact
+            onGridReady={(params) => setGridApi(params.api)}
             rowData={getCurrentPageData()}
             rowHeight={30}
             headerHeight={30}
@@ -300,8 +322,27 @@ export default function LicensePage() {
               headerClass: 'text-center' // 헤더 텍스트 가운데 정렬
             }}
             rowSelection="multiple"
-            pagination={false}
+            pagination={true}
             onRowClicked={onRowClicked} // 행 클릭 이벤트 핸들러 추가
+            onSelectionChanged={onSelectionChanged}
+          /> */}
+          <AgGridReact
+            getRowId={(params) => params.data.number} 
+            rowData={getCurrentPageData()}
+            rowHeight={30}
+            headerHeight={30}
+            columnDefs={columnDefs}
+            modules={modules}
+            theme="legacy"
+            defaultColDef={{
+              sortable: true,
+              resizable: true,
+              headerClass: 'text-center'
+            }}
+            rowSelection="multiple"
+            pagination={true}
+            onRowClicked={onRowClicked}
+            onSelectionChanged={onSelectionChanged}
           />
         </div>
 
@@ -334,9 +375,10 @@ export default function LicensePage() {
           <AlertModal
             open={isDeleteModalOpen}
             close={() => setIsDeleteModalOpen(false)}
-            state="delete"
+            state="license"
             title="삭제"
-            message="선택하신 데이터를 삭제하시겠습니까?"
+            message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`}
+            deleteIds={deleteIds}
           />
 
           <AlertModal
@@ -352,9 +394,9 @@ export default function LicensePage() {
           />
 
           <ToastAlert
-            open={open}
+            open={toastOpen}
             setOpen={toastClose}
-            message={message}
+            message={toastMsg}
             severity={severity}
           />
     </div>
