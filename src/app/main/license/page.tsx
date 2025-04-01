@@ -12,6 +12,7 @@ import Pagenation from '@/app/components/pagenation';
 import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
 import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
 import { useToastState } from '@/app/components/useToast';
+import { addLog } from '@/app/api/log/log';
 
 interface License {
   number: number;
@@ -107,8 +108,8 @@ export default function LicensePage() {
     },
     { field: 'ip', headerName: 'IP', cellClass: 'cell-style', width: 120 },
     { field: 'issuer', headerName: '발급자', cellClass: 'cell-style', width: 120 },
-    { field: 'manager', headerName: '관리자', cellClass: 'cell-style', width: 120 },
-    { field: 'site_nm', headerName: '사이트명', cellClass: 'cell-style', width: 150 },
+    { field: 'manager', headerName: '발급요청사(총판사)', cellClass: 'cell-style', width: 120 },
+    { field: 'site_nm', headerName: '고객사명', cellClass: 'cell-style', width: 150 },
   ]);
 
   // 라이센스 데이터 조회
@@ -175,7 +176,6 @@ export default function LicensePage() {
   };
 
   const deleteSelectedRows = () => {
-    console.log('선택된 행 데이터:', selectedRows);
     if(selectedRows.length === 0) {
       showToast('삭제할 데이터를 선택해주세요.', 'error');
       return;
@@ -272,7 +272,7 @@ export default function LicensePage() {
             <Button
               variant="contained"
               size="small"
-              onClick={() => {fetchLicenses()}}
+              onClick={() => {loadLicenses()}}
             >
               🔃
             </Button>
@@ -388,7 +388,7 @@ export default function LicensePage() {
             message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`}
             deleteIds={deleteIds}
             onConfirm={() => {
-              console.log('삭제 확인');
+              addLog(selectedRows);
               loadLicenses();
             }}
           />
