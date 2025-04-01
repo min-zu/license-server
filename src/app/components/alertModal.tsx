@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { deleteLicenses } from '@/app/api/license/license';
 import { useToastState } from '@/app/components/useToast';
 import ToastAlert from './toastAleat';
@@ -12,9 +14,12 @@ interface AlertModalProps {
   message: string;
   deleteIds?: string[];
   onConfirm?: (() => void) | undefined;
+  onDeleted?: (ids: string[]) => void;
 }
 
-export default function AlertModal({ open, close, state, title, message, deleteIds, onConfirm }: AlertModalProps) {
+export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm }: AlertModalProps) {
+  const router = useRouter();
+  
   const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
 
   const handleDeleteConfirm = async () => {
@@ -35,7 +40,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         showToast('삭제 중 오류 발생', 'error');
       }
 
-      // 관리자 삭제제
+      // 관리자 삭제
     } else if(state === 'admin') {
       try {
         const res = await fetch('/api/admin', {
@@ -43,11 +48,19 @@ export default function AlertModal({ open, close, state, title, message, deleteI
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: deleteIds }),
         });
-    
-        if (!res.ok) throw new Error('삭제 실패');
+          
+        const data = await res.json();
+
+        if (!res.ok) showToast('삭제 실패!', 'error');
     
         showToast('삭제 완료!', 'success');
+        onDeleted?.(deleteIds);
         close();
+    
+        if (data.deletedSelf) {
+          await signOut({ redirect: false });
+          router.push('/login?loggedout=true');
+        }
       } catch (err) {
         console.error(err);
         showToast('삭제 중 오류 발생', 'error');

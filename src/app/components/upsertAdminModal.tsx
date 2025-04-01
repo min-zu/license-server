@@ -3,24 +3,29 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from 'react';
+import { Admin } from "../main/admin/page";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { ValidEmail, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
+import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
+import { useToastState } from "./useToast";
+import ToastAlert from "./toastAleat";
 
 
-interface EditModalProps {
+interface ModalProps {
     open: boolean;
     onClose: () => void;
-    mode: "self" | "other";
+    mode?: "add" | "self" | "other";
+    onAdded?: () => void;
+    target?:Admin;
   }
 
-export default function Editadmin(props: EditModalProps) {
-  const { open, onClose } = props;
-  
+export default function UpsertModal({ open, onClose, mode, onAdded, target }: ModalProps) {
   const { data: session } = useSession();
-
-  const [role, setRole] = useState<number>();
-
   const [id, setId] = useState("");
+  const [idFormatError, setIdFormatError] = useState<string | null>(null);
+  const [idDupMessage, setIdDupMessage] = useState<string | null>(null);
+  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
+  
+  const [role, setRole] = useState<number>();
 
   const [passwd, setPasswd] = useState("");
   const [passwdError, setPasswdError] = useState<string | null>(null);
@@ -39,15 +44,30 @@ export default function Editadmin(props: EditModalProps) {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const disableSubmit =
-    (passwd !== "" || confirmPasswd !== "") && (
+  mode === 'add'
+    ? (
+      id.trim() === "" ||
       passwd.trim() === "" ||
       confirmPasswd.trim() === "" ||
+      !!idFormatError ||
+      isIdAvailable !== true ||
       !!passwdError ||
-      confirmPasswdValid === false
-    ) ||
-    !!nameError ||
-    !!phoneError ||
-    !!emailError;
+      confirmPasswdValid === false ||
+      !!nameError ||
+      !!phoneError ||
+      !!emailError
+      )
+    : (
+      (passwd !== "" || confirmPasswd !== "") && (
+        passwd.trim() === "" ||
+        confirmPasswd.trim() === "" ||
+        !!passwdError ||
+        confirmPasswdValid === false
+      ) ||
+      !!nameError ||
+      !!phoneError ||
+      !!emailError
+    )
 
   const handleAdminChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -57,28 +77,46 @@ export default function Editadmin(props: EditModalProps) {
   };
   
   useEffect(() => {
-    if (open && session?.user) {
-      setRole(session.user.role);
-
+    if (!open) return;
+  
+    setPasswd("");
+    setPasswdError(null);
+  
+    setConfirmPasswd("");
+    setConfirmPasswdMessage(null);
+    setConfirmPasswdValid(null);
+  
+    setName("");
+    setNameError(null);
+  
+    setPhone("");
+    setPhoneError(null);
+  
+    setEmail("");
+    setEmailError(null);
+  
+    if (mode === "add") {
+      setId("");
+      setIdFormatError(null);
+      setIdDupMessage(null);
+      setIsIdAvailable(null);
+      setRole(2);
+    } else if (mode === "self" && session?.user) {
       setId(session.user.id);
-  
-      setPasswd("");
-      setPasswdError(null);
-  
-      setConfirmPasswd("");
-      setConfirmPasswdMessage(null);
-      setConfirmPasswdValid(null);
-  
-      setName(session.user.name ?? '');
-      setNameError(null);
-  
-      setPhone(session.user.phone ?? '');
-      setPhoneError(null);
-  
-      setEmail(session.user.email ?? '');
-      setEmailError(null);
+      setRole(session.user.role);
+      setName(session.user.name ?? "");
+      setPhone(session.user.phone ?? "");
+      setEmail(session.user.email ?? "");
+    } else if (mode === "other" && target) {
+      setId(target.id);
+      setRole(target.role);
+      setName(target.name ?? "");
+      setPhone(target.phone ?? "");
+      setEmail(target.email ?? "");
     }
-  }, [open]);
+  }, [open, mode, session, target]);
+
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
 
   return (
     <React.Fragment>
@@ -91,59 +129,126 @@ export default function Editadmin(props: EditModalProps) {
             sx: { maxWidth: "900px", minWidth: "300px" },
             onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
               event.preventDefault();
+
+              let method = "";
+              if (mode === 'add') {
+                method = "POST";
+              } else {
+                method = "PUT"
+              }
+
               const formData = new FormData(event.currentTarget);
               const formJson = Object.fromEntries((formData as any).entries());
-              const body = {...formJson, mode: "add-admin"};
+
               try {
                 const res = await fetch("/api/admin", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify(body),
+                  method,
+                  headers: {"Content-Type": "application/json",},
+                  body: JSON.stringify(formJson),
                 });
             
                 const result = await res.json();
             
-                if (result.success) {
-                  alert("관리자 정보 수정 완료!");
-                  onClose();
-                } else {
-                  alert("정보 수정 실패: " + result.error);
+                if (!res.ok) {
+                  showToast(`${mode === "add" ? "추가" : "수정"} 실패: ${result.error}`, "error");
+                  return;
                 }
-              } catch (e) {
-                console.error("전송 실패:", e);
-                alert("네트워크 오류가 발생했습니다.");
+                
+                onAdded?.();
+                onClose();
+              } catch (err) {
+                console.error("전송 실패:", err);
+                showToast("네트워크 오류가 발생했습니다.", "error");
               }
-              // setTimeout(() => {
-              //   onClose();
-              // }, 0);
             },
           },
         }}
       >
-        <DialogTitle className="bg-gray-500 text-white">정보 수정</DialogTitle>
+        <ToastAlert
+          open={toastOpen}
+          setOpen={toastClose}
+          message={toastMsg}
+          severity={severity} 
+        />
+
+        <DialogTitle className="bg-gray-500 text-white">
+          {mode === "add" ? "계정 추가" : "정보 수정"}
+        </DialogTitle>
 
         <DialogContent>
           <Grid2 container rowSpacing={2} spacing={1} sx={{ pt: 3 }}>
             <Grid2 size={{ xs:12, md:2 }} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
-              <strong>아이디</strong>
+              <strong>
+              {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 아이디</>) : ("아이디")}
+              </strong>
             </Grid2>
+
             <Grid2 size={{ xs:12, md:4 }} >
-              <TextField
-                name="id"
-                label="ID"
-                variant="outlined"
-                size="small"
-                sx={{ width: "95%" }}
-                value={id}
-                disabled
-              />
+              {mode === "add" ? (
+                <TextField
+                  name="id"
+                  label="ID"
+                  variant="outlined"
+                  size="small"
+                  sx={{ width: "95%" }}
+                  value={id}
+                  onChange={(e) => {
+                    setId(e.target.value);
+                    setIdFormatError(null);
+                    setIdDupMessage(null);
+                    setIsIdAvailable(null);
+                  }}
+                  onBlur={async () => {
+                    if (id.trim() === "") {
+                      setIdFormatError(null);
+                      setIdDupMessage(null);
+                      setIsIdAvailable(null);
+                      return;
+                    }
+                    const format = ValidID(id);
+                    if (format !== true) {
+                      setIdFormatError(format);
+                      setIsIdAvailable(false);
+                      return;
+                    }
+                    const dupMsg = await checkIdDuplicate(id);
+                    setIdDupMessage(dupMsg);
+                    setIsIdAvailable(dupMsg === "사용 가능한 아이디입니다.");
+                  }}
+                  error={!!idFormatError || isIdAvailable === false}
+                  helperText={
+                    idFormatError ? (
+                      <span style={{ color: "red" }}>{idFormatError}</span>
+                    ) : idDupMessage ? (
+                      <span style={{ color: isIdAvailable ? "green" : "red" }}>{idDupMessage}</span>
+                    ) : (
+                      "영문, 영문 숫자 혼합 4~32자"
+                    )
+                  }
+                />
+                ) : (
+                  <>
+                    <TextField
+                      name="id"
+                      label="ID"
+                      variant="outlined"
+                      size="small"
+                      sx={{ width: "95%" }}
+                      value={id}
+                      disabled
+                      />
+                    <input type="hidden" name="id" value={id} />
+                  </>
+                )
+              }
             </Grid2>
 
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
-              <strong>관리자 유형</strong>
+              <strong>
+                {mode === 'add' ? (<><span>&nbsp;&nbsp;</span>관리자 유형</>) : ("관리자 유형")}
+              </strong>
             </Grid2>
+
             <Grid2 size={{ xs: 12, md: 4 }} sx={{ display: "flex", justifyContent: "center" }}>
               <ToggleButtonGroup
                 value={role}
@@ -153,15 +258,23 @@ export default function Editadmin(props: EditModalProps) {
                   "& .MuiToggleButton-root": { height: "40px" }
                 }}
               >
-                <ToggleButton value={2} size="small">설정 관리자</ToggleButton>
-                <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                {role === 3
+                  ? [<ToggleButton disabled value={3} size="small">슈퍼 관리자</ToggleButton>]
+                  : [
+                    <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
+                    <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                  ]
+                }
               </ToggleButtonGroup>
               <input type="hidden" name="role" value={role} />
             </Grid2>
             
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
-              <strong>비밀번호</strong>
+              <strong>
+              {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호</>) : ("비밀번호")}
+              </strong>
             </Grid2>
+
             <Grid2 size={{xs:12, md:4}} >
               <TextField 
                 type="password" 
@@ -191,8 +304,11 @@ export default function Editadmin(props: EditModalProps) {
             </Grid2>
 
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
-              <strong>비밀번호 확인</strong>
+              <strong>
+              {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호 확인</>) : ("비밀번호 확인")}
+              </strong>
             </Grid2>
+            
             <Grid2 size={{xs:12, md:4}} >
               <TextField
               type="password"
@@ -238,6 +354,7 @@ export default function Editadmin(props: EditModalProps) {
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
               <strong><span>&nbsp;&nbsp;</span>이름</strong>
             </Grid2>
+            
             <Grid2 size={{xs:12, md:4}} >
               <TextField
                 name="name"
@@ -270,6 +387,7 @@ export default function Editadmin(props: EditModalProps) {
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
               <strong><span>&nbsp;&nbsp;</span>연락처</strong>
             </Grid2>
+
             <Grid2 size={{xs:12, md:4}} >
               <TextField 
                 name="phone" 
@@ -303,6 +421,7 @@ export default function Editadmin(props: EditModalProps) {
             <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
               <strong><span>&nbsp;&nbsp;</span>이메일</strong>
             </Grid2>
+
             <Grid2 size={{xs:12, md:4}} >
               <TextField 
                 name="email"
@@ -335,7 +454,10 @@ export default function Editadmin(props: EditModalProps) {
         </DialogContent>
 
         <DialogActions sx={{ justifyContent: "center" }}>
-          <Button type="submit" variant="contained" disabled={disableSubmit}>수정</Button>
+          <Button type="submit" variant="contained" disabled={disableSubmit}>
+            {mode === 'add' ? '추가' : '수정'}
+          </Button>
+
           <Button variant="contained" onClick={onClose}>취소</Button>
         </DialogActions>
       </Dialog>

@@ -6,51 +6,55 @@ import { GridApi, ColDef, Module, ICellRendererParams, RowSelectionOptions } fro
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
-import { Box, Button, ButtonGroup, FormControl, MenuItem, Pagination, Select, SelectChangeEvent, IconButton } from '@mui/material';
+import { Box, Button, ButtonGroup, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import EditIcon from '@mui/icons-material/Edit';
 
-import Addadmin from '@/app/components/addAdmin';
 import AlertModal from '@/app/components/alertModal';
-import Editadmin from '@/app/components/editAdmin';
+import Pagenation from '@/app/components/pagenation';
+import UpsertModal from '@/app/components/upsertAdminModal';
 
 import { SessionProvider } from 'next-auth/react';
+import { useToastState } from '@/app/components/useToast';
+import ToastAlert from '@/app/components/toastAleat';
 
-interface Admin {
+export interface Admin {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
+  name?: string;
+  email?: string;
+  phone?: string;
   role: number;
   status: number;
-  login_ts: string;
+  login_ts?: string;
 }
 
 export default function AdminPage() {
   const [rowData, setRowData] = useState<Admin[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
+  const [editTarget, setEditTarget] = useState<Admin>();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(1);
-  const [openAdd, setOpenAdd] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [openUpsert, setOpenUpsert] = useState(false);
   const [openDelete, setOpenDelete] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Admin[]>([]);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
   const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule];
 
+  const fetchData = async () => {
+    try {
+      const res = await fetch('/api/admin?mode=list');
+      if (!res.ok) throw new Error('네트워크 오류');
+      const data = await res.json();
+      setRowData(data);
+    } catch (err) {
+      console.error('데이터 불러오기 실패:', err);
+    }
+  };
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/admin?mode=list');
-        if (!res.ok) throw new Error('네트워크 오류');
-        const data = await res.json();
-        setRowData(data);
-      } catch (err) {
-        console.error('데이터 불러오기 실패:', err);
-      }
-    };
     fetchData();
   }, []);
 
@@ -65,7 +69,7 @@ export default function AdminPage() {
     setCurrentPage(1);
   };
 
-  const handlePageChange = (_: any, value: number) => {
+  const handlePageChange = (value: number) => {
     setCurrentPage(value);
   };
 
@@ -76,8 +80,8 @@ export default function AdminPage() {
   }, []);
 
   const defaultColDef = useMemo(() => ({
-    sortable: true,
-    resizable: true,
+    sortable: false,
+    resizable: false,
     suppressMovable: true,
     headerClass: 'text-center',
   }), []);
@@ -119,23 +123,24 @@ export default function AdminPage() {
     {
       headerName: '관리',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        <IconButton // onClick={() => setOpenEdit(true)}
+        <IconButton
           onClick={() => {
-            // 👇 예: 해당 row의 데이터 활용
+            const data = params.data;
+            if (!data) return;
+            setEditTarget(data);
+            setUpsertMode('other');
+            setOpenUpsert(true);
             console.log('수정 클릭:', params.data);
-            // 여기에 모달 열기 같은 기능 추가 가능
           }}
         >
           <EditIcon />
         </IconButton>
       ),
       width: 100,
-      // pinned: 'right', // 👉 우측 고정 (선택)
-      // suppressSizeToFit: true, // 자동 크기 조정 제외 (선택)
     },
   ];
 
-
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
 
   return (
     <SessionProvider>
@@ -151,7 +156,7 @@ export default function AdminPage() {
             </Select>
           </FormControl>
           <ButtonGroup size="large" disableElevation variant="contained">
-            <Button onClick={() => setOpenAdd(true)}>추가</Button>
+            <Button onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
             <Button
               onClick={() => {
                 const ids = selectedRows.map((row) => row.id);
@@ -159,12 +164,32 @@ export default function AdminPage() {
                 setOpenDelete(true)
               }}
               disabled={selectedRows.length === 0}>삭제</Button>
-            {/* <Button onClick={() => setOpenEdit(true)}>수정</Button> */}
           </ButtonGroup>
 
-          <Addadmin open={openAdd} onClose={() => setOpenAdd(false)} />
-          <AlertModal open={openDelete} close={() => setOpenDelete(false)} state='delete' title='관리자 삭제' message={`선택하신 ${selectedRows.length}개의 계정을 삭제하시겠습니까?`}/>
-          <Editadmin open={openEdit} onClose={() => setOpenEdit(false)} mode="other" />
+          <UpsertModal
+            mode={upsertMode}
+            open={openUpsert}
+            onClose={() => setOpenUpsert(false)}
+            onAdded={() => {
+              const message =
+                upsertMode === "add" ? "관리자 계정이 생성되었습니다." : "관리자 계정이 수정되었습니다.";
+              showToast(message, "success");
+              fetchData();
+            }}
+            target={upsertMode === "other" ? editTarget : undefined}
+          />
+          <AlertModal 
+            open={openDelete} 
+            close={() => setOpenDelete(false)} 
+            state='admin' 
+            title='관리자 삭제' 
+            message={`선택하신 ${selectedRows.length}개의 계정을 삭제하시겠습니까?`}
+            deleteIds={deleteIds} 
+            onDeleted={(deletedIds) => {
+              setRowData((prev) => prev.filter((row) => !deletedIds.includes(row.id)));
+              setSelectedRows([]);
+            }}
+            />
         </div>
         <AgGridReact
           modules={modules}
@@ -178,14 +203,24 @@ export default function AdminPage() {
         />
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Pagination
-            count={Math.ceil(rowData.length / pageSize)}
-            page={currentPage}
-            onChange={handlePageChange}
-            color="primary"
+          <Pagenation
+            props={{
+              totalPages:Math.ceil(rowData.length / pageSize),
+              currentPage:currentPage,
+              onChange:handlePageChange
+            }}
           />
         </Box>
       </div>
+
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity} 
+      />
     </SessionProvider>
+
+    
   );
 }
