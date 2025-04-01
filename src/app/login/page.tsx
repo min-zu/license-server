@@ -1,15 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, CssBaseline, FormLabel, FormControl, TextField, Typography, Stack } from '@mui/material';
+import { Box, Button, CssBaseline, FormControl, TextField, Typography, Stack } from '@mui/material';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ValidID, ValidPW } from "@/app/api/validation"
 import { signIn } from "next-auth/react"
-
-// 임시 로그인 페이지
+import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useToastState } from '../components/useToast';
+import ToastAlert from '../components/toastAleat';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -58,6 +60,16 @@ export default function SignIn() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
 
+  const searchParams = useSearchParams();
+  const loggedOut = searchParams.get('loggedout');
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+
+  useEffect(() => {
+    if (loggedOut === 'true') {
+      showToast("로그아웃 되었습니다.", "success");
+    }
+  }, [loggedOut]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -67,20 +79,27 @@ export default function SignIn() {
     const idCheck = ValidID(ID);
     const pwCheck = ValidPW(PW);
 
-    if (idCheck !== true) {return alert(idCheck)};
-    if (pwCheck !== true) {return alert(pwCheck)};
+    if (idCheck !== true) {return showToast(idCheck, "error")};
+    if (pwCheck !== true) {return showToast(pwCheck, "error")};
     
     // const result = await signInAction({ id: ID, password: PW });
     const result = await signIn("credentials", {id: ID, password: PW, redirect: false})
 
     if (!result || result.error) {
       const errorMessage = result?.error === "CredentialsSignin" ? "아이디 또는 비밀번호가 일치하지 않습니다." : "로그인 중 오류가 발생했습니다.";
-      return alert(errorMessage);
+      return showToast(errorMessage, "error");
     }
     router.push("/main");
   };
+
   return (
     <div>
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity} 
+      />
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" alignItems="center">
         <Card

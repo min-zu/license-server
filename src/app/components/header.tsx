@@ -3,19 +3,44 @@ import Link from 'next/link';
 import { useEffect, useState } from "react";
 import { Button, Modal, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import LicenseAddModal from './licenseAddModal';
+import UpsertModal from './upsertAdminModal';
+import { signOut } from 'next-auth/react';
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Header() {
-
-  const [navState, setNavState] = useState<string>('license');
+  const pathname = usePathname();
+  const [navState, setNavState] = useState(() => {
+    if (pathname.includes("/main/license")) return "license";
+    if (pathname.includes("/main/admin")) return "admin";
+    if (pathname.includes("/main/log")) return "log";
+  });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [openUpsert, setOpenUpsert] = useState(false);
   const handleClose = () => setIsModalOpen(false);
-
+  
   const handleChange = (
     event: React.MouseEvent<HTMLElement>,
     newClick: string,
   ) => {
     setNavState(newClick);
   };
+
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push('/login?loggedout=true')
+  };
+
+  useEffect(() => {
+    if (pathname.includes("/main/license")) {
+      setNavState("license");
+    } else if (pathname.includes("/main/admin")) {
+      setNavState("admin");
+    } else if (pathname.includes("/main/log")) {
+      setNavState("log");
+    }
+  }, [pathname]);
 
   return (
     <div className="flex justify-between h-24 bg-gray-300 w-screen">
@@ -63,19 +88,24 @@ export default function Header() {
 
       <div className="flex items-center mr-4 gap-8">
         <nav className="flex gap-6">
-          <Link  
-            href="/main/admin"
-            className="hover:text-blue-600 transition-colors"
+          <div
+            className="hover:text-blue-600 transition-colors cursor-pointer"
+            onClick={() => setOpenUpsert(true)}
           >
             <p>User</p>
-          </Link>
+          </div>
+          <UpsertModal 
+            open={openUpsert} 
+            onClose={() => setOpenUpsert(false)} 
+            mode="self"
+          />
 
-          <Link  
-            href="/main/admin"
-            className="hover:text-blue-600 transition-colors"
+          <div
+            className="hover:text-blue-600 transition-colors cursor-pointer"
+            onClick={handleLogout}
           >
             <p>LogOut</p>
-          </Link>
+          </div>
         </nav>
       </div>
       

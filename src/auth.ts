@@ -110,7 +110,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       console.log("Session", session);
       return session;
     },
-    async redirect({ baseUrl }) {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) return url;
       return baseUrl + "/main";
     },
   },
