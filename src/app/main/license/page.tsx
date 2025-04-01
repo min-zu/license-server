@@ -9,7 +9,7 @@ import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import Pagenation from '@/app/components/pagenation';
-import { deleteLicenses, fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
+import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
 import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
 import { useToastState } from '@/app/components/useToast';
 
@@ -112,23 +112,23 @@ export default function LicensePage() {
   ]);
 
   // 라이센스 데이터 조회
-  useEffect(() => {
-    const loadLicenses = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLicenses();
-        setLicenses(Array.isArray(data) ? data : []);
-        if (data.length > 0) {
-          setTotalPages(Math.ceil(data.length / pageSize));
-        }
-      } catch (error) {
-        console.error('라이센스 데이터 조회 중 오류 발생:', error);
-        setError(error instanceof Error ? error.message : '데이터 로딩 중 오류가 발생했습니다.');
-      } finally {
-        setIsLoading(false);
+  const loadLicenses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchLicenses();
+      setLicenses(Array.isArray(data) ? data : []);
+      if (data.length > 0) {
+        setTotalPages(Math.ceil(data.length / pageSize));
       }
-    };
+    } catch (error) {
+      console.error('라이센스 데이터 조회 중 오류 발생:', error);
+      setError(error instanceof Error ? error.message : '데이터 로딩 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadLicenses();
   }, []);
   
@@ -184,13 +184,13 @@ export default function LicensePage() {
     setIsDeleteModalOpen(true);
   };
 
-  if (isLoading) {
-    return <div>로딩 중...</div>;
-  }
+  // if (isLoading) {
+  //   return <div>로딩 중...</div>;
+  // }
 
-  if (error) {
-    return <div>에러: {error}</div>;
-  }
+  // if (error) {
+  //   return <div>에러: {error}</div>;
+  // }
 
   // 페이지 데이터 조회
   const getCurrentPageData = () => {
@@ -267,6 +267,14 @@ export default function LicensePage() {
               onClick={() => {handleSearch()}}
             >
               검색
+            </Button>
+
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {fetchLicenses()}}
+            >
+              🔃
             </Button>
           </div>
 
@@ -379,6 +387,10 @@ export default function LicensePage() {
             title="삭제"
             message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`}
             deleteIds={deleteIds}
+            onConfirm={() => {
+              console.log('삭제 확인');
+              loadLicenses();
+            }}
           />
 
           <AlertModal

@@ -122,10 +122,10 @@ export default function LogPage() {
             onChange={(e) => setSearchField(e.target.value)}
           >
             {columnDefs
-              .filter(col => col.field !== 'number')
-              .map((col) => (
-                <MenuItem key={col.field} value={col.field}>
-                  {col.headerName}
+              .filter(item => item.field !== 'number')
+              .map((item) => (
+                <MenuItem key={item.field} value={item.field}>
+                  {item.headerName}
                 </MenuItem>
               ))
             }
@@ -142,7 +142,7 @@ export default function LogPage() {
         <Button
           variant="contained"
           size="small"
-          onClick={() => {handleSearch();}}
+          onClick={() => {handleSearch()}}
         >
           검색
         </Button>

@@ -12,8 +12,6 @@ interface PagenationProps {
 export default function Pagenation({ props }: PagenationProps) {
   const { totalPages, currentPage, onChange } = props;
 
-  console.log('totalPages', totalPages);
-  console.log('currentPage', currentPage);
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     if (onChange) {
       onChange(value);

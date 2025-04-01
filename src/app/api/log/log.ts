@@ -12,10 +12,25 @@ export const searchLogs = async (searchField: string, searchText: string) => {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ searchField, searchText })
+    body: JSON.stringify({ state: 'searchLog', searchField, searchText })
   });
   if (!response.ok) {
     throw new Error('검색 중 오류가 발생했습니다.');
   }
   return await response.json();
 };
+
+export const addLog = async (log: any) => {
+  const response = await fetch('/api/log', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ state: 'addLog', log })
+  });
+  if (!response.ok) {
+    throw new Error('로그 추가 중 오류가 발생했습니다.');
+  }
+  return await response.json();
+};
+
