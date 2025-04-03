@@ -5,6 +5,7 @@
   text-align: center;
   font-size: 12px;
   flex: 1 1 auto;
+  padding: 0px !important;
 }
 
 .header-style .ag-header-cell-label {
@@ -76,3 +77,45 @@
   border-radius: 4px;
   font-size: 12px;
 }
+
+/* 라이센스 등록 모달 */
+.add-license-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+} 
+
+.add-license-form .MuiFormLabel-root {
+  font-size: 13px;
+  width: 140px;
+  text-align: left;
+}
+
+.add-license-form .MuiTextField-root {
+  width: 80%;
+  /* margin-right: 8px; */
+}
+
+.add-license-half-width {
+  width: 30% !important;
+  margin-right: 2% !important;
+}
+
+.add-license-form .MuiFormControlLabel-label {
+  font-size: 13px !important;
+}
+
+.add-license-form .MuiFormGroup-root {
+  flex-direction: row !important;
+}
+
+.add-license-help-btn {
+  margin-left: 5px !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+
+
+
+

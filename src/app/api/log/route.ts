@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       
       if (log.length > 1) {
         const results = await Promise.all(log.map((item: any) => {
-          const params = [0, item.hardware_code, item.license_date === undefined ? '0000-00-00' : item.license_date, item.manager, item.site_nm];
+          const params = [item.number, item.hardware_code, item.license_date === null ? '0000-00-00' : item.license_date, item.manager, item.site_nm];
           return query(sql, params);
         }));
         return NextResponse.json(results);
@@ -36,7 +36,11 @@ export async function POST(request: Request) {
         if (searchText && searchField) {
           if (searchField === 'date') {
             sql += ` DATE_FORMAT(date, '%Y-%m-%d') = ?`; 
-            params.push(searchText);
+            if(!searchText.includes('-')) {
+              params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
+            } else {
+              params.push(searchText);
+            }
           } else {
             sql += ` ${searchField} LIKE ? `;
             params.push(`%${searchText}%`);

@@ -9,6 +9,8 @@
   line-height: 1;
 }
 
+/* mui */
+
 /* 버튼 공통 css */
 .MuiButtonBase-root {
   box-shadow: none !important;
@@ -16,7 +18,7 @@
   /* line-height: 0 !important; */
   font-size: 13px !important;
 }
- 
+
 /* 셀렉트 공통 css */
 .MuiSelect-select {
   min-height: 0px !important;
@@ -25,13 +27,14 @@
   line-height: 1 !important;
 }
 
-.MuiNativeSelect-select {
-  border: 1px solid silver !important;
-  border-radius: 4px !important;
-  min-height: 0px !important;
-  height: 13px !important;
-  font-size: 12px !important;
+.MuiMenu-list {
+  padding: 0px !important
 }
+
+.MuiMenuItem-gutters {
+  font-size: 11px !important;
+}
+
 
 /* input 공통 css */
 .MuiInputBase-input {
@@ -40,4 +43,14 @@
   min-height: 0px !important;
   height: 13px !important;
   font-size: 12px !important;
+}
+
+/* toggle 공통 css */
+.MuiToggleButtonGroup-root {
+  height: 30px;
+}
+
+/* formlabel */
+.MuiFormLabel-root {
+  font-size: 13px !important;
 }

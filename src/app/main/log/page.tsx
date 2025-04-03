@@ -10,6 +10,8 @@ import '../../style/common.css';
 import '../../style/license.css';
 import Pagenation from '@/app/components/pagenation';
 import { fetchLogs, searchLogs } from '@/app/api/log/log'; // API 요청 함수 임포트
+import { useToastState } from '@/app/components/useToast';
+import ToastAlert from '@/app/components/toastAleat';
 
 interface Log {
   number: number;
@@ -28,14 +30,22 @@ export default function LogPage() {
     CellStyleModule
   ];
   const [logs, setLogs] = useState<Log[]>([]);
-  const [pageSize, setPageSize] = useState<number>(10);
+
+  // 검색 상태
   const [searchText, setSearchText] = useState<string>('');
   const [searchField, setSearchField] = useState<string>('hardware_code');
+
+  // 페이지 상태
+  const [pageSize, setPageSize] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   
+
+  // 토스트 상태
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
-    { field: 'number', headerName: 'No', width: 120, checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
     { 
       field: 'date', 
@@ -54,21 +64,26 @@ export default function LogPage() {
     { field: 'site_nm', headerName: '고객사명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' }
   ]);
 
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
-        const data = await fetchLogs();
-        setLogs(data);
-        setTotalPages(Math.ceil(data.length / pageSize));
-      } catch (error) {
-        console.error('로그 데이터 조회 중 오류 발생:', error);
-      }
-    };
+  const loadLogs = async () => {
+    try {
+      const data = await fetchLogs();
+      setLogs(data);
+      setTotalPages(Math.ceil(data.length / pageSize));
+    } catch (error) {
+      console.error('로그 데이터 조회 중 오류 발생:', error);
+    }
+  };
 
+  useEffect(() => {
     loadLogs();
   }, []);
 
   const handleSearch = async () => {
+    if(searchText === '') {
+      showToast('검색어가 입력되지 않았습니다.', 'error');
+      loadLogs();
+      return;
+    }
     try {
       const data = await searchLogs(searchField, searchText);
       setLogs(data);
@@ -78,10 +93,6 @@ export default function LogPage() {
       console.error('검색 중 오류 발생:', error);
     }
   };
-
-  useEffect(() => {
-    console.log('logs', logs);
-  }, [logs]); 
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -100,8 +111,8 @@ export default function LogPage() {
 
   return (
     <div className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+      <div className="flex items-center gap-1 mb-4">
+        <FormControl size="small" sx={{ width: 90 }}>
           <Select
             value={pageSize}
             onChange={(e) => {
@@ -116,7 +127,7 @@ export default function LogPage() {
           </Select>
         </FormControl>
         
-        <FormControl size="small" sx={{ minWidth: 120 }}>
+        <FormControl size="small" sx={{ width: 160 }}>
           <Select
             value={searchField}
             onChange={(e) => setSearchField(e.target.value)}
@@ -146,6 +157,18 @@ export default function LogPage() {
         >
           검색
         </Button>
+
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => {
+            loadLogs();
+            setSearchText('');
+            setSearchField('hardware_code');
+          }}
+        >
+          🔃
+        </Button>
       </div>
 
       <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
@@ -161,7 +184,6 @@ export default function LogPage() {
             resizable: true,
             headerClass: 'text-center' // 헤더 텍스트 가운데 정렬
           }}
-          rowSelection="multiple"
           pagination={false}
         />
       </div>
@@ -178,6 +200,13 @@ export default function LogPage() {
         </div>
         <span className='text-13'>총 {logs.length}개</span>
       </footer>
+      
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity}
+      />
     </div>
   );
 } 

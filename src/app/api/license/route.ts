@@ -18,9 +18,13 @@ export async function POST(request: Request) {
     const params = [];
 
     if (searchText && searchField) {
-      if (searchField.includes('date')) {
-        sql += ` DATE_FORMAT(date, '%Y-%m-%d') = ?`; 
-        params.push(searchText);
+      if (searchField.includes('date') || searchField.includes('_st') || searchField.includes('_end')) {
+        sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
+        if(!searchText.includes('-')) {
+          params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
+        } else {
+          params.push(searchText);
+        }
       } else {
         sql += ` ${searchField} LIKE ? `;
         params.push(`%${searchText}%`);
