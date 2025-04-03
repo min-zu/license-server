@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Button, Modal, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { usePathname, useRouter } from "next/navigation";
+import { useToastState } from './useToast';
+import ToastAlert from './toastAleat';
 
 export default function Header() {
   const pathname = usePathname();
@@ -14,6 +16,12 @@ export default function Header() {
     if (pathname.includes("/main/admin")) return "admin";
     if (pathname.includes("/main/log")) return "log";
   });
+
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+
+  const router = useRouter();
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
   const handleClose = () => setIsModalOpen(false);
@@ -24,12 +32,11 @@ export default function Header() {
   ) => {
     setNavState(newClick);
   };
-
-  const router = useRouter();
-
+  
+  // 로그아웃
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    router.push('/login?loggedout=true')
+    router.replace('/login?loggedout=true')
   };
 
   useEffect(() => {
@@ -41,6 +48,8 @@ export default function Header() {
       setNavState("log");
     }
   }, [pathname]);
+
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
 
   return (
     <div className="flex justify-between h-24 bg-gray-300 w-screen">
@@ -90,14 +99,20 @@ export default function Header() {
         <nav className="flex gap-6">
           <div
             className="hover:text-blue-600 transition-colors cursor-pointer"
-            onClick={() => setOpenUpsert(true)}
+            onClick={() => {
+              if (role === 3) {
+                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
+                return;
+              }
+              setOpenUpsert(true)}}
           >
             <p>User</p>
           </div>
           <UpsertModal 
-            open={openUpsert} 
+            open={openUpsert}
             onClose={() => setOpenUpsert(false)} 
             mode="self"
+            onAdded={() => showToast("내 정보가 수정되었습니다.", "success")}
           />
 
           <div
@@ -119,6 +134,12 @@ export default function Header() {
         />
         </span>
       </Modal>
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity}
+      />
     </div>
   )
 }

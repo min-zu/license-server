@@ -4,7 +4,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from 'react';
 import { Admin } from "../main/admin/page";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
 import { useToastState } from "./useToast";
 import ToastAlert from "./toastAleat";
@@ -19,30 +19,46 @@ interface ModalProps {
   }
 
 export default function UpsertModal({ open, onClose, mode, onAdded, target }: ModalProps) {
-  const { data: session } = useSession();
+  // 현재 로그인된 사용자 세션 정보와 세션 갱신 함수
+  const { data: session, update } = useSession();
+
+  // ToastAlert
+  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+
+  // ID
   const [id, setId] = useState("");
   const [idFormatError, setIdFormatError] = useState<string | null>(null);
   const [idDupMessage, setIdDupMessage] = useState<string | null>(null);
   const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
   
+  // 관리자 권한
   const [role, setRole] = useState<number>();
 
+  // 계정 활성화
+  const [status, setStatus] = useState<number>();
+
+  // 비밀번호
   const [passwd, setPasswd] = useState("");
   const [passwdError, setPasswdError] = useState<string | null>(null);
 
+  // 비밀번호 확인
   const [confirmPasswd, setConfirmPasswd] = useState("");
   const [confirmPasswdMessage, setConfirmPasswdMessage] = useState<string | null>(null);
   const [confirmPasswdValid, setConfirmPasswdValid] = useState<boolean | null>(null);
 
+  // 이름
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
 
+  // 연락처
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
+  // 이메일
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
 
+  // 확인 또는 수정 버튼 막기 조건
   const disableSubmit =
   mode === 'add'
     ? (
@@ -69,13 +85,19 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
       !!emailError
     )
 
-  const handleAdminChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newRole: number
-  ) => {
+  // 권한 핸들러
+  const handleAdminChange = (_: any, newRole: number) => {
+    if (newRole !== null) {
       setRole(newRole);
+    }
+  };
+
+  // 활성화 핸들러
+  const handleStatusChange = (_: any, checked: boolean) => {
+    setStatus(checked ? 1 : 0); // true: 1(계정 활성화), false: 0(계정 비활성화)
   };
   
+  // 모달이 열릴 때 폼 초기화 및 mode에 따라 사용자 정보 설정 ('add' | 'self' | 'other')
   useEffect(() => {
     if (!open) return;
   
@@ -113,13 +135,20 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
       setName(target.name ?? "");
       setPhone(target.phone ?? "");
       setEmail(target.email ?? "");
+      setStatus(target.status ?? 1);
     }
   }, [open, mode, session, target]);
 
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
-
   return (
     <React.Fragment>
+      {/* ToastAlert */}
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity} 
+      />
+      {/* Modal */}
       <Dialog
         open={open}
         maxWidth={false}
@@ -149,11 +178,15 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
             
                 const result = await res.json();
             
-                if (!res.ok) {
+                if (!result.success) {
                   showToast(`${mode === "add" ? "추가" : "수정"} 실패: ${result.error}`, "error");
                   return;
                 }
                 
+                if (mode === "self") {
+                  await update({ trigger: "update" });
+                }
+
                 onAdded?.();
                 onClose();
               } catch (err) {
@@ -164,13 +197,6 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
           },
         }}
       >
-        <ToastAlert
-          open={toastOpen}
-          setOpen={toastClose}
-          message={toastMsg}
-          severity={severity} 
-        />
-
         <DialogTitle className="bg-gray-500 text-white">
           {mode === "add" ? "계정 추가" : "정보 수정"}
         </DialogTitle>
@@ -449,6 +475,17 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
                 error={!!emailError}
                 helperText={emailError ?? undefined}
               />
+            </Grid2>
+
+            <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
+              <strong><span>&nbsp;&nbsp;</span>계정 활성화</strong>
+            </Grid2>
+            <Grid2 size={{xs:12, md:4}} >
+              <Switch
+                checked={status === 1}
+                onChange={handleStatusChange}
+              />
+              <input type="hidden" name="status" value={status} />
             </Grid2>
           </Grid2>
         </DialogContent>

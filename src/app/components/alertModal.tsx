@@ -53,7 +53,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
 
         if (!res.ok) showToast('삭제 실패!', 'error');
     
-        showToast('삭제 완료!', 'success');
+        showToast(deleteIds.length + '개의 계정이 삭제되었습니다.', 'success');
         onDeleted?.(deleteIds);
         close();
     
@@ -70,6 +70,12 @@ export default function AlertModal({ open, close, state, title, message, deleteI
 
   return (
     <>
+      <ToastAlert
+        open={toastOpen}
+        setOpen={toastClose}
+        message={toastMsg}
+        severity={severity} 
+      />
       <Dialog open={open} onClose={close}>
         <div className="flex justify-between items-center p-4 border-b bg-gray-500">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
@@ -96,12 +102,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         </Box>
 
       </Dialog>
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity} 
-      />
     </>
   );
 }

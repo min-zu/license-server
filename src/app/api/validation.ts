@@ -1,3 +1,4 @@
+// 아이디 유효성 검사
 export const ValidID = (id: unknown): string | true => {
   if (typeof id !== "string") return "아이디 형식이 올바르지 않습니다.";
   if (id.length < 4 || id.length > 32) return "아이디는 4자 이상 32자 이하여야 합니다.";
@@ -6,6 +7,7 @@ export const ValidID = (id: unknown): string | true => {
   return true;
   };
 
+// 비밀번호 유효성 검사
 export const ValidPW = (password: unknown): string | true => {
   if (typeof password !== "string") return "비밀번호 형식이 올바르지 않습니다.";
   if (password.length < 8 || password.length > 32) return "비밀번호는 8자 이상 32자 이하여야 합니다.";
@@ -14,6 +16,7 @@ export const ValidPW = (password: unknown): string | true => {
   return true;
 };
 
+// 이름 유효성 검사
 export const ValidName = (name: unknown): string | true => {
   if (name === undefined || name === null || (typeof name === "string" && name.trim() === "")) return true;
   if (typeof name !== "string") return "이름 형식이 올바르지 않습니다.";
@@ -21,6 +24,8 @@ export const ValidName = (name: unknown): string | true => {
   return true;
 };
 
+
+// 연락처 유효성 검사
 export const ValidPhone = (phone: unknown): string | true => {
   if (phone === undefined || phone === null || (typeof phone === "string" && phone.trim() === "")) return true;
   if (typeof phone !== "string") return "연락처 형식이 올바르지 않습니다. 예: 010-1234-5678";
@@ -29,6 +34,7 @@ export const ValidPhone = (phone: unknown): string | true => {
   return true;
 };
 
+// 이메일 유효성 검사
 export const ValidEmail = (email: unknown): string | true => {
   if (email === undefined || email === null || (typeof email === "string" && email.trim() === "")) return true;
   if (typeof email !== "string") return "이메일 형식이 올바르지 않습니다. 예: future@domain.com";
@@ -37,10 +43,10 @@ export const ValidEmail = (email: unknown): string | true => {
   return true;
 };
 
-// 아이디 중복 검사 (비동기)
+// 아이디 중복 검사
 export const checkIdDuplicate = async (id: string): Promise<string> => {
   try {
-    const res = await fetch(`/api/admin?id=${encodeURIComponent(id)}&mode=check-id`);
+    const res = await fetch(`/api/admin?id=${encodeURIComponent(id)}&mode=checkId`);
     if (!res.ok) throw new Error("서버 응답 실패");
 
     const isDuplicate = await res.json();
