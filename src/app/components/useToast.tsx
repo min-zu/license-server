@@ -1,19 +1,35 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import ToastAlert from '@/app/components/toastAleat';
 
 export const useToastState = () => {
-  const [toastOpen, setToastOpen] = useState<boolean>(false);
-  const [toastMsg, setToastMsg] = useState<string>("");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
   const [severity, setSeverity] = useState<"success" | "error" | "warning" | "info">("info");
 
-  const showToast = (message: string, severity: "success" | "error" | "warning" | "info") => {
-    console.log('showToast', message, severity);
+  const showToast = useCallback((message: string, severity: "success" | "error" | "warning" | "info") => {
+    console.log('showToast :: ', message, severity);
     setToastMsg(message);
     setSeverity(severity);
     setToastOpen(true);
-  };
+  }, []);
 
-  const toastClose = () => {
-    setToastOpen(false);
-  };
+  const closeToast = useCallback(() => setToastOpen(false), []);
 
-  return { toastOpen, toastMsg, severity, showToast, toastClose };};
+  return {
+    toastOpen,
+    toastMsg,
+    severity,
+    showToast,
+    ToastComponent: (
+      <ToastAlert
+        open={toastOpen}
+        setOpen={closeToast}
+        message={toastMsg}
+        severity={severity}
+      />
+    )
+  };
+};
+
+
+

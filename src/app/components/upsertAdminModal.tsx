@@ -23,7 +23,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
   const { data: session, update } = useSession();
 
   // ToastAlert
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const { showToast, ToastComponent } = useToastState();
 
   // ID
   const [id, setId] = useState("");
@@ -142,12 +142,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
   return (
     <React.Fragment>
       {/* ToastAlert */}
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity} 
-      />
+      {ToastComponent}
+      
       {/* Modal */}
       <Dialog
         open={open}

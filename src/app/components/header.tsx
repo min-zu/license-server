@@ -49,7 +49,7 @@ export default function Header() {
     }
   }, [pathname]);
 
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const { showToast, ToastComponent } = useToastState();
 
   return (
     <div className="flex justify-between h-24 bg-gray-300 w-screen">
@@ -122,6 +122,7 @@ export default function Header() {
             <p>LogOut</p>
           </div>
         </nav>
+      {ToastComponent}
       </div>
       
       <Modal
@@ -134,12 +135,7 @@ export default function Header() {
         />
         </span>
       </Modal>
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity}
-      />
+      
     </div>
   )
 }
