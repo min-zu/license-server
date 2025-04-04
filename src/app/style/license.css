@@ -115,6 +115,13 @@
   height: 32px !important;
 }
 
+.add-license-form .MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  font-size: 11px !important;
+
+}
 
 
 

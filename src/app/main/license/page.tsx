@@ -2,7 +2,7 @@
 
 import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi } from 'ag-grid-community';
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
 import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
 import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
@@ -18,6 +18,7 @@ interface License {
   number: number;
   reg_date: string;
   hardware_code: string;
+  hardware_status: string;
   software_opt: object;
   license_date: string;
   limit_time_st: string;
@@ -50,7 +51,7 @@ export default function LicensePage() {
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
   const [searchField, setSearchField] = useState('hardware_code');
-  const [hardwareState, setHardwareState] = useState('all');
+  const [hardwareStatus, setHardwareStatus] = useState('all');
   // 모달 열기 상태
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null); // 선택된 라이센스 상태 추가
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
@@ -63,7 +64,7 @@ export default function LicensePage() {
   const [pageSize, setPageSize] = useState<number>(10);
 
   // 토스트 상태
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const { showToast, ToastComponent } = useToastState();
 
   // 모달 닫기 함수
   const handleClose = () => setDetailModalOpen(false);
@@ -72,8 +73,8 @@ export default function LicensePage() {
   const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
-    { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerClass: 'header-style', cellClass: 'cell-style', width: 100 },
-    { field: 'reg_date', headerName: '등록일', cellClass: 'cell-style', width: 100,
+    { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px', padding: '5px'}, cellClass: 'cell-style', width: 100 },
+    { field: 'reg_date', headerName: '등록일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
@@ -88,28 +89,28 @@ export default function LicensePage() {
       flex: 1,
       valueGetter: (params: any) => params.data?.[item] === '1' ? 'O' : 'X',
     })),
-    { field: 'license_date', headerName: '발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
+    { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
       }
     },
-    { field: 'limit_time_st', headerName: '시작일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
+    { field: 'limit_time_st', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => { 
         if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
       }
     },
-    { field: 'limit_time_end', headerName: '종료일', cellClass: 'cell-style', width: 100,
+    { field: 'limit_time_end', headerName: '유효기간(만료)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         if (params.value) return new Date(params.value).toISOString().split('T')[0];
         return '';
       }
     },
-    { field: 'ip', headerName: 'IP', cellClass: 'cell-style', width: 120 },
-    { field: 'issuer', headerName: '발급자', cellClass: 'cell-style', width: 120 },
-    { field: 'manager', headerName: '발급요청사(총판사)', cellClass: 'cell-style', width: 120 },
-    { field: 'site_nm', headerName: '고객사명', cellClass: 'cell-style', width: 150 },
+    { field: 'ip', headerName: 'IP', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
+    { field: 'issuer', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
+    { field: 'manager', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
+    { field: 'site_nm', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-style', width: 150 },
   ]);
 
   // 라이센스 데이터 조회
@@ -132,22 +133,10 @@ export default function LicensePage() {
   useEffect(() => {
     loadLicenses();
   }, []);
-  
-  // 검색
-  const handleSearch = async () => {
-    if(searchText === '') {
-      showToast('검색어가 입력되지 않았습니다.', 'error');
-      return;
-    }
 
-    try {
-      const data = await searchLicenses(searchField, searchText);
-      setLicenses(data);
-      setTotalPages(Math.ceil(data.length / pageSize));
-      setCurrentPage(1);
-    } catch (error) {
-      console.error('검색 중 오류 발생:', error);
-    }
+  const onRowClicked = (event: any) => {
+    setSelectedLicense(event.data); // 클릭한 행의 데이터 저장
+    setDetailModalOpen(true); // 모달 열기
   };
 
   // 페이지 변경
@@ -161,9 +150,43 @@ export default function LicensePage() {
     }
   }, [licenses, pageSize]);
 
-  const onRowClicked = (event: any) => {
-    setSelectedLicense(event.data); // 클릭한 행의 데이터 저장
-    setDetailModalOpen(true); // 모달 열기
+
+  // 장비 상태
+  const handelStatusChange = useCallback(async (status: string) => {
+    const data = await fetchLicenses(); // 전체 라이센스 데이터 불러오기
+    if (status === 'all') {
+      setLicenses(data); // 모든 라이센스 데이터 설정
+    } else {
+      const filteredLicenses = data.filter((item: License) => {
+        if (item.hardware_status) {
+          return item.hardware_status.toUpperCase() === status;
+        }
+        return false;
+      });
+      setLicenses(filteredLicenses); // 필터링된 라이센스 데이터 설정
+    }
+  }, []);
+
+  useEffect(() => {
+    handelStatusChange(hardwareStatus);
+  }, [hardwareStatus]);
+  
+  // 검색
+  const handleSearch = async () => {
+    if(searchText === '') {
+      showToast('검색어가 입력되지 않았습니다.', 'error');
+      loadLicenses();
+      return;
+    }
+
+    try {
+      const data = await searchLicenses(searchField, searchText);
+      setLicenses(data);
+      setTotalPages(Math.ceil(data.length / pageSize));
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('검색 중 오류 발생:', error);
+    }
   };
 
   // 삭제
@@ -202,7 +225,7 @@ export default function LicensePage() {
   return (
     <div className="p-4">
         <div className="flex justify-between items-center w-full mb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="contained"
               color="error"
@@ -212,7 +235,7 @@ export default function LicensePage() {
               삭제
             </Button>
 
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ width: 80}}>
             <Select
               value={pageSize}
               onChange={(e) => {
@@ -227,10 +250,10 @@ export default function LicensePage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ width: 90 }}>
               <Select 
-                value={hardwareState} 
-                onChange={(e) => setHardwareState(e.target.value)}>
+                value={hardwareStatus} 
+                onChange={(e) => setHardwareStatus(e.target.value)}>
                 <MenuItem value={'all'}>전체</MenuItem>
                 <MenuItem value={'ITU'}>ITU</MenuItem>
                 <MenuItem value={'ITM'}>ITM</MenuItem> 
@@ -239,7 +262,7 @@ export default function LicensePage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ width: 160 }}>
               <Select 
                 value={searchField} 
                 onChange={(e) => setSearchField(e.target.value)}>
@@ -272,13 +295,18 @@ export default function LicensePage() {
             <Button
               variant="contained"
               size="small"
-              onClick={() => {loadLicenses()}}
+              onClick={() => {
+                loadLicenses();
+                setHardwareStatus('all');
+                setSearchText('');
+                setSearchField('hardware_code');
+              }}
             >
               🔃
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="contained"
               component="label"
@@ -405,12 +433,7 @@ export default function LicensePage() {
                     \n유효기간(YYYYMMDD 형식), 라이센스 옵션(1: 사용함, 0: 사용안함)`}
           />
 
-          <ToastAlert
-            open={toastOpen}
-            setOpen={toastClose}
-            message={toastMsg}
-            severity={severity}
-          />
+          {ToastComponent}
     </div>
   );
 }
