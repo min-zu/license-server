@@ -7,7 +7,6 @@ import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
 import { usePathname, useRouter } from "next/navigation";
 import { useToastState } from './useToast';
-import ToastAlert from './toastAleat';
 
 export default function Header() {
   const pathname = usePathname();
@@ -17,7 +16,7 @@ export default function Header() {
     if (pathname.includes("/main/log")) return "log";
   });
 
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const role = session?.user?.role;
 
   const router = useRouter();
@@ -35,8 +34,8 @@ export default function Header() {
   
   // 로그아웃
   const handleLogout = async () => {
+    localStorage.setItem('loggedout', 'true');
     await signOut({ redirect: false });
-    router.replace('/login?loggedout=true')
   };
 
   useEffect(() => {
@@ -108,12 +107,18 @@ export default function Header() {
           >
             <p>User</p>
           </div>
-          <UpsertModal 
-            open={openUpsert}
-            onClose={() => setOpenUpsert(false)} 
-            mode="self"
-            onAdded={() => showToast("내 정보가 수정되었습니다.", "success")}
-          />
+          {openUpsert && (
+            <UpsertModal 
+              open={openUpsert}
+              onClose={() => setOpenUpsert(false)} 
+              mode="self"
+              session={session}
+              onAdded={async () => {
+                await update({ trigger: "update" });
+                showToast("내 정보가 수정되었습니다.", "success")
+              }}
+            />
+          )}
 
           <div
             className="hover:text-blue-600 transition-colors cursor-pointer"
@@ -135,7 +140,6 @@ export default function Header() {
         />
         </span>
       </Modal>
-      
     </div>
   )
 }

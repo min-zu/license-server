@@ -2,21 +2,24 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+// AG Grid 관련
 import { ColDef, Module, ICellRendererParams, RowSelectionOptions } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
+// MUI 관련
 import { Box, Button, ButtonGroup, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import EditIcon from '@mui/icons-material/Edit';
 
+// 컴포넌트 임포트
 import AlertModal from '@/app/components/alertModal';
 import Pagenation from '@/app/components/pagenation';
 import UpsertModal from '@/app/components/upsertAdminModal';
 import { useToastState } from '@/app/components/useToast';
-import ToastAlert from '@/app/components/toastAleat';
-import { SessionProvider } from 'next-auth/react';
 
 export interface Admin {
   id: string;
@@ -33,11 +36,11 @@ export default function AdminPage() {
   const [rowData, setRowData] = useState<Admin[]>([]);
   // mode ('add' = 추가, 'other' = 수정)
   const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
-  // 수정 대상 관리자 정보
+  // 수정 대상 정보
   const [editTarget, setEditTarget] = useState<Admin>();
   // 현재 페이지 번호
   const [currentPage, setCurrentPage] = useState(1);
-  // 페이지당 보여줄 항목 수
+  // 페이지당 보여줄 행(관리자) 수
   const [pageSize, setPageSize] = useState(10);
   // 관리자 추가/수정 모달 열림 여부
   const [openUpsert, setOpenUpsert] = useState(false);
@@ -47,10 +50,12 @@ export default function AdminPage() {
   const [selectedRows, setSelectedRows] = useState<Admin[]>([]);
   // 삭제 대상 관리자 ID 배열
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
+
   // ag-Grid에서 사용할 모듈 설정
   const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule];
+  
   // ToastAlert
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const {  showToast, ToastComponent } = useToastState();
 
   // 관리자 목록 데이터를 API로부터 불러와 상태로 저장하는 함수
   const fetchData = async () => {
@@ -170,13 +175,6 @@ export default function AdminPage() {
   ];
 
   return (
-    <SessionProvider>
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity} 
-      />
       <div className="flex flex-col justify-center h-[calc(100vh-10rem)] w-[calc(100vw)] p-4 mt-5 bg-gray-100">
         <div className="flex justify-between items-end mb-2" >
           <FormControl size="small" sx={{ width: 90 }}>
@@ -199,26 +197,27 @@ export default function AdminPage() {
               disabled={selectedRows.length === 0}>삭제</Button>
           </ButtonGroup>
         </div>
-        <UpsertModal
-          mode={upsertMode}
-          open={openUpsert}
-          onClose={() => setOpenUpsert(false)}
-          onAdded={() => {
-            let message = "";
-            if (upsertMode === "add") {
-              message = "관리자 계정이 생성되었습니다.";
-            } else if (upsertMode === "other") {
-              message = "관리자 계정이 수정되었습니다.";
-            }
-            
-            if (message) {
-              showToast(message, "success");
-            }
-            fetchData();
-          }}
-          target={upsertMode === "other" ? editTarget : undefined}
-        />
-
+        {openUpsert && (
+          <UpsertModal
+            mode={upsertMode}
+            open={openUpsert}
+            onClose={() => setOpenUpsert(false)}
+            onAdded={() => {
+              let message = "";
+              if (upsertMode === "add") {
+                message = "관리자 계정이 생성되었습니다.";
+              } else if (upsertMode === "other") {
+                message = "관리자 계정이 수정되었습니다.";
+              }
+              
+              if (message) {
+                showToast(message, "success");
+              }
+              fetchData();
+            }}
+            target={upsertMode === "other" ? editTarget : undefined}
+          />
+        )}
         <AlertModal 
           open={openDelete} 
           close={() => setOpenDelete(false)} 
@@ -231,7 +230,7 @@ export default function AdminPage() {
             setSelectedRows([]);
           }}
         />
-
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
         <AgGridReact
           modules={modules}
           rowData={pagedData}
@@ -239,8 +238,10 @@ export default function AdminPage() {
           rowSelection={rowSelection}
           defaultColDef={defaultColDef}
           pagination={false}
+          theme="legacy"
           onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
         />
+        </div>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
           <Pagenation
@@ -251,9 +252,7 @@ export default function AdminPage() {
             }}
           />
         </Box>
+        {ToastComponent}
       </div>
-    </SessionProvider>
-
-    
   );
 }

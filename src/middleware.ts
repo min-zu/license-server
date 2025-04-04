@@ -1,39 +1,29 @@
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  const session = await auth();
 
-  const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname.startsWith('/login');
-  const isApiRoute = pathname.startsWith('/api');
-  const isPublicAsset = pathname.startsWith('/_next') || pathname.includes('.');
+export default auth((req) => {
+  const pathname = req.nextUrl.pathname;
 
-  // 세션이 없는 경우 로그인 페이지 제외한 모든 페이지 접근 시 로그인페이지로 리다이렉트
-  if (!session && !isAuthPage && !isApiRoute && !isPublicAsset) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('timedout', 'true');
-    return NextResponse.redirect(loginUrl);
+  // 모든 페이지에서 캐시 방지 헤더 설정
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+
+  // 세션이 있는데 로그인 페이지 접근 시 메인 페이지로 리다이렉트
+  if (req.auth && pathname.startsWith('/login')) {
+    return NextResponse.redirect(new URL('/main', req.url));
   }
 
-  // 세션이 있는 경우 로그인 페이지 접근 시 메인으로 리다이렉트
-  if (session && isAuthPage) {
-    return NextResponse.redirect(new URL('/main', request.url));
+  // role이 3이 아닌 경우 /main/admin 접근 제한
+  if (req.auth && req.auth.user.role !== 3 && pathname.startsWith('/main/admin')) {
+    const referer = req.headers.get('referer'); // 'referer' 헤더를 사용하여 이전 페이지로 리다이렉트
+    const redirectUrl = referer ? referer : '/main'; // referer가 없으면 기본값으로 '/main'
+    return NextResponse.redirect(new URL(redirectUrl, req.url));
   }
 
-  // role이 3 (슈퍼 관리자)가 아닌 경우, /main/admin 접근 제한
-  if (pathname.startsWith('/main/admin')) {
-    const role = session?.user?.role;
-
-    if (role !== 3) {
-      const referer = request.headers.get('referer');
-      return NextResponse.redirect(referer ? referer : new URL('/main', request.url));
-    }
-  }
-
-  return NextResponse.next();
-}
+  return response;
+});
 
 export const config = {
   matcher: [

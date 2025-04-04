@@ -1,14 +1,12 @@
 'use client'
 
 import React from "react";
-import { useSession } from "next-auth/react";
 import { useState, useEffect } from 'react';
 import { Admin } from "../main/admin/page";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
 import { useToastState } from "./useToast";
-import ToastAlert from "./toastAleat";
-
+import { Session } from "next-auth";
 
 interface ModalProps {
     open: boolean;
@@ -16,12 +14,10 @@ interface ModalProps {
     mode?: "add" | "self" | "other";
     onAdded?: () => void;
     target?:Admin;
+    session?: Session | null;
   }
 
-export default function UpsertModal({ open, onClose, mode, onAdded, target }: ModalProps) {
-  // 현재 로그인된 사용자 세션 정보와 세션 갱신 함수
-  const { data: session, update } = useSession();
-
+export default function UpsertModal({ open, onClose, mode, onAdded, target, session }: ModalProps) {
   // ToastAlert
   const { showToast, ToastComponent } = useToastState();
 
@@ -180,7 +176,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
                 }
                 
                 if (mode === "self") {
-                  await update({ trigger: "update" });
+                  onAdded?.();
                 }
 
                 onAdded?.();
@@ -473,16 +469,20 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target }: Mo
               />
             </Grid2>
 
-            <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
-              <strong><span>&nbsp;&nbsp;</span>계정 활성화</strong>
-            </Grid2>
-            <Grid2 size={{xs:12, md:4}} >
-              <Switch
-                checked={status === 1}
-                onChange={handleStatusChange}
-              />
-              <input type="hidden" name="status" value={status} />
-            </Grid2>
+            {mode === "other" && (
+              <>
+                <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
+                  <strong><span>&nbsp;&nbsp;</span>계정 활성화</strong>
+                </Grid2>
+                <Grid2 size={{xs:12, md:4}} >
+                  <Switch
+                    checked={status === 1}
+                    onChange={handleStatusChange}
+                  />
+                  <input type="hidden" name="status" value={status} />
+                </Grid2>
+              </>
+            )}
           </Grid2>
         </DialogContent>
 

@@ -3,10 +3,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { ValidID, ValidPW } from "../api/validation";
-import { getSession, signIn, signOut, useSession } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import { useToastState } from "../components/useToast";
-import ToastAlert from "../components/toastAleat";
 
 export default function SignIn() {
   // 라우터
@@ -18,7 +17,7 @@ export default function SignIn() {
   const timedout = searchParams.get('timedout'); // 세션만료
 
   // toastAleat
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const { showToast, ToastComponent } = useToastState();
   
   // 세션 만료 또는 로그아웃 등으로 로그인 페이지로 리다이렉트된 경우
   // 파라미터 기반 toastMsg 출력 및 이전 페이지로 돌아가기 막기
@@ -105,12 +104,7 @@ export default function SignIn() {
       }}
     >
       {/* ToastAlert */}
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity}
-      />
+      {ToastComponent}
       {/* Login Form */}
       <Paper
         component="form"
