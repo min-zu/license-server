@@ -19,32 +19,18 @@ export default function SignIn() {
   // toastAleat
   const { showToast, ToastComponent } = useToastState();
   
-  // 세션 만료 또는 로그아웃 등으로 로그인 페이지로 리다이렉트된 경우
-  // 파라미터 기반 toastMsg 출력 및 이전 페이지로 돌아가기 막기
+  // 세션 만료 또는 로그아웃 등으로 로그인 페이지로 리다이렉트된 경우 ToastAlert
   useEffect(() => {
-    // 뒤로가기 시 강제로 /login 경로 유지 (뒤로가기 방지)
-    const handlePopState = () => {
-      history.pushState(null, "", "/login");
-    };
     // 로그아웃
     if (loggedOut === 'true') {
       showToast("로그아웃 되었습니다.", "success");
       router.replace("/login");
-      history.replaceState(null, "", "/login");
-      history.pushState(null, "", "/login");
-      window.addEventListener("popstate", handlePopState);
     }
     // 세션 만료
     if (timedout === 'true') {
       showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
       router.replace("/login");
-      history.replaceState(null, "", "/login");
-      history.pushState(null, "", "/login");
-      window.addEventListener("popstate", handlePopState);
     }
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
   }, [loggedOut, timedout, showToast]);
 
   // 로그인 처리 핸들러

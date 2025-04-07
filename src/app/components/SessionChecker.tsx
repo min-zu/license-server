@@ -12,13 +12,6 @@ export default function SessionChecker({
   const { status } = useSession({
     required: true,
     onUnauthenticated: () => {
-      const isLogout = localStorage.getItem('loggedout') === 'true';
-
-      if (isLogout) {
-      localStorage.removeItem('loggedout');
-      router.replace('/login?loggedout=true')
-      return;
-      } 
       router.replace("/login?timedout=true");
     },
   });

@@ -86,7 +86,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
     maxAge: 900,
-    updateAge: 60,
   },
   callbacks: {
     // JWT 콜백 함수: 로그인 성공 또는 세션 갱신 시 토큰 데이터를 설정하거나 갱신 

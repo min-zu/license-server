@@ -34,8 +34,7 @@ export default function Header() {
   
   // 로그아웃
   const handleLogout = async () => {
-    localStorage.setItem('loggedout', 'true');
-    await signOut({ redirect: false });
+    await signOut({ callbackUrl: '/login?loggedout=true' });
   };
 
   useEffect(() => {
