@@ -1,10 +1,13 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, styled, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 import '../style/common.css';
 import '../style/license.css';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ValidEmail, ValidHardwareCode, ValidLimitTimeEnd, ValidLimitTimeStart, checkHardwareCode } from "@/app/api/validation";
 import { useToastState } from "@/app/components/useToast";
-// import { z } from "zod";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export default function LicenseAddModal({ close }: { close: () => void }) {
   // 입력값
@@ -25,7 +28,7 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
   const defaultOps = ['FW', 'VPN', 'SSL', 'IPS', 'WAF', 'AV', 'AS', 'Tracker'];
   const ituOps = ['FW', 'VPN', '행안부', 'DPI', 'AV', 'AS'];
 
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  // const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [hardwareCodeError, setHardwareCodeError] = useState<string>('');
   const [validHardwareCode, setValidHardwareCode] = useState<string>('');
@@ -48,64 +51,37 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
     );
   };
 
-  const validationCheck = async (field: string, value: string) => {
-    console.log(field, value);
-    if(field === 'hardwareCode') {
-      const result = ValidHardwareCode(value);
-      console.log('result',result);
-      if (result !== true) {
-        setHardwareCodeError(result);
-        setValidHardwareCode('');
-      } else {
-        setHardwareCodeError('');
-        const isDuplicate = await checkHardwareCode(value);
-        Number(isDuplicate) > 0 ? setValidHardwareCode('이미 등록된 시리얼 번호입니다.') : setValidHardwareCode('');
-      }
-    }
+  const addSchema = z.object({
+    hardwareStatus: z.string().min(1, { message: '장비 선택을 해주세요.' }),
+    hardwareCode: z.string()
+      .min(1, { message: '제품 시리얼 번호를 입력해주세요.' })
+      .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, { message: '제품 시리얼 번호는 영문과 숫자를 각각 1개 이상 포함해야 합니다.' })
+      .min(24, { message: '제품 시리얼 번호는 24자입니다.' }),
+    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
+    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
+    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    cpuName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
+    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    cfid: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
+  })
 
-    if(field === 'limitTimeStart') {
-      value === '' ? setLimitTimeStartError('유효기간(시작)을 입력해 주세요.') : setLimitTimeStartError('');
-    }
+  const {
+    register,
+    handleSubmit, 
+    formState: { errors },
+  } = useForm<z.infer<typeof addSchema>>({
+    resolver: zodResolver(addSchema),
+    mode: 'onChange',
+    reValidateMode: 'onSubmit',
+  });
 
-    if(field === 'limitTimeEnd') {
-      value === '' ? setLimitTimeEndError('유효기간(만료)을 입력해 주세요.') : setLimitTimeEndError('');
-    }
-
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true); 
-
-    // 필수 입력값 체크
-    if (hardwareCodeError !== '' || limitTimeStartError !== '' || limitTimeEndError !== '') { 
-      showToast("입력값을 확인해 주세요.", "error");
-      return;
-    }
-
-    // 입력값 유효성 검사
-
-    // 등록 처리 로직
-    const licenseData = {
-      hardwareStatus, 
-      hardwareCode,
-      limitTimeStart,
-      limitTimeEnd,
-      issuer,
-      manager,
-      cpuName,
-      siteName,
-      cfid,
-      initCode,
-    };
-    console.log("라이센스 등록 데이터:", licenseData);
-    // 여기서 API 호출 등을 통해 등록 처리
-
-    
+  const onSubmit = (data: z.infer<typeof addSchema>) => {
+    console.log("onsubmit: ", data);
   };
 
-  return (
-    <form className="w-full h-full flex justify-center items-center text-13" onSubmit={handleSubmit}>
+  return ( 
+    <>
+    <form className="w-full h-full flex justify-center items-center text-13" onSubmit={handleSubmit(onSubmit)}>
       <div className="w-1/2 bg-white rounded-md">
         <div className="flex justify-between items-center p-4 border-b bg-gray-500">
           <h2 className="text-xl font-semibold text-white">라이센스 등록</h2>
@@ -136,16 +112,16 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
               </FormLabel>
               <TextField 
                 size="small" 
-                inputProps={{ maxLength: 24 }}
-                name="hardwareCode"
                 value={hardwareCode} 
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setHardwareCode(value);
-                  validationCheck('hardwareCode', value);
-                }} 
-                error={hardwareCodeError !== '' || validHardwareCode !== ''}
-                helperText={hardwareCodeError || validHardwareCode}
+                error={errors.hardwareCode !== undefined}
+                helperText={errors.hardwareCode?.message}
+                {...register('hardwareCode', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    if(value.length > 24) return;
+                    setHardwareCode(value);
+                  },
+                })}
               />
               {textFieldTooltip(`ITU : ITU201AXXXXXXXXXXXXXXXXX (24 codes)\nITM : 3XXXXX-XXXXXX-XXXXXXXX[-N]\n(대소문자구분 22 codes | 번호추가[-N] 시 24 codes)`)}
             </Box>
@@ -166,8 +142,6 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
                     control={<Checkbox size="small"/>}
                     label={item}
                     key={item}
-
-                    
                   />
                 ))} 
               </FormGroup>
@@ -179,17 +153,16 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
               </FormLabel>
               <TextField
                 className="add-license-half-width" 
-                name="limitTimeStart"
                 size="small"
                 type="date"
                 value={limitTimeStart}
-                onChange={(e) => {
-                  setLimitTimeStart(e.target.value);
-                  validationCheck('limitTimeStart', e.target.value);
-                }}
-                error={limitTimeStartError !== ''}
-                helperText={limitTimeStartError}
-                // required
+                error={errors.limitTimeStart !== undefined}
+                helperText={errors.limitTimeStart?.message}
+                {...register('limitTimeStart', {
+                  onChange: (e) => {
+                    setLimitTimeStart(e.target.value);
+                  },
+                })}
               />
 
               <FormLabel>
@@ -197,18 +170,17 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
               </FormLabel>
               <TextField
                 className="add-license-half-width"
-                name="limitTimeEnd"
                 size="small"
                 type="date"
                 value={limitTimeEnd}
-                onChange={(e) => {
-                  if(new Date(e.target.value) > new Date('2036-12-31')) setLimitTimeEnd('2036-12-31');
-                  else setLimitTimeEnd(e.target.value);
-                  validationCheck('limitTimeEnd', e.target.value);
-                }}
-                error={limitTimeEndError !== ''}
-                helperText={limitTimeEndError}
-                // required
+                error={errors.limitTimeEnd !== undefined}
+                helperText={errors.limitTimeEnd?.message}
+                {...register('limitTimeEnd', {
+                  onChange: (e) => {
+                    if(new Date(e.target.value) > new Date('2036-12-31')) setLimitTimeEnd('2036-12-31');
+                    else setLimitTimeEnd(e.target.value);
+                  },
+                })}
               />
               {textFieldTooltip('만료일은 최대 2036년 12월 31일까지 가능합니다.')}
             </Box>
@@ -224,28 +196,68 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
               <FormLabel>
                 <span className="text-red-500">*</span> 발급요청사
               </FormLabel>
-              <TextField size="small" name="manager" value={manager} onChange={(e) => setManager(e.target.value)} />
+              <TextField 
+                size="small" 
+                value={manager}
+                error={errors.manager !== undefined}
+                helperText={errors.manager?.message}
+                {...register('manager', {
+                  onChange: (e) => {
+                    setManager(e.target.value);
+                  },
+                })} 
+                />
             </Box>
 
             <Box display="flex" alignItems="center">
               <FormLabel>
                 <span className="text-red-500">*</span> 프로젝트명
-              </FormLabel>
-              <TextField size="small" name="cpuName" value={cpuName} onChange={(e) => setCpuName(e.target.value)} />
+              </FormLabel>  
+              <TextField 
+                size="small" 
+                value={cpuName}  
+                error={errors.cpuName !== undefined}
+                helperText={errors.cpuName?.message}
+                {...register('cpuName', {
+                  onChange: (e) => {
+                    setCpuName(e.target.value);
+                  },
+                })} 
+              />
             </Box>
 
             <Box display="flex" alignItems="center">
               <FormLabel>
                 <span className="text-red-500">*</span> 고객사명
               </FormLabel>
-              <TextField size="small" name="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+              <TextField 
+                size="small" 
+                value={siteName}  
+                error={errors.siteName !== undefined}
+                helperText={errors.siteName?.message}
+                {...register('siteName', {
+                  onChange: (e) => {
+                    setSiteName(e.target.value);
+                  },
+                })} 
+              />
             </Box>
 
             <Box display="flex" alignItems="center">
               <FormLabel>
                 <span className="text-red-500">*</span> 고객사 E-mail
               </FormLabel>
-              <TextField size="small" name="cfid" value={cfid} onChange={(e) => setCfid(e.target.value)} />
+              <TextField 
+                size="small" 
+                value={cfid} 
+                error={errors.cfid !== undefined}
+                helperText={errors.cfid?.message}
+                {...register('cfid', {
+                  onChange: (e) => {
+                    setCfid(e.target.value);
+                  },
+                })} 
+              />
             </Box>
 
             <Box display="flex" alignItems="center">
@@ -257,7 +269,7 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
             </Box>
 
             <Box display="flex" justifyContent="center" gap={1} mt={2}>
-              <Button type="submit" variant="contained" color="primary"> 
+              <Button type="submit" variant="contained" color="primary" > 
                 계속 등록
               </Button>
               <Button type="submit" variant="contained" color="primary">
@@ -272,5 +284,6 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
       </div>
       {ToastComponent}
     </form>
+    </>
   )
 }
