@@ -2,15 +2,15 @@ import { NextResponse, NextRequest } from "next/server";
 import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import fs from 'fs';
+import { writeFileSync } from 'fs';
 
-export async function POST(params: NextRequest) {
-  const { searchParams } = new URL(params.url);
+export async function POST(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
 
   const hardware_code = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
-  const ip = params.headers.get('x-forwarded-for') || '0.0.0.0';
+  const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
   
   // let check = 0;
 
@@ -24,7 +24,12 @@ export async function POST(params: NextRequest) {
   // ].join('\n');
   const logPath = "/tmp/serial.log";
   const logContent = `${hardware_code}\n${uuid}\n${init_code}`;
-  // fs.writeFileSync(logPath, logContent, { flag: 'w' });
+
+  try {
+    writeFileSync(logPath, logContent, { flag: 'w' });
+  } catch (error) {
+    console.error("log 파일 생성 실패: ", error);
+  }
 
   const rows = await query("SELECT hardware_code, init_code, process FROM license");
 
@@ -39,10 +44,10 @@ export async function POST(params: NextRequest) {
     } 
   }
 
-  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as FROM license WHERE hardware_code = ?", [hardware_code]);
+  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license _as FROM license WHERE hardware_code = ?", [hardware_code]);
   const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as } = (rows2 as any[])[0];
 
-  const function_map = 
+  const function_map =  
     (Number(license_fw) || 0) * 1 +
     (Number(license_vpn) || 0) * 2 +
     (Number(license_ssl) || 0) * 4 +
@@ -57,7 +62,12 @@ export async function POST(params: NextRequest) {
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
   const logPath2 = "/tmp/date.log";
-  // fs.writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
+
+  try {
+    writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
+  } catch (error) {
+    console.error("log 파일 생성 실패: ", error);
+  }
 
   const cmd = `/var/www/issue/license ${hardware_code} ${function_map} ${hex_expire}`;
 

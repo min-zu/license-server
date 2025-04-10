@@ -3,13 +3,13 @@ import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
-export async function POST(params: NextRequest) {
-  const { searchParams } = new URL(params.url);
+export async function POST(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
 
   const hardware_code = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
-  const ip = params.headers.get('x-forwarded-for') || '0.0.0.0';
+  const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
   
   let check = 0;
 
