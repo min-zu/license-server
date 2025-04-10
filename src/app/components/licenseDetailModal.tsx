@@ -232,7 +232,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </p>
               </Box>
               <Box display="flex" alignItems="center">
-                <FormLabel>사이트 :</FormLabel> <p>{license.auth_code}</p>
+                <FormLabel>인증키 :</FormLabel> <p>{license.auth_code}</p>
               </Box>
 
               <div className="split-line"></div>

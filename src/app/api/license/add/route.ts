@@ -39,12 +39,12 @@ export async function POST(request: NextRequest) {
       if(license_key) {        
         sql = `INSERT INTO license (
           number, reg_date, license_date,
-          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process,
           hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpu_name, cfid,
           license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
           ) VALUES (
             0, now(), now(),
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 1,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -56,12 +56,12 @@ export async function POST(request: NextRequest) {
       } else {
         sql = `INSERT INTO license (
           number, reg_date, license_date,
-          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process, auth_code,
           hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
           license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
         ) VALUES (
           0, now(), now(),
-          0, 0, 0, 0, 0, 0
+          0, 0, 0, 0, 0, 1, 0,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )`
@@ -75,12 +75,12 @@ export async function POST(request: NextRequest) {
       if(license_key) {
         sql = `INSERT INTO license (
           number, reg_date, license_date,
-          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process
           hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpuName, cfid,
           license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
           ) VALUES (
             0, now(), now(),
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -92,12 +92,12 @@ export async function POST(request: NextRequest) {
       } else {
         sql = `INSERT INTO license (
           number, reg_date, license_date,
-          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code, process
           hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
           license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
           ) VALUES (
             0, now(), now(),
-            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0
             ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
           )`;
