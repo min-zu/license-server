@@ -5,7 +5,7 @@ import { Button, Modal, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useToastState } from './useToast';
 
 export default function Header() {
@@ -18,8 +18,6 @@ export default function Header() {
 
   const { data: session, update } = useSession();
   const role = session?.user?.role;
-
-  const router = useRouter();
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
@@ -34,7 +32,9 @@ export default function Header() {
   
   // 로그아웃
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login?loggedout=true' });
+    sessionStorage.setItem('loginToast', 'loggedout');
+    await signOut({ callbackUrl:'/login' });
+
   };
 
   useEffect(() => {
@@ -73,7 +73,15 @@ export default function Header() {
           <Link 
             href="/main/admin"
             className="hover:text-blue-600 transition-colors"
-            onClick={() => setNavState('admin')}
+            onClick={(e) => {
+              if (role !== 3) {
+                e.preventDefault();
+                showToast("접근 권한이 없습니다.", "warning");
+                return;
+              }
+          
+              setNavState('admin');
+            }}
           >
             <p className={navState === 'admin' ? 'text-blue-600' : ''}>Admin</p>
           </Link>

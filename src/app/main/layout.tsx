@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { SessionProvider } from "next-auth/react";
 import SessionChecker from "../components/SessionChecker";
 import Header from "../components/header";
 import { redirect } from "next/navigation";
@@ -9,9 +10,11 @@ export default async function mainLayout({ children }: { children: React.ReactNo
     redirect("/login");
   }
   return (
-    <SessionChecker>
-      <Header/>
-      {children}
-    </SessionChecker>
+    <SessionProvider>
+      <SessionChecker>
+        <Header/>
+        {children}
+      </SessionChecker>
+    </SessionProvider>
   );
 }

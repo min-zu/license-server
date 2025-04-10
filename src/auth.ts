@@ -127,7 +127,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.phone = token.phone ?? "";
       session.user.email = token.email ?? "";
       session.user.login_ts = token.login_ts;
-      console.log("Session", session);
+      // console.log("Session", session);
       return session;
     },
   },

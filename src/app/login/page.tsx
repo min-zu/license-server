@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ValidID, ValidPW } from "../api/validation";
 import { getSession, signIn, signOut } from "next-auth/react";
@@ -11,27 +11,31 @@ export default function SignIn() {
   // 라우터
   const router = useRouter();
 
-  // (Client Only) 쿼리 파라미터에서 로그아웃/세션 만료 여부 확인
-  const searchParams = useSearchParams();
-  const loggedOut = searchParams.get('loggedout'); // 로그아웃
-  const timedout = searchParams.get('timedout'); // 세션만료
-
   // toastAleat
   const { showToast, ToastComponent } = useToastState();
   
-  // 세션 만료 또는 로그아웃 등으로 로그인 페이지로 리다이렉트된 경우 ToastAlert
   useEffect(() => {
-    // 로그아웃
-    if (loggedOut === 'true') {
-      showToast("로그아웃 되었습니다.", "success");
-      router.replace("/login");
+    // 로그아웃 시 unload발생 -> 오탐 방지로 제거
+    if (sessionStorage.getItem('wasExternal') === 'true') {
+      sessionStorage.removeItem('wasExternal');
     }
-    // 세션 만료
-    if (timedout === 'true') {
+
+    // 토스트 플래그 확인
+    const toastFlag = sessionStorage.getItem('loginToast');
+    console.log('메시지', toastFlag)
+    if (toastFlag === 'loggedout') {
+      showToast('로그아웃 되었습니다.', 'success');
+      sessionStorage.removeItem('loginToast');
+    }
+    if (toastFlag === 'timedout') {
       showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
-      router.replace("/login");
+      sessionStorage.removeItem('loginToast');
     }
-  }, [loggedOut, timedout, showToast]);
+    if (toastFlag === 'forced') {
+      showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
+      sessionStorage.removeItem('loginToast');
+    }
+  }, []);
 
   // 로그인 처리 핸들러
   const handleLogin = async (e: React.FormEvent) => {
@@ -77,7 +81,8 @@ export default function SignIn() {
     }
 
     // 로그인 성공 시 페이지 이동
-    router.push("/main");
+    document.cookie = "loginInit=true; max-age=10; path=/; SameSite=Lax";
+    router.replace("/main");
   };
   return (
     // 전체 레이아웃
