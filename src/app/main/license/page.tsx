@@ -404,6 +404,9 @@ export default function LicensePage() {
             <LicenseDetailModal 
               close={handleClose}
               license={selectedLicense}
+              onUpdated={() => {
+                loadLicenses(); // 수정 후 데이터 재조회
+              }}
             />
             </span>
           </Modal>
