@@ -1,5 +1,6 @@
 'use client';
 
+import { useIdleTimer } from 'react-idle-timer'
 import { signOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
@@ -8,7 +9,34 @@ export default function SessionChecker({
 }: {
   children: React.ReactNode;
 }) {
-  const [allowRender, setAllowRender] = useState(false); 
+  const [allowRender, setAllowRender] = useState(false);
+
+  useIdleTimer({
+    timeout: 1000 * 60 * 5, // 5분
+    onIdle: () => {
+      if (document.visibilityState === 'visible') {
+        sessionStorage.setItem('loginToast', 'timedout')
+        signOut({ callbackUrl: '/login' });
+      } else {
+        sessionStorage.setItem('loginToast', 'timedout')
+      }
+    },
+    debounce: 500, // 이벤트 감지 최소 간격 (선택)
+  })
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const expired = sessionStorage.getItem('loginToast') === 'timedout';
+        if (expired) {
+          signOut({ callbackUrl: '/login' });
+        }
+      }
+    };
+  
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   // 1. 외부 이동 시 unload 기록
   useEffect(() => {
