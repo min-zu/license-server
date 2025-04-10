@@ -4,7 +4,7 @@ import '../style/license.css';
 import { useState, useEffect } from "react";
 import { checkHardwareCode } from "@/app/api/validation";
 import { useToastState } from "@/app/components/useToast";
-
+import { defaultOps, ituOps } from "@/app/data/config";
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,8 +16,8 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
   // 토스트 상태
   const { showToast, ToastComponent } = useToastState();
 
-  const defaultOps = ['FW', 'VPN', 'SSL', 'IPS', 'WAF', 'AV', 'AS', 'Tracker'];
-  const ituOps = ['FW', 'VPN', '행안부', 'DPI', 'AV', 'AS'];
+  // const defaultOps = ['FW', 'VPN', 'SSL', 'IPS', 'WAF', 'AV', 'AS', 'Tracker'];
+  // const ituOps = ['FW', 'VPN', '행안부', 'DPI', 'AV', 'AS'];
 
   const [isContinue, setIsContinue] = useState(false);
 
@@ -43,7 +43,22 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
     hardwareCode: z.string()
       .min(1, { message: '제품 시리얼 번호를 입력해주세요.' })
       .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, { message: '제품 시리얼 번호는 영문과 숫자를 각각 1개 이상 포함해야 합니다.' })
-      .min(24, { message: '제품 시리얼 번호는 24자입니다.' })
+      .superRefine((value, ctx) => {
+        const trimmed = value.trim();
+        const codes = trimmed.split('-').length >= 3;
+      
+        if (codes && trimmed.length < 22) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '제품 시리얼 번호는 22자 이상이어야 합니다.',
+          });
+        } else if (!codes && trimmed.length !== 24) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '제품 시리얼 번호는 24자입니다.',
+          });
+        }
+      })
       .refine(async (value) => {
         const count = await checkHardwareCode(value);
         console.log("count: ", count);
@@ -96,6 +111,18 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
   });
 
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
+    
+    const updatedSoftwareOpt = { ...data.softwareOpt };
+    if(data.hardwareStatus === "ITU") {
+      const ituValues = ituOps.map(option => option.value);
+      ituValues.forEach(label => {
+        if (!(label in updatedSoftwareOpt)) {
+          updatedSoftwareOpt[label] = 0; // 기본값으로 0 추가
+        }
+      });
+    }
+    // 업데이트된 소프트웨어 옵션을 데이터에 다시 설정
+    data.softwareOpt = updatedSoftwareOpt;
     console.log("onsubmit: ", data);
 
     const res = await fetch('/api/license/add', {
@@ -156,7 +183,12 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
                 inputProps={{ maxLength: 24 }}
                 error={errors.hardwareCode !== undefined}
                 helperText={errors.hardwareCode?.message}
-                {...register('hardwareCode')}
+                {...register('hardwareCode', {
+                  onChange: (e) => {
+                    const value = e.target.value.trim();
+                    setValue('hardwareCode', value);
+                  }
+                })}
               />
               {textFieldTooltip(`ITU : ITU201AXXXXXXXXXXXXXXXXX (24 codes)\nITM : 3XXXXX-XXXXXX-XXXXXXXX[-N]\n(대소문자구분 22 codes | 번호추가[-N] 시 24 codes)`)}
             </Box>
@@ -172,18 +204,18 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
                   <FormGroup className="flex flex-wrap justify-between" style={{ flexDirection: 'row' }}>
                     {(selectedHardware === 'ITU' ? ituOps : defaultOps).map((item) => (
                       <FormControlLabel
-                        key={item}
+                        key={item.value}
                         control={
                           <Checkbox
                             size="small"
-                            checked={field.value[item] === 1}
+                            checked={field.value[item.value] === 1}
                             onChange={(e) => {
-                              const newValue = e.target.checked ? { ...field.value, [item]: 1 } : { ...field.value, [item]: 0 };
+                              const newValue = e.target.checked ? { ...field.value, [item.value]: 1 } : { ...field.value, [item.value]: 0 };
                               field.onChange(newValue);
                             }}
                           />
                         }
-                        label={item}
+                        label={item.label}
                       />
                     ))}
                   </FormGroup>

@@ -19,8 +19,8 @@ export const defaultOps = [
 export const ituOps = [
   { label: 'FW', value: 'fw' },
   { label: 'VPN', value: 'vpn' },
-  { label: '행안부', value: 'ssl' },
-  { label: 'DPI', value: 'ips' },
+  { label: '행안부', value: '행안부' },
+  { label: 'DPI', value: 'dpi' },
   { label: 'AV', value: 'av' },
   { label: 'AS', value: 'as' },
 ] 

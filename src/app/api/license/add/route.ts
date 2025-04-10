@@ -16,11 +16,99 @@ export async function GET(params: Request) {
 
 export async function POST(request: NextRequest) {
   const data = await request.json();
-  // console.log('data', data);
-  const license_key = generateLicenseKey(data);
+  const ip = request.headers.get('x-forwarded-for');
+  const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
+  const license_key = await generateLicenseKey(data);
 
-  // console.log('license_key', license_key);
-//   const url = new URL(params.url); 
-//   const hardwareCode = url.searchParams.get('hardwareCode'); 
-//   const softwareOpt = url.searchParams.get('softwareOpt'); 
+  const option0 = softwareOpt.basic || 0;
+  const option1 = softwareOpt.fw || 0;
+  const option2 = softwareOpt.vpn || 0;
+  const option3 = softwareOpt.ssl || softwareOpt.행안부 || 0;
+  const option4 = softwareOpt.ips || softwareOpt.dpi || 0;
+  const option5 = softwareOpt.ddos || 0;
+  const option6 = softwareOpt.waf || 0;
+  const option7 = softwareOpt.av || 0;
+  const option8 = softwareOpt.as || 0; 
+  // const option9 = softwareOpt.apt || 0;
+  const option9 = softwareOpt.tracker || 0;
+
+  let sql = '';
+  const params = [];
+  if(hardwareCode !== "") {
+    if(hardwareCode.startsWith("ITU")) {
+      if(license_key) {        
+        sql = `INSERT INTO license (
+          number, reg_date, license_date,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance,
+          hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpu_name, cfid,
+          license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+          ) VALUES (
+            0, now(), now(),
+            0, 0, 0, 0, 0,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          )`;
+
+        params.push(
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, license_key, issuer, manager, siteName, cpuName, cfid, 
+          option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
+        );
+      } else {
+        sql = `INSERT INTO license (
+          number, reg_date, license_date,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code,
+          hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
+          license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+        ) VALUES (
+          0, now(), now(),
+          0, 0, 0, 0, 0, 0
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )`
+
+        params.push(
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, issuer, manager, siteName, cpuName, cfid, 
+          option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
+        );
+      }
+    } else {
+      if(license_key) {
+        sql = `INSERT INTO license (
+          number, reg_date, license_date,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance,
+          hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpuName, cfid,
+          license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+          ) VALUES (
+            0, now(), now(),
+            0, 0, 0, 0, 0,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          )`;
+
+        params.push(
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, license_key, issuer, manager, siteName,
+          option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
+        );
+      } else {
+        sql = `INSERT INTO license (
+          number, reg_date, license_date,
+          \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code,
+          hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
+          license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+          ) VALUES (
+            0, now(), now(),
+            0, 0, 0, 0, 0, 0,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          )`;
+
+        params.push(
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, issuer, manager, siteName, 
+          option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
+        );
+      }
+    }
+    const result = await query(sql, params);
+    return NextResponse.json(result);
+  }
 }
