@@ -57,17 +57,35 @@
   width: 30%;
   margin-bottom: 2px;
 }
-
+/* 
 .license-detail-modal-wrap .detail-line-box-item-label {
   width: 110px;
   text-align: left;
   font-size: 13px;
+} */
+
+.license-detail-modal-wrap .MuiFormLabel-root {
+  width: 130px;
+  text-align: left;
+  font-size: 13px;
 }
 
-.license-detail-modal-wrap .detail-line-box-item-value {
-  flex-grow: 1;
+.license-detail-modal-wrap {
+  p {
+    flex-grow: 1;
+  }
 }
 
+.license-detail-modal-wrap .MuiTextField-root .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input {
+  width: 100%;
+  height: 24px !important; 
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+/* 
 .license-detail-modal-wrap .detail-line-box-item-edit .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input {
   width: 100%;
   height: 24px;
@@ -76,6 +94,10 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 12px;
+} */
+
+.split-line {
+  border-top: 1px solid #c5c5c5;
 }
 
 /* 라이센스 등록 모달 */

@@ -11,6 +11,19 @@ const nextConfig: NextConfig = {
   //     }
   //   ]
   // }
+
+  async rewrites() {
+    return [
+      {
+        source: "/ituindex.php",
+        destination: "/api/ituindex",
+      },
+      {
+        source: "/demoindex.php",
+        destination: "/api/demoindex",
+      }
+    ]
+  }
 };
 
 export default nextConfig;
