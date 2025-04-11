@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // AG Grid 관련
-import { ColDef, Module, ICellRendererParams, RowSelectionOptions } from 'ag-grid-community';
+import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -15,11 +15,16 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import EditIcon from '@mui/icons-material/Edit';
 
-// 컴포넌트 임포트
+// 컴포넌트
 import AlertModal from '@/app/components/alertModal';
 import Pagenation from '@/app/components/pagenation';
 import UpsertModal from '@/app/components/upsertAdminModal';
 import { useToastState } from '@/app/components/useToast';
+import Link from 'next/link';
+
+// 커스텀 css
+import '@/app/style/login.css'
+import '@/app/style/common.css'
 
 export interface Admin {
   id: string;
@@ -32,16 +37,22 @@ export interface Admin {
 }
 
 export default function AdminPage() {
+  // ag-Grid에서 사용할 모듈 설정
+  const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule, PaginationModule];
+  // AG Grid API에 접근하기 위한 참조 객체
+  const gridRef = useRef<any>(null);
   // 전체 관리자 데이터
   const [rowData, setRowData] = useState<Admin[]>([]);
-  // mode ('add' = 추가, 'other' = 수정)
-  const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
-  // 수정 대상 정보
-  const [editTarget, setEditTarget] = useState<Admin>();
+  // 전체 페이지 수
+  const [totalPages, setTotalPages] = useState(1);
   // 현재 페이지 번호
   const [currentPage, setCurrentPage] = useState(1);
   // 페이지당 보여줄 행(관리자) 수
   const [pageSize, setPageSize] = useState(10);
+  // mode ('add' = 추가, 'other' = 수정)
+  const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
+  // 수정 대상 정보
+  const [editTarget, setEditTarget] = useState<Admin>();
   // 관리자 추가/수정 모달 열림 여부
   const [openUpsert, setOpenUpsert] = useState(false);
   // 관리자 삭제 확인 모달 열림 여부
@@ -50,10 +61,6 @@ export default function AdminPage() {
   const [selectedRows, setSelectedRows] = useState<Admin[]>([]);
   // 삭제 대상 관리자 ID 배열
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
-
-  // ag-Grid에서 사용할 모듈 설정
-  const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule];
-  
   // ToastAlert
   const {  showToast, ToastComponent } = useToastState();
 
@@ -74,22 +81,19 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
-  // 현재 페이지와 페이지 크기를 기반으로 보여줄 데이터 계산
-  const pagedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return rowData.slice(startIndex, startIndex + pageSize);
-  }, [rowData, pageSize, currentPage]);
+  // 현재 페이지 번호와 전체 페이지 수
+  const handlePaginationChanged = (params: any) => {
+    const current = params.api.paginationGetCurrentPage() + 1;
+    const total = params.api.paginationGetTotalPages();
+    setCurrentPage(current);
+    setTotalPages(total);
+  };
 
   // 페이지 사이즈 변경 시 호출되는 핸들러 - 선택된 페이지 크기(newSize)로 설정하고, 페이지를 첫 페이지(1)로 초기화
   const handlePageSizeChange = (event: SelectChangeEvent) => {
     const newSize = Number(event.target.value);
     setPageSize(newSize);
-    setCurrentPage(1);
-  };
-
-  // 페이지 번호 클릭 시 현재 페이지 상태를 업데이트하는 핸들러
-  const handlePageChange = (value: number) => {
-    setCurrentPage(value);
+    gridRef.current?.api?.paginationGoToPage?.(0); // 첫 페이지
   };
 
   // ag-Grid에서 다중 행 선택 설정 및 조건부 선택 제한 설정 - 슈퍼 관리자는 선택 불가로 설정
@@ -99,18 +103,11 @@ export default function AdminPage() {
           isRowSelectable: (rowNode) => rowNode.data ? rowNode.data.role !== 3 : false,
     }
   }, []);
-
-  // ag-Grid의 모든 컬럼에 적용할 기본 속성 설정
-  const defaultColDef = useMemo(() => ({
-    sortable: true, // 컬럼 정렬 허용
-    resizable: false, // 컬럼 크기 조절 X
-    suppressMovable: true, // 컬럼 드래그로 위치 이동 X
-  }), []);
-
+  
   // ag-Grid에 표시할 컬럼 정의 목록
   const columnDefs: ColDef<Admin>[] = [
-    { field: 'id', headerName: '아이디', cellStyle: {justifyContent: "center"} },
-    { field: 'name', headerName: '이름', cellStyle: {textAlign: "center"} },
+    { field: 'id', headerName: '아이디' },
+    { field: 'name', headerName: '이름' },
     {
       headerName: '슈퍼 관리자',
       field: 'role',
@@ -146,18 +143,19 @@ export default function AdminPage() {
       },
     },
     {
-      headerName: '활성화',
       field: 'status',
+      headerName: '활성화',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
         params.value === 1 ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
       ),
     },
     {// 편집 버튼 (슈퍼 관리자는 제외)
+      colId: 'editBtn',
       headerName: '관리',
       cellRenderer: (params: ICellRendererParams<Admin>) => {
         const data = params.data;
         if (!data || data.role === 3) return null; // 슈퍼 관리자 수정 금지
-      
+        
         return (
           <IconButton
             onClick={() => {
@@ -165,17 +163,24 @@ export default function AdminPage() {
               setUpsertMode('other');
               setOpenUpsert(true);
             }}
-          >
+            >
             <EditIcon />
           </IconButton>
         );
       },
-      width: 100,
     },
   ];
-
+  
+  // ag-Grid의 모든 컬럼에 적용할 기본 속성 설정
+  const defaultColDef = useMemo(() => ({
+    sortable: true, // 컬럼 정렬 허용
+    resizable: true, // 컬럼 크기 조절 X
+    suppressMovable: true, // 컬럼 드래그로 위치 이동 X
+    flex: 1
+  }), []);
+  
   return (
-      <div className="flex flex-col justify-center h-[calc(100vh-10rem)] w-[calc(100vw)] p-4 mt-5 bg-gray-100">
+    <div className="flex flex-col justify-center h-[calc(100vh-10rem)] w-[calc(100vw)] p-4 mt-5 bg-gray-100">
         <div className="flex justify-between items-end mb-2" >
           <FormControl size="small" sx={{ width: 90 }}>
             <Select value={pageSize.toString()} onChange={handlePageSizeChange}>
@@ -186,16 +191,19 @@ export default function AdminPage() {
               <MenuItem value={1000000}>전체</MenuItem>
             </Select>
           </FormControl>
-          <ButtonGroup size="large" disableElevation variant="contained">
-            <Button onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
+          <div className="flex items-center gap-1">
+            <Button size="small" variant="contained" onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
             <Button
+              size="small"
+              variant="contained"
+              color="error"
               onClick={() => {
                 const ids = selectedRows.map((row) => row.id);
                 setDeleteIds(ids);
                 setOpenDelete(true)
               }}
               disabled={selectedRows.length === 0}>삭제</Button>
-          </ButtonGroup>
+          </div>
         </div>
         {openUpsert && (
           <UpsertModal
@@ -233,13 +241,17 @@ export default function AdminPage() {
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
         <AgGridReact
           modules={modules}
-          rowData={pagedData}
+          rowData={rowData}
           columnDefs={columnDefs}
           rowSelection={rowSelection}
           defaultColDef={defaultColDef}
-          pagination={false}
           theme="legacy"
           onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
+          pagination={true}
+          suppressPaginationPanel={true}
+          paginationPageSize={pageSize}
+          onPaginationChanged={handlePaginationChanged}
+          ref={gridRef}
         />
         </div>
 
@@ -247,9 +259,9 @@ export default function AdminPage() {
           <div className="flex justify-center flex-grow">
             <Pagenation
               props={{
-                totalPages:Math.ceil(rowData.length / pageSize),
-                currentPage:currentPage,
-                onChange:handlePageChange
+                totalPages: totalPages,
+                currentPage: currentPage,
+                gridRef: gridRef,
               }}
             />
           </div>
