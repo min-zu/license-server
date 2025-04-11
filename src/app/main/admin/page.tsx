@@ -243,14 +243,17 @@ export default function AdminPage() {
         />
         </div>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Pagenation
-            props={{
-              totalPages:Math.ceil(rowData.length / pageSize),
-              currentPage:currentPage,
-              onChange:handlePageChange
-            }}
-          />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+          <div className="flex justify-center flex-grow">
+            <Pagenation
+              props={{
+                totalPages:Math.ceil(rowData.length / pageSize),
+                currentPage:currentPage,
+                onChange:handlePageChange
+              }}
+            />
+          </div>
+          <span className='text-13 text-black'>총 {rowData.length}개</span>
         </Box>
         {ToastComponent}
       </div>

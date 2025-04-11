@@ -1,5 +1,5 @@
 import { Box, Button, Checkbox, FormControl, FormControlLabel, FormLabel, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { defaultOps, ituOps } from "@/app/data/config";
 
 import { useForm, Controller } from "react-hook-form";
@@ -19,10 +19,14 @@ interface LicenseDetailModalProps {
 
 const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated }) => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const { showToast, ToastComponent } = useToastState();
+
+  const isITU = license?.hardware_code?.startsWith("ITU");
 
   console.log(license);
 
-  const editSchema = z.object({
+  // ITU 유효성 검사
+  const ITUSchema = z.object({
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
@@ -34,40 +38,69 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     initCode: z.string().optional(),
   })
 
+  // ITU 제외 유효성 검사
+  const nonITUSchema = z.object({
+    softwareOpt: z.record(z.number()),
+    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
+    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
+    issuer: z.string().optional(),
+    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    initCode: z.string().optional(),
+  })
+
+
+  const { schema, defaultValues } = useMemo(() => {
+    const base = {
+      softwareOpt: {
+        FW: license.license_fw === "1" ? 1 : 0,
+        VPN: license.license_vpn === "1" ? 1 : 0,
+        [isITU ? "행안부" : "SSL"]: license?.license_ssl === "1" ? 1 : 0,
+        [isITU ? "DPI" : "IPS"]: license?.license_ips === "1" ? 1 : 0,
+        WAF: license.license_waf === "1" ? 1 : 0,
+        AV: license.license_av === "1" ? 1 : 0,
+        AS: license.license_as === "1" ? 1 : 0,
+        Tracker: license.license_tracker === "1" ? 1 : 0,
+      },
+      limitTimeStart: new Date(license.limit_time_st).toISOString().split("T")[0],
+      limitTimeEnd: new Date(license.limit_time_end).toISOString().split("T")[0],
+      issuer: license.issuer,
+      manager: license.manager,
+      siteName: license.site_nm,
+      initCode: license.init_code,
+    };
+    if (isITU) {
+      return {
+        schema: ITUSchema,
+        defaultValues: {
+          ...base,
+          cpuName: license.cpu_name,
+          cfid: license.cfid,
+        },
+      };
+    }
+    return { schema: nonITUSchema, defaultValues: base };
+  }, [license]);
+
   const {
     control,
     register,
     handleSubmit, 
     formState: { errors },
     setValue,
-  } = useForm<z.infer<typeof editSchema>>({
-    resolver: zodResolver(editSchema),
+    reset,
+    watch,
+  } = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: {
-      softwareOpt: {   
-      FW: license.license_fw === "1" ? 1 : 0,
-      VPN: license.license_vpn === "1" ? 1 : 0,
-      [license.hardware_code.startsWith("ITU") ? "행안부" : "SSL"]: license.license_ssl === "1" ? 1 : 0,
-      [license.hardware_code.startsWith("ITU") ? "DPI" : "IPS"]: license.license_ips === "1" ? 1 : 0,
-      WAF: license.license_waf === "1" ? 1 : 0,
-      AV: license.license_av === "1" ? 1 : 0,
-      AS: license.license_as === "1" ? 1 : 0,
-      Tracker: license.license_tracker === "1" ? 1 : 0,
-      },  
-      limitTimeStart: new Date(license.limit_time_st).toISOString().split("T")[0],
-      limitTimeEnd: new Date(license.limit_time_end).toISOString().split("T")[0],
-      issuer: license.issuer,
-      manager: license.manager,
-      cpuName: license.cpu_name,
-      siteName: license.site_nm,
-      cfid: license.cfid,
-      initCode: license.init_code,
-    },
+    defaultValues,
   });
 
-  const { showToast, ToastComponent } = useToastState();
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
-  const onSubmit = async (data: z.infer<typeof editSchema>) => {
+  const onSubmit = async (data: z.infer<typeof schema>) => {
     console.log("onsubmit: ", data);
     try {
       const res = await fetch('/api/license/edit', {
@@ -99,7 +132,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   };
 
   return (
-    <form className="w-full h-full flex justify-center items-center text-13" onSubmit={handleSubmit(onSubmit)}>
+    <form className="w-full h-full flex justify-center items-center text-13">
       <div className="w-full h-full flex justify-center items-center license-detail-modal-wrap">
         <div className="w-1/2 bg-white rounded-md">
           <div className="flex justify-between items-center p-4 border-b bg-gray-500">
@@ -130,13 +163,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
                       <TextField {...register("cpuName")} /> : 
-                      <p>{license.cpu_name}</p>} 
+                      <p>{watch("cpuName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
                       <TextField {...register("cfid")} /> : 
-                      <p>{license.cfid}</p>}
+                      <p>{watch("cfid")}</p>}
                   </Box>
                 </Box>
               ) : (
@@ -161,13 +194,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <FormLabel>유효기간(시작) :</FormLabel> 
                   {isEdit ? 
                     <TextField {...register("limitTimeStart")} type="date"/> : 
-                    <p>{new Date(license.limit_time_st).toISOString().split('T')[0]}</p>}
+                    <p>{watch("limitTimeStart")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(만료) :</FormLabel> 
                   {isEdit ? 
                     <TextField {...register("limitTimeEnd")} type="date"/> : 
-                    <p>{new Date(license.limit_time_end).toISOString().split('T')[0]}</p>}
+                    <p>{watch("limitTimeEnd")}</p>}
                 </Box>
               </Box>
 
@@ -176,19 +209,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
                     <TextField {...register("issuer")} /> : 
-                    <p>{license.issuer}</p>}
+                    <p>{watch("issuer")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>담당자 :</FormLabel> 
                   {isEdit ? 
                     <TextField {...register("manager")} /> : 
-                    <p>{license.manager}</p>}
+                    <p>{watch("manager")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
                     <TextField {...register("siteName")} /> : 
-                    <p>{license.site_nm}</p>}
+                    <p>{watch("siteName")}</p>}
                 </Box>
               </Box>
 
