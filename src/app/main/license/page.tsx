@@ -13,6 +13,7 @@ import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // AP
 import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
 import { useToastState } from '@/app/components/useToast';
 import { addLog } from '@/app/api/log/log';
+import LicenseAddModal from '@/app/components/licenseAddModal';
 
 interface License {
   number: number;
@@ -52,7 +53,9 @@ export default function LicensePage() {
   const [searchText, setSearchText] = useState<string>('');  
   const [searchField, setSearchField] = useState('hardware_code');
   const [hardwareStatus, setHardwareStatus] = useState('all');
+
   // 모달 열기 상태
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false); // 라이센스 등록 모달 열기 상태 추가
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null); // 선택된 라이센스 상태 추가
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false); // 삭제 모달 열기 상태 추가
@@ -67,7 +70,8 @@ export default function LicensePage() {
   const { showToast, ToastComponent } = useToastState();
 
   // 모달 닫기 함수
-  const handleClose = () => setDetailModalOpen(false);
+  const addModalClose = () => setIsAddModalOpen(false);
+  const detailModalClose = () => setDetailModalOpen(false);
 
   const softwareOptions = ['license_basic', 'license_fw', 'license_vpn', 'license_ssl', 'license_ips', 'license_waf', 'license_av', 'license_as', 'license_tracker'];
   const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
@@ -235,6 +239,17 @@ export default function LicensePage() {
               삭제
             </Button>
 
+            <Button
+              variant="contained"
+              color="primary" 
+              size="small"
+              onClick={() => {
+                setIsAddModalOpen(true);
+              }}
+            >
+              라이센스 등록
+            </Button>
+
             <FormControl size="small" sx={{ width: 80}}>
             <Select
               value={pageSize}
@@ -397,12 +412,27 @@ export default function LicensePage() {
 
         {/* modal */}
           <Modal
+          open={isAddModalOpen}
+          onClose={addModalClose}
+          >
+            <span>
+            <LicenseAddModal 
+              close={addModalClose}
+              onUpdated={() => {
+                showToast("라이센스 등록 완료되었습니다.", "success");
+                loadLicenses();
+              }}
+            />
+            </span>
+          </Modal>
+
+          <Modal
           open={isDetailModalOpen}
-          onClose={handleClose}
+          onClose={detailModalClose}
           >
             <span>
             <LicenseDetailModal 
-              close={handleClose}
+              close={detailModalClose}
               license={selectedLicense}
               onUpdated={() => {
                 loadLicenses(); // 수정 후 데이터 재조회
@@ -433,7 +463,7 @@ export default function LicensePage() {
                     \n[시리얼, 유효기간(시작), 유효기간(만료), 발급자, 발급요청사(총판사),
                     \n고객사명, 프로젝트명, 고객사 E-mail,
                     \n방화벽, VPN, DPI, AV, AS, 행안부 라이센스 옵션]
-                    \n유효기간(YYYYMMDD 형식), 라이센스 옵션(1: 사용함, 0: 사용안함)`}
+                    \n유효기간(YYYYMMDD 형식), 라이센스 옵션(1: 사용함, 0: 사용안함)`} 
           />
 
           {ToastComponent}

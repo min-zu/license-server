@@ -41,8 +41,8 @@ export default function LogPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   
 
-  // 토스트 상태
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  // ToastAlert
+  const {  showToast, ToastComponent } = useToastState();
 
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
@@ -201,12 +201,7 @@ export default function LogPage() {
         <span className='text-13'>총 {logs.length}개</span>
       </footer>
       
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity}
-      />
+      {ToastComponent}
     </div>
   );
 } 

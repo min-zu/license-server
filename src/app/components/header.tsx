@@ -19,16 +19,16 @@ export default function Header() {
   const { data: session, update } = useSession();
   const role = session?.user?.role;
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
-  const handleClose = () => setIsModalOpen(false);
+  // const handleClose = () => setIsModalOpen(false);
   
-  const handleChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newClick: string,
-  ) => {
-    setNavState(newClick);
-  };
+  // const handleChange = (
+  //   event: React.MouseEvent<HTMLElement>,
+  //   newClick: string,
+  // ) => {
+  //   setNavState(newClick);
+  // };
   
   // 로그아웃
   const handleLogout = async () => {
@@ -86,7 +86,7 @@ export default function Header() {
             <p className={navState === 'admin' ? 'text-blue-600' : ''}>Admin</p>
           </Link>
           
-          {navState === 'license' && (
+          {/* {navState === 'license' && (
             <Button
               variant="contained"
               color="primary" 
@@ -97,7 +97,7 @@ export default function Header() {
             >
               라이센스 등록
             </Button>
-          )}
+          )} */}
         </nav>
       </div>
 
@@ -137,7 +137,7 @@ export default function Header() {
       {ToastComponent}
       </div>
       
-      <Modal
+      {/* <Modal
         open={isModalOpen}
         onClose={handleClose}
       >
@@ -146,7 +146,7 @@ export default function Header() {
           close={handleClose}
         />
         </span>
-      </Modal>
+      </Modal> */}
     </div>
   )
 }

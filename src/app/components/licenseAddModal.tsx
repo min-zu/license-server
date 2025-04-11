@@ -10,7 +10,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-export default function LicenseAddModal({ close }: { close: () => void }) {
+export default function LicenseAddModal({ close, onUpdated }: { close: () => void, onUpdated: () => void }) {
   // 입력값
   const [selectedHardware, setSelectedHardware] = useState("ITU");
   // 토스트 상태
@@ -81,6 +81,7 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
     handleSubmit, 
     formState: { errors },
     setValue,
+    reset,
   } = useForm<z.infer<typeof addSchema>>({
     resolver: zodResolver(addSchema),
     mode: 'onChange',
@@ -136,9 +137,14 @@ export default function LicenseAddModal({ close }: { close: () => void }) {
     const result = await res.json();
     console.log("result: ", result);
 
+    if (result.success) {
+      onUpdated();
+      reset();
+
+      if(!isContinue) close();
+    }
     // showToast("라이센스 등록 완료", "success");
 
-    // if(!isContinue) close();
   };
 
   return ( 
