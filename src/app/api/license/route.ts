@@ -30,6 +30,8 @@ export async function POST(request: Request) {
         params.push(`%${searchText}%`);
       }
     }
+
+    sql += " ORDER BY number DESC;";
     const rows = await query(sql, params);
     return NextResponse.json(rows);
 

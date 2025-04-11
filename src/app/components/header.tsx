@@ -50,25 +50,30 @@ export default function Header() {
   const { showToast, ToastComponent } = useToastState();
 
   return (
-    <div className="flex justify-between h-24 bg-gray-300 w-screen">
+    <div className="flex justify-between h-12 bg-cyan-950 w-screen">
       <div className="flex items-center ml-4 gap-8">
         <div className="logo w-12 h-12 bg-gray-400" /> {/* 로고 자리 */}
+        <p className="text-white">|</p>
         <nav className="flex gap-6">
           <Link 
             href="/main/license"
             className="hover:text-blue-600 transition-colors"
             onClick={() => setNavState('license')}
           >
-            <p className={navState === 'license' ? 'text-blue-600' : ''}>License</p>
+            <p className={navState === 'license' ? 'text-white font-bold' : 'text-gray-300'}>License</p>
           </Link>
+
+          <p className="text-white">|</p>
 
           <Link 
             href="/main/log"
             className="hover:text-blue-600 transition-colors"
             onClick={() => setNavState('log')}
           >
-            <p className={navState === 'log' ? 'text-blue-600' : ''}>Log</p>
+            <p className={navState === 'log' ? 'text-white font-bold' : 'text-gray-300'}>Log</p>
           </Link>
+
+          <p className="text-white">|</p>
 
           <Link 
             href="/main/admin"
@@ -83,7 +88,7 @@ export default function Header() {
               setNavState('admin');
             }}
           >
-            <p className={navState === 'admin' ? 'text-blue-600' : ''}>Admin</p>
+            <p className={navState === 'admin' ? 'text-white font-bold' : 'text-gray-300'}>Admin</p>
           </Link>
           
           {/* {navState === 'license' && (
@@ -112,7 +117,7 @@ export default function Header() {
               }
               setOpenUpsert(true)}}
           >
-            <p>User</p>
+            <p className="text-gray-300">User</p>
           </div>
           {openUpsert && (
             <UpsertModal 
@@ -127,11 +132,13 @@ export default function Header() {
             />
           )}
 
+          <p className="text-white">|</p>
+
           <div
             className="hover:text-blue-600 transition-colors cursor-pointer"
             onClick={handleLogout}
           >
-            <p>LogOut</p>
+            <p className="text-gray-300">LogOut</p>
           </div>
         </nav>
       {ToastComponent}

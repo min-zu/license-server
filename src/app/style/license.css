@@ -135,6 +135,7 @@
   margin-left: 5px !important;
   width: 32px !important;
   height: 32px !important;
+  background-color: #7e7e7e !important;
 }
 
 .add-license-form .MuiFormHelperText-root.Mui-error {

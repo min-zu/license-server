@@ -19,8 +19,7 @@ interface AlertModalProps {
 
 export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm }: AlertModalProps) {
   const router = useRouter();
-  
-  const { toastOpen, toastMsg, severity, showToast, toastClose } = useToastState();
+  const { showToast, ToastComponent } = useToastState();
 
   const handleDeleteConfirm = async () => {
     if (!deleteIds || deleteIds.length === 0) return;
@@ -70,33 +69,27 @@ export default function AlertModal({ open, close, state, title, message, deleteI
 
   return (
     <>
-      <ToastAlert
-        open={toastOpen}
-        setOpen={toastClose}
-        message={toastMsg}
-        severity={severity} 
-      />
+      {ToastComponent}
       <Dialog open={open} onClose={close}>
-        <div className="flex justify-between items-center p-4 border-b bg-gray-500">
+        <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
           <Button className="close-btn" onClick={close}><span style={{ color: '#fff' }}>X</span></Button>
         </div>
         <DialogContent className="alert-modal-content">{message}</DialogContent>
 
-        <Box display="flex" justifyContent="center" gap={1} mt={2} mb={2}>
+        <Box display="flex" justifyContent="center" gap={0.5} mt={2} mb={2}>
           {state === 'help' ? (
-            <Button variant="contained" color="primary">
+            <Button className="default-btn">
               샘플파일 다운로드
             </Button>
           ) : (
             <Button
-              variant="contained"
-              color="primary"
+              className="default-btn"
               onClick={() => { handleDeleteConfirm(); } }>
               확인
             </Button>
           )}
-          <Button variant="contained" color="inherit" onClick={close}>
+          <Button className="close-text-btn" onClick={close}>
             취소
           </Button>
         </Box>

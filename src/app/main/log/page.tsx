@@ -152,14 +152,21 @@ export default function LogPage() {
 
         <Button
           variant="contained"
+          className="default-btn"
           size="small"
           onClick={() => {handleSearch()}}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
         >
           검색
         </Button>
 
         <Button
           variant="contained"
+          className="default-btn"
           size="small"
           onClick={() => {
             loadLogs();
@@ -167,11 +174,11 @@ export default function LogPage() {
             setSearchField('hardware_code');
           }}
         >
-          🔃
+          ↻
         </Button>
       </div>
 
-      <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
+      <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
         <AgGridReact
           rowData={getCurrentPageData()}
           rowHeight={30}

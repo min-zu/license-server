@@ -199,6 +199,9 @@ export default function LicensePage() {
   const onSelectionChanged = (e: any) => {
     const selected = e.api.getSelectedRows();
     selectedRowsRef.current = selected;
+    console.log(selected);
+
+    // timezone 처리 해야함 4/13
     setSelectedRows([...selected]);
   };
 
@@ -207,10 +210,19 @@ export default function LicensePage() {
       showToast('삭제할 데이터를 선택해주세요.', 'error');
       return;
     }
-    setDeleteIds(selectedRows.map((row) => row.hardware_code));
+    // setDeleteIds(selectedRows.map((row) => row.hardware_code));
+    
+    console.log(selectedRows);
     setIsDeleteModalOpen(true);
   };
 
+  // 데이터 초기화
+  const handleReset = () => {
+    loadLicenses();
+    setHardwareStatus('all');
+    setSearchText('');
+    setSearchField('hardware_code');
+  }
   // if (isLoading) {
   //   return <div>로딩 중...</div>;
   // }
@@ -240,8 +252,7 @@ export default function LicensePage() {
             </Button>
 
             <Button
-              variant="contained"
-              color="primary" 
+              className="default-btn"
               size="small"
               onClick={() => {
                 setIsAddModalOpen(true);
@@ -297,10 +308,15 @@ export default function LicensePage() {
               placeholder="검색어를 입력하세요"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
             />
 
             <Button
-              variant="contained"
+              className="default-btn"
               size="small"
               onClick={() => {handleSearch()}}
             >
@@ -308,22 +324,17 @@ export default function LicensePage() {
             </Button>
 
             <Button
-              variant="contained"
+              className="default-btn"
               size="small"
-              onClick={() => {
-                loadLicenses();
-                setHardwareStatus('all');
-                setSearchText('');
-                setSearchField('hardware_code');
-              }}
+              onClick={() => {handleReset()}}
             >
-              🔃
+              ↻
             </Button>
           </div>
 
           <div className="flex items-center gap-1">
             <Button
-              variant="contained"
+              className="default-btn"
               component="label"
               size="small"
             >
@@ -341,16 +352,14 @@ export default function LicensePage() {
             />
 
             <Button
-              variant="contained"
-              color="primary"
+              className="default-btn"
               size="small"
             >
               등록
             </Button>
 
             <Button
-              variant="contained"
-              color="primary"
+              className="default-btn"
               size="small"
               onClick={() => setIsHelpModalOpen(true)}
             >
@@ -358,25 +367,7 @@ export default function LicensePage() {
             </Button>
           </div>
         </div>
-        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
-          {/* <AgGridReact
-            onGridReady={(params) => setGridApi(params.api)}
-            rowData={getCurrentPageData()}
-            rowHeight={30}
-            headerHeight={30}
-            columnDefs={columnDefs}
-            modules={modules}
-            theme="legacy"
-            defaultColDef={{
-              sortable: true,
-              resizable: true,
-              headerClass: 'text-center' // 헤더 텍스트 가운데 정렬
-            }}
-            rowSelection="multiple"
-            pagination={true}
-            onRowClicked={onRowClicked} // 행 클릭 이벤트 핸들러 추가
-            onSelectionChanged={onSelectionChanged}
-          /> */}
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
           <AgGridReact
             getRowId={(params) => params.data.number} 
             rowData={getCurrentPageData()}
@@ -419,8 +410,8 @@ export default function LicensePage() {
             <LicenseAddModal 
               close={addModalClose}
               onUpdated={() => {
-                showToast("라이센스 등록 완료되었습니다.", "success");
-                loadLicenses();
+                showToast("라이센스 등록이 완료되었습니다.", "success");
+                handleReset();
               }}
             />
             </span>

@@ -125,6 +125,19 @@ body {
   color: #ffffff;
 }
 
+/* button */
+.default-btn {
+  background-color: #053345 !important;
+  color: #ffffff !important;
+  padding: 4px 10px !important;
+}
+
+.close-text-btn {
+  background-color: #727272 !important;
+  color: #ffffff !important;
+  padding: 4px 10px !important;
+}
+
 /* ag-theme-alpine */
 .ag-header-cell.text-center {
   .ag-header-cell-label{

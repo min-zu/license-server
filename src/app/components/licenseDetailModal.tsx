@@ -135,7 +135,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     <form className="w-full h-full flex justify-center items-center text-13">
       <div className="w-full h-full flex justify-center items-center license-detail-modal-wrap">
         <div className="w-1/2 bg-white rounded-md">
-          <div className="flex justify-between items-center p-4 border-b bg-gray-500">
+          <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
             <h2 className="text-xl font-semibold text-white">상세보기</h2>
             <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
           </div>
@@ -270,10 +270,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
               <div className="split-line"></div>
 
-              <Box display="flex" justifyContent="center" gap={1} mt={2}>
+              <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
                 <Button
-                  variant="contained"
-                  color="primary"
+                  className="default-btn"
                   onClick={() => {
                     if (!isEdit) {
                       setIsEdit(true);
@@ -284,7 +283,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 >
                   {isEdit ? '저장' : '수정'}
                 </Button>
-                <Button variant="contained" color="inherit" onClick={close}>
+                <Button className="close-text-btn" onClick={close}>
                   취소
                 </Button>
               </Box>

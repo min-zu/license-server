@@ -153,7 +153,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     <form className="w-full h-full flex justify-center items-center text-13" onSubmit={handleSubmit(onSubmit)}>
       <div className="w-1/2 bg-white rounded-md">
         {ToastComponent}
-        <div className="flex justify-between items-center p-4 border-b bg-gray-500">
+        <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
           <h2 className="text-xl font-semibold text-white">라이센스 등록</h2>
           <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
         </div>
@@ -325,14 +325,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               {textFieldTooltip('수동 발급시에만 입력하세요!')}
             </Box>
 
-            <Box display="flex" justifyContent="center" gap={1} mt={2}>
-              <Button type="submit" variant="contained" color="primary" onClick={() => setIsContinue(true)} > 
+            <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
+              <Button type="submit" className="default-btn" onClick={() => setIsContinue(true)} > 
                 계속 등록
               </Button>
-              <Button type="submit" variant="contained" color="primary" onClick={() => setIsContinue(false)}>
+              <Button type="submit" className="default-btn" onClick={() => setIsContinue(false)}>
                 등록
               </Button>
-              <Button variant="contained" color="inherit" onClick={close}>
+              <Button className="close-text-btn" onClick={close}>
                 취소
               </Button>
             </Box>
