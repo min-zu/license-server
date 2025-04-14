@@ -16,7 +16,8 @@ export async function GET(params: Request) {
 
 export async function POST(request: NextRequest) {
   const data = await request.json();
-  const ip = request.headers.get('x-forwarded-for');
+  const forwarded = request.headers.get('x-forwarded-for');
+  const clientIp = forwarded?.split(',')[0].trim();
   const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
   const license_key = await generateLicenseKey(data);
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
           )`;
 
         params.push(
-          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, license_key, issuer, manager, siteName, cpuName, cfid, 
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
           option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
         );
       } else {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
         )`
 
         params.push(
-          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, issuer, manager, siteName, cpuName, cfid, 
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, clientIp, issuer, manager, siteName, cpuName, cfid, 
           option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
         );
       }
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
           )`;
 
         params.push(
-          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, license_key, issuer, manager, siteName,
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, clientIp, license_key, issuer, manager, siteName,
           option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
         );
       } else {
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
           )`;
 
         params.push(
-          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, ip, issuer, manager, siteName, 
+          hardwareCode, hardwareStatus, regInit, limitTimeStart, limitTimeEnd, clientIp, issuer, manager, siteName, 
           option0, option1, option2, option3, option4, option5, option6, option7, option8, option9
         );
       }
