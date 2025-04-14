@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Menu, MenuItem } from '@mui/material';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { deleteLicenses } from '@/app/api/license/license';
@@ -11,13 +11,22 @@ interface AlertModalProps {
   close: () => void;
   state: string;
   title: string;
-  message: string;
+  message: string | React.ReactNode;
   deleteIds?: string[];
   onConfirm?: (() => void) | undefined;
   onDeleted?: (ids: string[]) => void;
 }
 
 export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm }: AlertModalProps) {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const sampleOpen = Boolean(anchorEl);
+  const handleSampleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleSampleClose = () => {
+    setAnchorEl(null);
+  };
+
   const router = useRouter();
   const { showToast, ToastComponent } = useToastState();
 
@@ -79,9 +88,34 @@ export default function AlertModal({ open, close, state, title, message, deleteI
 
         <Box display="flex" justifyContent="center" gap={0.5} mt={2} mb={2}>
           {state === 'help' ? (
-            <Button className="default-btn">
+            <>
+            <Button className="default-btn" onClick={handleSampleClick}>
               샘플파일 다운로드
             </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={sampleOpen}
+              onClose={handleSampleClose}
+            >
+              <MenuItem 
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = '/sample/ituImport.csv';
+                  link.download = 'ituImport.csv';
+                  link.click();
+              }}>
+                ITU 샘플파일
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = '/sample/defaultImport.csv';
+                  link.download = 'defaultImport.csv';
+                  link.click();
+                }}
+              >ITM/SMC/XTM 샘플파일</MenuItem>
+            </Menu>
+            </>
           ) : (
             <Button
               className="default-btn"

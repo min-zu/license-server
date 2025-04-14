@@ -144,7 +144,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               <div className="split-line"></div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
-                  <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toISOString().split('T')[0]}</p>
+                  <FormLabel>등록일 :</FormLabel> {license.license_date !== null ? <p>{new Date(license.reg_date).toISOString().split('T')[0]}</p> : <p>0000-00-00</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>라이센스 발급일 :</FormLabel> <p>{new Date(license.license_date).toISOString().split('T')[0]}</p>
@@ -157,7 +157,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               {license.hardware_code.startsWith('ITU') ? (
                 <Box className="detail-line-box">
                   <Box className="detail-line-box-item">
-                    <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.process}</p>
+                    <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.process}</p> 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 

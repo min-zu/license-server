@@ -106,7 +106,7 @@ export default function Header() {
         </nav>
       </div>
 
-      <div className="flex items-center mr-4 gap-8">
+      <div className="flex items-center mr-4">
         <nav className="flex gap-6">
           <div
             className="hover:text-blue-600 transition-colors cursor-pointer"

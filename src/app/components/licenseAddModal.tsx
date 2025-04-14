@@ -292,7 +292,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> 고객사명
+                <span className="text-red-500">*</span> {selectedHardware === "ITU" ? "고객사명" : "CPU명"}
               </FormLabel>
               <TextField 
                 size="small" 
@@ -304,7 +304,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> 고객사 E-mail
+                <span className="text-red-500">*</span> {selectedHardware === "ITU" ? "고객사 E-mail" : "CF ID"}
               </FormLabel>
               <TextField 
                 size="small" 
