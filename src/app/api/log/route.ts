@@ -13,18 +13,26 @@ export async function GET(params:Request) {
 export async function POST(request: Request) {
   try {
     const { state, searchField, searchText, log } = await request.json();
+
+    const formatDate = (date: Date | string | null): string => {
+      if (!date) return '0000-00-00';
+    
+      const d = typeof date === 'string' ? new Date(date) : date;
+      return d.toISOString().split('T')[0];
+    };
+
     if(state === 'addLog') {
       
       const sql = "INSERT INTO license_log (number, hardware_code, date, manager, site_nm) VALUES (?, ?, ?, ?, ?)";
       
       if (log.length > 1) {
         const results = await Promise.all(log.map((item: any) => {
-          const params = [item.number, item.hardware_code, item.license_date === null ? '0000-00-00' : item.license_date, item.manager, item.site_nm];
+          const params = [item.number, item.hardware_code, formatDate(item.license_date), item.manager, item.site_nm];
           return query(sql, params);
         }));
         return NextResponse.json(results);
       } else {
-        const params = [log[0].number, log[0].hardware_code, log[0].license_date === null ? '0000-00-00' : log[0].license_date, log[0].manager, log[0].site_nm];
+        const params = [log[0].number, log[0].hardware_code, formatDate(log[0].license_date), log[0].manager, log[0].site_nm];
         const result = await query(sql, params);
         return NextResponse.json(result);
       }

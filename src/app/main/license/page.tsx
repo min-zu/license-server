@@ -210,9 +210,7 @@ export default function LicensePage() {
       showToast('삭제할 데이터를 선택해주세요.', 'error');
       return;
     }
-    // setDeleteIds(selectedRows.map((row) => row.hardware_code));
-    
-    console.log(selectedRows);
+    setDeleteIds(selectedRows.map((row) => row.hardware_code));
     setIsDeleteModalOpen(true);
   };
 
@@ -223,13 +221,6 @@ export default function LicensePage() {
     setSearchText('');
     setSearchField('hardware_code');
   }
-  // if (isLoading) {
-  //   return <div>로딩 중...</div>;
-  // }
-
-  // if (error) {
-  //   return <div>에러: {error}</div>;
-  // }
 
   // 페이지 데이터 조회
   const getCurrentPageData = () => {
