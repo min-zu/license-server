@@ -60,7 +60,7 @@ export default function LogPage() {
         return '';
       }
     },
-    { field: 'manager', headerName: '발급요청사(출판사)', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'manager', headerName: '발급요청사(총판사)', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'site_nm', headerName: '고객사명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' }
   ]);
 
