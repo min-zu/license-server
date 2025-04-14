@@ -69,11 +69,42 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
     issuer: z.string().optional(),
     manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    cpuName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
+    cpuName: z.string(),
     siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    cfid: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
+    cfid: z.string(),
     regInit: z.string().optional(),
-  })
+  }).superRefine((data, ctx) => {
+    const { hardwareStatus, cfid, cpuName } = data;
+    const isITU = hardwareStatus === 'ITU';
+    const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+
+    if (!cpuName || cpuName.trim() === '') {
+      ctx.addIssue({
+        path: ["cpuName"],
+        code: z.ZodIssueCode.custom,
+        message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
+      });
+    }
+    
+    if (!cfid || cfid.trim() === '') {
+      ctx.addIssue({
+        path: ["cfid"],
+        code: z.ZodIssueCode.custom,
+        message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
+      });
+      return;
+    }
+
+    if (isITU) {
+      if (!emailRegex.test(cfid)) {
+        ctx.addIssue({
+          path: ["cfid"],
+          code: z.ZodIssueCode.custom,
+          message: '이메일 형식이 올바르지 않습니다.',
+        })
+      }
+    }
+  });
 
   const {
     control,
@@ -82,6 +113,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     formState: { errors },
     setValue,
     reset,
+    clearErrors,
+    watch,
+    trigger,
+    formState: { dirtyFields }
   } = useForm<z.infer<typeof addSchema>>({
     resolver: zodResolver(addSchema),
     mode: 'onChange',
@@ -110,6 +145,24 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       regInit: "",
     },
   });
+
+  // "ITU", "ITM", "XTM", "SMC" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
+  const fieldsToCheck = ["hardwareCode", "manager", "cpuName", "siteName", "cfid"] as const;
+
+  useEffect(() => {
+  const subscription = watch((_value, { name }) => {
+    if (name === "hardwareStatus") {
+      fieldsToCheck.forEach(field => {
+        if (dirtyFields[field]) {
+          trigger(field);
+        } else {
+          clearErrors(field);
+        }
+      });
+    }
+  });
+    return () => subscription.unsubscribe();
+  }, [watch, trigger, clearErrors, dirtyFields]);
 
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
     
