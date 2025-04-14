@@ -10,7 +10,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 // MUI 관련
-import { Box, Button, ButtonGroup, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
+import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import EditIcon from '@mui/icons-material/Edit';
@@ -20,7 +20,6 @@ import AlertModal from '@/app/components/alertModal';
 import Pagenation from '@/app/components/pagenation';
 import UpsertModal from '@/app/components/upsertAdminModal';
 import { useToastState } from '@/app/components/useToast';
-import Link from 'next/link';
 
 // 커스텀 css
 import '@/app/style/login.css'
@@ -180,8 +179,8 @@ export default function AdminPage() {
   }), []);
   
   return (
-    <div className="flex flex-col justify-center h-[calc(100vh-10rem)] w-[calc(100vw)] p-4 mt-5 bg-gray-100">
-        <div className="flex justify-between items-end mb-2" >
+    <div className="flex flex-col justify-center w-[calc(100vw)] p-4">
+        <div className="flex justify-between items-end mb-4" >
           <FormControl size="small" sx={{ width: 90 }}>
             <Select value={pageSize.toString()} onChange={handlePageSizeChange}>
               <MenuItem value={10}>10개</MenuItem>
@@ -192,7 +191,7 @@ export default function AdminPage() {
             </Select>
           </FormControl>
           <div className="flex items-center gap-1">
-            <Button size="small" variant="contained" onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
+            <Button className="default-btn" size="small" variant="contained" onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
             <Button
               size="small"
               variant="contained"
@@ -238,7 +237,7 @@ export default function AdminPage() {
             setSelectedRows([]);
           }}
         />
-        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 240px)', width: '100%' }}>
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
         <AgGridReact
           modules={modules}
           rowData={rowData}
@@ -246,6 +245,8 @@ export default function AdminPage() {
           rowSelection={rowSelection}
           defaultColDef={defaultColDef}
           theme="legacy"
+          rowHeight={30}
+          headerHeight={30}
           onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
           pagination={true}
           suppressPaginationPanel={true}
@@ -255,7 +256,7 @@ export default function AdminPage() {
         />
         </div>
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
           <div className="flex justify-center flex-grow">
             <Pagenation
               props={{
