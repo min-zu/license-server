@@ -144,10 +144,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               <div className="split-line"></div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
-                  <FormLabel>등록일 :</FormLabel> {license.license_date !== null ? <p>{new Date(license.reg_date).toISOString().split('T')[0]}</p> : <p>0000-00-00</p>}
+                  <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toISOString().split('T')[0]}</p>
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>라이센스 발급일 :</FormLabel> <p>{new Date(license.license_date).toISOString().split('T')[0]}</p>
+                  <FormLabel>라이센스 발급일 :</FormLabel> {license.license_date === null ? "" : <p>{new Date(license.license_date).toISOString().split('T')[0]}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>발급이력 :</FormLabel> <p>{license.reissuance === 1 ? '재발급' : '초기발급'}</p>
