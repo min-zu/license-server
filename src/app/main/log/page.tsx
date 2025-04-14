@@ -54,10 +54,11 @@ export default function LogPage() {
       headerClass: 'header-style',
       cellClass: 'cell-style',
       valueFormatter: (params: any) => {
-        if (params.value) {
-          return new Date(params.value).toISOString().split('T')[0];
-        }
-        return '';
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'manager', headerName: '발급요청사(총판사)', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },

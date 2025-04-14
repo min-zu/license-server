@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       if (!date) return '0000-00-00';
     
       const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toISOString().split('T')[0];
+      return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
     };
 
     if(state === 'addLog') {

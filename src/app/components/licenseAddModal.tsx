@@ -100,7 +100,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         // AS: 0,
         // Tracker: 0,
       },
-      limitTimeStart: new Date().toISOString().split("T")[0],
+      limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: "2036-12-31",
       issuer: "",
       manager: "",
@@ -280,7 +280,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> 프로젝트명
+                <span className="text-red-500">*</span>{selectedHardware === "ITU" ? "프로젝트명" : "CPU명"}
               </FormLabel>  
               <TextField 
                 size="small" 
@@ -292,7 +292,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> {selectedHardware === "ITU" ? "고객사명" : "CPU명"}
+                <span className="text-red-500">*</span>고객사명
               </FormLabel>
               <TextField 
                 size="small" 

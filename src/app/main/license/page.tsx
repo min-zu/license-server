@@ -80,8 +80,11 @@ export default function LicensePage() {
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px', padding: '5px'}, cellClass: 'cell-style', width: 100 },
     { field: 'reg_date', headerName: '등록일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) return new Date(params.value).toISOString().split('T')[0];
-        return '';
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'hardware_code', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-style', width: 220 },
@@ -95,20 +98,29 @@ export default function LicensePage() {
     })),
     { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) return new Date(params.value).toISOString().split('T')[0];
-        return '';
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'limit_time_st', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
-      valueFormatter: (params: any) => { 
-        if (params.value) return new Date(params.value).toISOString().split('T')[0];
-        return '';
+      valueFormatter: (params: any) => {
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'limit_time_end', headerName: '유효기간(만료)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        if (params.value) return new Date(params.value).toISOString().split('T')[0];
-        return '';
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'ip', headerName: 'IP', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
