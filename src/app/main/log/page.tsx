@@ -36,7 +36,7 @@ export default function LogPage() {
   const [searchField, setSearchField] = useState<string>('hardware_code');
 
   // 페이지 상태
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   
@@ -121,10 +121,10 @@ export default function LogPage() {
               setCurrentPage(1);
             }}
           >
-            <MenuItem value={10}>10개</MenuItem>
             <MenuItem value={20}>20개</MenuItem>
             <MenuItem value={50}>50개</MenuItem>
             <MenuItem value={100}>100개</MenuItem>
+            <MenuItem value={1000000}>전체</MenuItem>
           </Select>
         </FormControl>
         

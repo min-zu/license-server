@@ -67,7 +67,7 @@ export default function LicensePage() {
   // 페이지 상태
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
 
   // 토스트 상태
   const { showToast, ToastComponent } = useToastState();
@@ -317,10 +317,10 @@ export default function LicensePage() {
                 setCurrentPage(1);
               }}
             >
-                <MenuItem value={10}>10개</MenuItem>
                 <MenuItem value={20}>20개</MenuItem> 
-                <MenuItem value={30}>30개</MenuItem>
+                <MenuItem value={50}>50개</MenuItem>
                 <MenuItem value={100}>100개</MenuItem>
+                <MenuItem value={1000000}>전체</MenuItem>
               </Select>
             </FormControl>
 

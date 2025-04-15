@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from "react";
-import { Button, Modal, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Button, Modal, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { AccountCircle, Logout } from '@mui/icons-material';
 import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
@@ -113,16 +113,20 @@ export default function Header() {
               }
               setOpenUpsert(true)}}
           >
-            <AccountCircle style={{ color: 'white', cursor: 'pointer' }} />
+            <Tooltip title="계정 수정">
+              <AccountCircle style={{ color: 'white', cursor: 'pointer' }} />
+            </Tooltip>
           </div>
 
           <p className="text-white">|</p>
 
           <div onClick={handleLogout}>
-            <Logout style={{ color: 'white', cursor: 'pointer' }} />
+            <Tooltip title="로그아웃">
+              <Logout style={{ color: 'white', cursor: 'pointer' }} />
+            </Tooltip>
           </div>
         </nav>
-        
+
       {ToastComponent}      
       
       {openUpsert && (
