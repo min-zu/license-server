@@ -1,33 +1,39 @@
 /* 로그인 페이지 관련 css */
 
 /* admin 페이지 관련 css */
-.ag-column-first {
+/* .ag-column-first {
   border-right: 1px solid #ddd !important;
-}
+} */
 
-.ag-header-cell {
+/* .ag-header-cell {
   justify-content: center !important;
   align-items: center !important;
-}
+} */
 
-.ag-header-cell-label {
+/* .ag-header-cell-label {
   justify-content: center !important;
 }
 
 .ag-theme-alpine .ag-header-row .ag-header-cell:last-child .ag-header-cell-label {
   border-right: none !important;
-}
+} */
 
-.ag-theme-alpine .ag-cell-value {
+/* .ag-theme-alpine .ag-cell-value {
   border-right: 1px solid #ddd !important;
-}
+} */
 
 .ag-cell {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
+  font-size: 12px !important;
 }
 
+/* .MuiSvgIcon-root {
+  width: 20px !important;
+  height: 20px !important;
+} */
+/*
 .ag-theme-alpine .ag-row .ag-cell:last-child {
   border-right: none !important;
 }
@@ -35,3 +41,28 @@
 .ag-header-select-all, .ag-selection-checkbox {
   margin: 0 !important;
 }
+  */
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-form .MuiFormLabel-root {
+  margin-left: 3% !important;
+  width: 25% !important;
+  font-size: 13px !important;
+  text-align: left !important;
+}
+
+.admin-form .MuiTextField-root {
+  width: 70% !important;
+} 
+
+/* .admin-form .MuiSwitch-thumb {
+  width: 12px !important;
+  height: 12px !important;
+  transform: translate(4px, 4px) !important;
+} */
+

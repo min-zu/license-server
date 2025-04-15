@@ -1,4 +1,24 @@
 /* 공통 관련 css */
+/* grid 관련 css */
+.header-style {
+  text-align: center;
+  font-size: 12px;
+  flex: 1 1 auto;
+  padding: 0px !important;
+}
+
+.header-style .ag-header-cell-label {
+  justify-content: center;
+}
+
+.header-style .ag-header-cell-comp-wrapper {
+  justify-content: center;
+}
+
+.cell-style {
+  text-align: center;
+  font-size: 11px;
+}
 
 
 /* 알림창 관련 css */
@@ -47,10 +67,23 @@
 
 /* toggle 공통 css */
 .MuiToggleButtonGroup-root {
-  height: 30px;
+  height: 30px !important;
 }
 
 /* formlabel */
 .MuiFormLabel-root {
   font-size: 13px !important;
+}
+
+/* formhelpertext */
+.MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  font-size: 11px !important;
+}
+
+
+.split-line {
+  border-top: 1px solid #c5c5c5;
 }

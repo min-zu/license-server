@@ -3,10 +3,13 @@
 import React from "react";
 import { useState, useEffect } from 'react';
 import { Admin } from "../main/admin/page";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid2, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormLabel, Grid2, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
 import { useToastState } from "./useToast";
 import { Session } from "next-auth";
+
+// import '../style/common.css';
+// import '../style/login.css';
 
 interface ModalProps {
     open: boolean;
@@ -70,12 +73,11 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
       !!emailError
       )
     : (
-      (passwd !== "" || confirmPasswd !== "") && (
-        passwd.trim() === "" ||
-        confirmPasswd.trim() === "" ||
-        !!passwdError ||
-        confirmPasswdValid === false
-      ) ||
+      (passwd !== "" || confirmPasswd !== "") && 
+      passwd.trim() === "" ||
+      confirmPasswd.trim() === "" ||
+      !!passwdError ||
+      confirmPasswdValid === false ||
       !!nameError ||
       !!phoneError ||
       !!emailError
@@ -147,7 +149,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
         slotProps={{
           paper: {
             component: 'form',
-            sx: { maxWidth: "900px", minWidth: "300px" },
+            sx: { maxWidth: "900px", minWidth: '50%' },
             onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
               event.preventDefault();
 
@@ -171,7 +173,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                 const result = await res.json();
             
                 if (!result.success) {
-                  showToast(`${mode === "add" ? "추가" : "수정"} 실패: ${result.error}`, "error");
+                  showToast(`${mode === "add" ? "등록" : "수정"} 실패: ${result.error}`, "error");
                   return;
                 }
                 
@@ -189,10 +191,282 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
           },
         }}
       >
-        <DialogTitle className="bg-gray-500 text-white">
-          {mode === "add" ? "계정 추가" : "정보 수정"}
-        </DialogTitle>
+      
+        <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
+          <h2 className="text-xl font-semibold text-white">{mode === "add" ? "계정 등록" : "정보 수정"} </h2>
+          <Button className="close-btn" onClick={onClose}><span style={{color:'#fff'}}>X</span></Button>
+        </div>
 
+        {/* <DialogTitle className="bg-cyan-950 text-white">
+          {mode === "add" ? "계정 등록" : "정보 수정"} 
+          <Button className="close-btn" onClick={onClose}><span style={{ color: '#fff' }}>X</span></Button>
+        </DialogTitle> */}
+
+        
+        <div className="flex flex-col gap-2 p-10">
+          <Box className="admin-form">
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}> 
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 아이디</>) : ("아이디")}
+                </FormLabel>
+                  {mode === "add" ? (
+                    <>
+                    <TextField
+                      name="id"
+                      size="small"
+                      placeholder="영문, 영문 숫자 혼합 4~32자"
+                      value={id}
+                      onChange={(e) => {
+                        setId(e.target.value);
+                        setIdFormatError(null);
+                        setIdDupMessage(null);
+                        setIsIdAvailable(null);
+                      }}
+                      onBlur={async () => {
+                        if (id.trim() === "") {
+                          setIdFormatError(null);
+                          setIdDupMessage(null);
+                          setIsIdAvailable(null);
+                          return;
+                        }
+                        const format = ValidID(id);
+                        if (format !== true) {
+                          setIdFormatError(format);
+                          setIsIdAvailable(false);
+                          return;
+                        }
+                        const dupMsg = await checkIdDuplicate(id);
+                        console.log(dupMsg);
+                        if(dupMsg === '0') {
+                          setIdDupMessage("");
+                          setIsIdAvailable(true);
+                        } else {
+                          setIdDupMessage("이미 사용 중인 아이디");
+                          setIsIdAvailable(false);
+                        }
+                      }}
+                      error={!!idFormatError || isIdAvailable === false}
+                      helperText={idFormatError ? idFormatError : idDupMessage}
+                    />
+                    </>
+                ) : (
+                  <>
+                    <TextField
+                      name="id"
+                      size="small"
+                      value={id}
+                      disabled
+                    />
+                    <input type="hidden" name="id" value={id || ""} />
+                  </>
+                )}
+              </Box>
+
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === 'add' ? (<><span>&nbsp;&nbsp;</span>관리자 유형</>) : ("관리자 유형")}
+                </FormLabel>
+                <ToggleButtonGroup
+                  value={role}
+                  exclusive
+                  onChange={handleAdminChange}
+                >
+                  {role === 3
+                    ? [<ToggleButton disabled value={3} size="small">슈퍼 관리자</ToggleButton>]
+                    : [
+                      <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
+                      <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                    ]
+                  }
+                </ToggleButtonGroup>
+                <input type="hidden" name="role" value={role || ""} />
+              </Box>
+            </Box>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}> 
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호</>) : ("비밀번호")}
+                </FormLabel>
+                <TextField 
+                  type="password" 
+                  name="passwd" 
+                  size="small"
+                  placeholder="영문 대/소문자, 숫자, 특수문자 포함, 8~32자"
+                  value={passwd}
+                  onChange={(e) => {
+                    setPasswd(e.target.value);
+                    if (passwdError) {
+                      setPasswdError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (passwd.trim() === "") {
+                      setPasswdError(null);
+                      return;
+                    }
+                    const result = ValidPW(passwd);
+                    setPasswdError(result === true ? null : result);
+                  }}
+                  error={!!passwdError}
+                  helperText={passwdError}
+                />
+              </Box>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호 확인</>) : ("비밀번호 확인")}
+                </FormLabel>
+                <TextField
+                  type="password"
+                  name="confirmpasswd"
+                  size="small"
+                  value={confirmPasswd}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setConfirmPasswd(value);
+
+                    if (!value) {
+                      setConfirmPasswdValid(null);
+                      setConfirmPasswdMessage(null);
+                      return;
+                    }
+
+                    if (value === passwd) {
+                      setConfirmPasswdValid(true);
+                      setConfirmPasswdMessage("");
+                    } else {
+                      setConfirmPasswdValid(false);
+                      setConfirmPasswdMessage("비밀번호가 일치하지 않습니다.");
+                    }
+                  }}
+                  error={confirmPasswdValid === false}
+                  helperText={confirmPasswdMessage}
+                />
+              </Box>
+            </Box>
+
+            <div className="split-line"></div>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 이름</>) : ("이름")}
+                </FormLabel>
+                  <TextField
+                  name="name"
+                  size="small"
+                  placeholder="32자 이하" 
+                  value={name}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if(value.length <= 33) setName(value);
+
+                    if (nameError) {
+                      setNameError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    const result = ValidName(name);
+                    if (result !== true) {
+                      setNameError(result);
+                    } else {
+                      setNameError(null);
+                    }
+                  }}
+                  error={!!nameError}
+                  helperText={nameError ?? undefined}
+                />
+              </Box>
+
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 연락처</>) : ("연락처")}
+                </FormLabel>
+                <TextField 
+                  name="phone" 
+                  size="small"
+                  placeholder="000-0000-0000" 
+                  value={phone}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPhone(value);
+
+                    if (phoneError) {
+                      setPhoneError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    const result = ValidPhone(phone);
+                    if (result !== true) {
+                      setPhoneError(result);
+                    } else {
+                      setPhoneError(null);
+                    }
+                  }}
+                  error={!!phoneError}
+                  helperText={phoneError ?? undefined}
+                />
+              </Box>
+            </Box>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <FormLabel>
+                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 이메일</>) : ("이메일")}
+                </FormLabel>
+                <TextField 
+                  name="email"
+                  placeholder="future@future.co.kr"
+                  size="small"
+                  value={email}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEmail(value);
+                    if (emailError) {
+                      setEmailError(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    const result = ValidEmail(email);
+                    if (result !== true) {
+                      setEmailError(result);
+                    } else {
+                      setEmailError(null);
+                    }
+                  }}
+                  error={!!emailError}
+                  helperText={emailError ?? undefined}
+                />
+              </Box>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                {mode === 'other' && (
+                  <>
+                    <FormLabel>
+                      <span>&nbsp;&nbsp;</span>계정 활성화
+                    </FormLabel>
+                    <Switch
+                      checked={status === 1}
+                      onChange={handleStatusChange}
+                    />
+                    <input type="hidden" name="status" value={status || ""} />
+                  </>
+                )} 
+              </Box>
+            </Box>
+
+            
+            <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
+              <Button type="submit" className={disableSubmit ? "close-text-btn" : "default-btn"} disabled={disableSubmit}>
+                {mode === 'add' ? '등록' : '수정'}
+              </Button>
+
+              <Button  className="close-text-btn" onClick={onClose}>취소</Button>
+            </Box>
+          </Box>
+
+        </div>
+{/* }
         <DialogContent>
           <Grid2 container rowSpacing={2} spacing={1} sx={{ pt: 3 }}>
             <Grid2 size={{ xs:12, md:2 }} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
@@ -205,8 +479,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
               {mode === "add" ? (
                 <TextField
                   name="id"
-                  label="ID"
-                  variant="outlined"
+                  // label="ID"
+                  // variant="outlined"
                   size="small"
                   sx={{ width: "95%" }}
                   value={id}
@@ -248,8 +522,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   <>
                     <TextField
                       name="id"
-                      label="ID"
-                      variant="outlined"
+                      // label="ID"
+                      // variant="outlined"
                       size="small"
                       sx={{ width: "95%" }}
                       value={id}
@@ -272,9 +546,6 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                 value={role}
                 exclusive
                 onChange={handleAdminChange}
-                sx={{
-                  "& .MuiToggleButton-root": { height: "40px" }
-                }}
               >
                 {role === 3
                   ? [<ToggleButton disabled value={3} size="small">슈퍼 관리자</ToggleButton>]
@@ -469,7 +740,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
               />
             </Grid2>
 
-            {mode === "other" && (
+            {mode === "other" && ( 
               <>
                 <Grid2 size={{xs:12, md:2}} sx={{ display: 'flex', alignItems: 'flex-start', pt: '10px' }}>
                   <strong><span>&nbsp;&nbsp;</span>계정 활성화</strong>
@@ -482,17 +753,11 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   <input type="hidden" name="status" value={status} />
                 </Grid2>
               </>
-            )}
+            )} 
           </Grid2>
+
         </DialogContent>
-
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button type="submit" variant="contained" disabled={disableSubmit}>
-            {mode === 'add' ? '추가' : '수정'}
-          </Button>
-
-          <Button variant="contained" onClick={onClose}>취소</Button>
-        </DialogActions>
+        */}
       </Dialog>
     </React.Fragment>
   );

@@ -2,11 +2,15 @@
 import Link from 'next/link';
 import { useEffect, useState } from "react";
 import { Button, Modal, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { AccountCircle, Logout } from '@mui/icons-material';
 import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
 import { usePathname } from "next/navigation";
 import { useToastState } from './useToast';
+
+import '@/app/style/common.css';
+import '@/app/style/login.css';
 
 export default function Header() {
   const pathname = usePathname();
@@ -57,7 +61,6 @@ export default function Header() {
         <nav className="flex gap-6">
           <Link 
             href="/main/license"
-            className="hover:text-blue-600 transition-colors"
             onClick={() => setNavState('license')}
           >
             <p className={navState === 'license' ? 'text-white font-bold' : 'text-gray-300'}>License</p>
@@ -67,7 +70,6 @@ export default function Header() {
 
           <Link 
             href="/main/log"
-            className="hover:text-blue-600 transition-colors"
             onClick={() => setNavState('log')}
           >
             <p className={navState === 'log' ? 'text-white font-bold' : 'text-gray-300'}>Log</p>
@@ -77,7 +79,6 @@ export default function Header() {
 
           <Link 
             href="/main/admin"
-            className="hover:text-blue-600 transition-colors"
             onClick={(e) => {
               if (role !== 3) {
                 e.preventDefault();
@@ -109,51 +110,39 @@ export default function Header() {
       <div className="flex items-center mr-4">
         <nav className="flex gap-6">
           <div
-            className="hover:text-blue-600 transition-colors cursor-pointer"
             onClick={() => {
-              if (role === 3) {
-                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
-                return;
-              }
+              // if (role === 3) {
+              //   showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
+              //   return;
+              // }
               setOpenUpsert(true)}}
           >
-            <p className="text-gray-300">User</p>
+            <AccountCircle style={{ color: 'white' }} />
           </div>
-          {openUpsert && (
-            <UpsertModal 
-              open={openUpsert}
-              onClose={() => setOpenUpsert(false)} 
-              mode="self"
-              session={session}
-              onAdded={async () => {
-                await update({ trigger: "update" });
-                showToast("내 정보가 수정되었습니다.", "success")
-              }}
-            />
-          )}
 
           <p className="text-white">|</p>
 
           <div
-            className="hover:text-blue-600 transition-colors cursor-pointer"
             onClick={handleLogout}
           >
-            <p className="text-gray-300">LogOut</p>
+            <Logout style={{ color: 'white' }} />
           </div>
         </nav>
-      {ToastComponent}
-      </div>
+      {ToastComponent}      
       
-      {/* <Modal
-        open={isModalOpen}
-        onClose={handleClose}
-      >
-        <span>
-        <LicenseAddModal 
-          close={handleClose}
+      {openUpsert && (
+        <UpsertModal 
+          open={openUpsert}
+          onClose={() => setOpenUpsert(false)} 
+          mode="self"
+          session={session}
+          onAdded={async () => {
+            await update({ trigger: "update" });
+            showToast("내 정보가 수정되었습니다.", "success")
+          }}
         />
-        </span>
-      </Modal> */}
+      )}
+      </div>
     </div>
   )
 }

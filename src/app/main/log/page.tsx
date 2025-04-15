@@ -81,7 +81,7 @@ export default function LogPage() {
 
   const handleSearch = async () => {
     if(searchText === '') {
-      showToast('검색어가 입력되지 않았습니다.', 'error');
+      showToast('검색어가 입력되지 않았습니다.', 'warning');
       loadLogs();
       return;
     }

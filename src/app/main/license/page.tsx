@@ -4,6 +4,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi } from 'ag-grid-community';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
 import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
 import 'ag-grid-community/styles/ag-grid.css';
@@ -14,6 +15,8 @@ import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
 import { useToastState } from '@/app/components/useToast';
 import { addLog } from '@/app/api/log/log';
 import LicenseAddModal from '@/app/components/licenseAddModal';
+
+import '@/app/style/license.css';
 
 interface License {
   number: number;
@@ -97,7 +100,7 @@ export default function LicensePage() {
       headerStyle: { textAlign: 'center', fontSize: '10px', padding: '0px' },
       cellClass: 'cell-style',
       flex: 1,
-      valueGetter: (params: any) => params.data?.[item] === '1' ? 'O' : 'X',
+      cellRenderer: (params: any) => params.data?.[item] === '1' ? <CheckBox fontSize="small" /> : <CheckBoxOutlineBlank fontSize="small" />
     })),
     { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
@@ -193,7 +196,7 @@ export default function LicensePage() {
   // 검색
   const handleSearch = async () => {
     if(searchText === '') {
-      showToast('검색어가 입력되지 않았습니다.', 'error');
+      showToast('검색어가 입력되지 않았습니다.', 'warning');
       loadLicenses();
       return;
     }
@@ -222,7 +225,7 @@ export default function LicensePage() {
 
   const deleteSelectedRows = () => {
     if(selectedRows.length === 0) {
-      showToast('삭제할 데이터를 선택해주세요.', 'error');
+      showToast('삭제할 데이터를 선택해주세요.', 'warning');
       return;
     }
     setDeleteIds(selectedRows.map((row) => row.hardware_code));
@@ -239,7 +242,7 @@ export default function LicensePage() {
 
   const handleFileUpload = async () => {
     if(!selectedFile) {
-      showToast('csv파일을 선택해주세요.', 'error');
+      showToast('csv파일을 선택해주세요.', 'warning');
       return;
     }
 

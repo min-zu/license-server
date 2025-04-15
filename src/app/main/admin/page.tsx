@@ -11,8 +11,7 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 // MUI 관련
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 
 // 컴포넌트
@@ -23,7 +22,6 @@ import { useToastState } from '@/app/components/useToast';
 
 // 커스텀 css
 import '@/app/style/login.css'
-import '@/app/style/common.css'
 
 export interface Admin {
   id: string;
@@ -105,34 +103,33 @@ export default function AdminPage() {
   
   // ag-Grid에 표시할 컬럼 정의 목록
   const columnDefs: ColDef<Admin>[] = [
-    { field: 'id', headerName: '아이디' },
-    { field: 'name', headerName: '이름' },
+    { field: 'id', headerName: '아이디', headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'name', headerName: '이름', headerClass: 'header-style', cellClass: 'cell-style' },
     {
-      headerName: '슈퍼 관리자',
-      field: 'role',
+      field: 'role', headerName: '슈퍼 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 3 ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
+        params.value === 3 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
       ),
     },
     {
-      headerName: '설정 관리자',
-      field: 'role',
+      field: 'role', headerName: '설정 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 2 ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
+        params.value === 2 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
       ),
     },
     {
-      headerName: '모니터 관리자',
-      field: 'role',
+      field: 'role', headerName: '모니터 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 1 ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
+        params.value === 1 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
       ),
     },
-    { field: 'phone', headerName: '연락처' },
-    { field: 'email', headerName: '이메일' },
+    { field: 'phone', headerName: '연락처', headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'email', headerName: '이메일', headerClass: 'header-style', cellClass: 'cell-style' },
     {
       field: 'login_ts',
       headerName: '최근 로그인',
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
       valueFormatter: (params) => {
         const value = params.value;
         if (!value) return '';
@@ -144,13 +141,17 @@ export default function AdminPage() {
     {
       field: 'status',
       headerName: '활성화',
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 1 ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />
+        params.value === 1 ? <CheckBox fontSize="small" /> : <CheckBoxOutlineBlank fontSize="small" />
       ),
     },
     {// 편집 버튼 (슈퍼 관리자는 제외)
       colId: 'editBtn',
       headerName: '관리',
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => {
         const data = params.data;
         if (!data || data.role === 3) return null; // 슈퍼 관리자 수정 금지

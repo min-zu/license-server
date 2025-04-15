@@ -77,7 +77,7 @@ export default function SignIn() {
     const session = await getSession();
     if (session?.user?.status === 0) {
       await signOut({ redirect: false }); // 세션 삭제
-      return showToast("계정이 비활성화되어 있습니다.", "error");
+      return showToast("계정이 비활성화되어 있습니다.", "warning");
     }
 
     // 로그인 성공 시 페이지 이동

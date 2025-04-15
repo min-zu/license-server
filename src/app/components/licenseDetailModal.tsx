@@ -114,7 +114,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       if (!res.ok) {
         const errorData = await res.json();
         console.error("업데이트 실패:", errorData);
-        showToast("업데이트 실패: " + (errorData?.error || "알 수 없는 오류"), "warning");
+        showToast("업데이트 실패: " + (errorData?.error || "알 수 없는 오류"), "error");
         return;
       }
   
@@ -126,7 +126,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   
     } catch (error) {
       console.error("서버 요청 중 오류 발생:", error);
-      showToast("서버 오류 발생", "warning");
+      showToast("서버 오류 발생", "error");
     }
     // showToast("라이센스 수정 완료", "success");
   };

@@ -1,25 +1,5 @@
 /* 라이센스 페이지 관련 css */
 
-/* grid 관련 css */
-.header-style {
-  text-align: center;
-  font-size: 12px;
-  flex: 1 1 auto;
-  padding: 0px !important;
-}
-
-.header-style .ag-header-cell-label {
-  justify-content: center;
-}
-
-.header-style .ag-header-cell-comp-wrapper {
-  justify-content: center;
-}
-
-.cell-style {
-  text-align: center;
-  font-size: 11px;
-}
 
 /* 라이센스 등록 모달 */
 .close-btn {
@@ -96,9 +76,6 @@
   font-size: 12px;
 } */
 
-.split-line {
-  border-top: 1px solid #c5c5c5;
-}
 
 /* 라이센스 등록 모달 */
 .add-license-form {
