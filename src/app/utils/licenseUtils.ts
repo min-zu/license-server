@@ -3,9 +3,9 @@ import { POST } from '@/app/api/cmd/route';
 export async function generateLicenseKey(data: any) {
   const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
   let license_key: string | null = null;
-
-  // console.log('data ::::::: ', data);
-  // console.log('code ::::::: ', hardwareCode);
+  
+  console.log('data ::::::: ', data);
+  console.log('code ::::::: ', hardwareCode);
   // function parseOption(opt?: number): number {
   //   return opt === 1 ? 1 : 0;
   // }
@@ -62,7 +62,9 @@ export async function generateLicenseKey(data: any) {
     const _key = "addtestITU123hardwardCode456";
     license_key = typeof _key === 'string' ? _key : null;
 
-  } else if (!hardwareCode.startsWith('ITU') && regInit !== "") {
+  } else if (!hardwareCode.startsWith('ITU') && regInit !== "" && regInit !== undefined) {
+
+    console.log('regInit ::::::: ', regInit);
     let license_module = "-F";
     if(Number(softwareOpt.vpn) === 1) license_module += "V"; // option 2
     if(Number(softwareOpt.ssl) === 1) license_module += "S"; // option 3
@@ -109,6 +111,6 @@ export async function generateLicenseKey(data: any) {
   } else {
     license_key = null;
   }
-  // console.log('license_key ::::::: ', license_key);
+  console.log('license_key ::::::: ', license_key);
   return license_key;
 }

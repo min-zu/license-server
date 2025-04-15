@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // output: "export",
+  // typescript: {
+  //   ignoreBuildErrors: true, // 타입스크립트 빌드 오류 무시
+  // },
   /* config options here */
   // async redirects() {
   //   return [

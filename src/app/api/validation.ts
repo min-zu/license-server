@@ -76,6 +76,7 @@ export const ValidHardwareCode = (hardwareCode: unknown): string | true => {
 
 
 export const checkHardwareCode = async (hardwareCode: string): Promise<string> => {
+  console.log('hardwareCode', hardwareCode);
   try {
     const res = await fetch(`/api/license/add?hardwareCode=${encodeURIComponent(hardwareCode)}`);
     if (!res.ok) throw new Error("서버 응답 실패");

@@ -24,13 +24,13 @@ export async function getDBConnection() {
   return await database.getConnection();
 }
 
-// 쿼리 실행 함수
-export async function query(sql: string, values: any[] = []) {
+// 쿼리 실행 함수 - 제네릭 추가
+export async function query<T = any>(sql: string, values: any[] = []): Promise<T> {
   let connection;
   try {
     connection = await getDBConnection();
     const [results] = await connection.execute(sql, values);
-    return results;
+    return results as T;
   } catch (error) {
     console.error("Database Query Error:", error);
     throw new Error("Database query failed");

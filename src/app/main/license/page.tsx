@@ -68,6 +68,9 @@ export default function LicensePage() {
 
   // 토스트 상태
   const { showToast, ToastComponent } = useToastState();
+  
+  // 파일 업로드 상태
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // 모달 닫기 함수
   const addModalClose = () => setIsAddModalOpen(false);
@@ -226,6 +229,45 @@ export default function LicensePage() {
     setIsDeleteModalOpen(true);
   };
 
+  // 파일 업로드
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if(file) {
+      setSelectedFile(file);
+    }
+  }
+
+  const handleFileUpload = async () => {
+    if(!selectedFile) {
+      showToast('csv파일을 선택해주세요.', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('uploadFile', selectedFile);
+
+    try {
+      const response = await fetch('/api/license/fileUpload', {
+        method: 'POST', 
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log('result', result);
+
+      if(response.ok) {
+        showToast('파일 업로드 성공', 'success');
+        setSelectedFile(null);
+        handleReset();
+      } else {
+        console.log('response', response);
+        showToast('파일 업로드 실패 : ' + result.message, 'error');
+      }
+    } catch (error) {
+      console.error('파일 업로드 중 오류 발생:', error);
+    }
+  }
+
   // 데이터 초기화
   const handleReset = () => {
     loadLicenses();
@@ -344,19 +386,22 @@ export default function LicensePage() {
               파일 선택
               <input
                 type="file"
+                accept=".csv"
                 hidden
+                onChange={handleFileChange}
               />
             </Button>
 
             <TextField
               size="small"
-              placeholder="선택된 파일 없음"
+              placeholder={selectedFile ? selectedFile.name : "선택된 파일 없음"}
               disabled
             />
 
             <Button
               className="default-btn"
               size="small"
+              onClick={handleFileUpload}
             >
               등록
             </Button>
@@ -459,9 +504,7 @@ export default function LicensePage() {
               <br />
               [장비선택, 시리얼, 유효기간(시작), 유효기간(만료), 발급자, 발급요청사(총판사),
               <br />
-              고객사명, 프로젝트명, 고객사 E-mail,
-              <br />
-              방화벽, VPN, DPI, AV, AS, 행안부 라이센스 옵션]
+              고객사명, 프로젝트명, 고객사 E-mail, 소프트웨어 옵션]
               <div className="split-line my-4 border-t border-gray-300" />
               * 장비선택(ITU, ITM, XTM, SMC)
               <br />
