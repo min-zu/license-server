@@ -111,13 +111,13 @@ export default function Header() {
         <nav className="flex gap-6">
           <div
             onClick={() => {
-              // if (role === 3) {
-              //   showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
-              //   return;
-              // }
+              if (role === 3) {
+                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
+                return;
+              }
               setOpenUpsert(true)}}
           >
-            <AccountCircle style={{ color: 'white' }} />
+            <AccountCircle style={{ color: 'white', cursor: 'pointer' }} />
           </div>
 
           <p className="text-white">|</p>
@@ -125,7 +125,7 @@ export default function Header() {
           <div
             onClick={handleLogout}
           >
-            <Logout style={{ color: 'white' }} />
+            <Logout style={{ color: 'white', cursor: 'pointer' }} />
           </div>
         </nav>
       {ToastComponent}      

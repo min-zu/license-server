@@ -57,6 +57,22 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
 
+  const isChanged =
+  (mode === "other" && target && (
+    name !== (target.name ?? "") ||
+    phone !== (target.phone ?? "") ||
+    email !== (target.email ?? "") ||
+    role !== target.role ||
+    status !== target.status ||
+    passwd.trim() !== "" && confirmPasswd.trim() !== ""
+  )) ||
+  (mode === "self" && session?.user && (
+    name !== (session.user.name ?? "") ||
+    phone !== (session.user.phone ?? "") ||
+    email !== (session.user.email ?? "") ||
+    passwd.trim() !== "" && confirmPasswd.trim() !== ""
+  ));
+
   // 확인 또는 수정 버튼 막기 조건
   const disableSubmit =
   mode === 'add'
@@ -74,13 +90,14 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
       )
     : (
       (passwd !== "" || confirmPasswd !== "") && 
-      passwd.trim() === "" ||
+      (passwd.trim() === "" ||
       confirmPasswd.trim() === "" ||
       !!passwdError ||
-      confirmPasswdValid === false ||
+      confirmPasswdValid === false) ||
       !!nameError ||
       !!phoneError ||
-      !!emailError
+      !!emailError ||
+      !!!isChanged
     )
 
   // 권한 핸들러
@@ -351,7 +368,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 이름</>) : ("이름")}
+                  이름
                 </FormLabel>
                   <TextField
                   name="name"
@@ -381,7 +398,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
 
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 연락처</>) : ("연락처")}
+                  연락처
                 </FormLabel>
                 <TextField 
                   name="phone" 
@@ -413,7 +430,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  {mode === 'add' ? (<><span style={{ color: 'red' }}>*</span> 이메일</>) : ("이메일")}
+                  이메일
                 </FormLabel>
                 <TextField 
                   name="email"
@@ -443,7 +460,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                 {mode === 'other' && (
                   <>
                     <FormLabel>
-                      <span>&nbsp;&nbsp;</span>계정 활성화
+                      계정 활성화
                     </FormLabel>
                     <Switch
                       checked={status === 1}
