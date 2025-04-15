@@ -20,6 +20,13 @@
   font-size: 11px;
 }
 
+.cell_left {
+  display: flex !important;
+  justify-content: flex-start !important;
+  text-align: center !important;
+  /* padding-left: 10px !important; */
+}
+
 
 /* 알림창 관련 css */
 .alert-modal-content {

@@ -108,19 +108,19 @@ export default function AdminPage() {
     {
       field: 'role', headerName: '슈퍼 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 3 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
+        params.value === 3 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}}/>
       ),
     },
     {
       field: 'role', headerName: '설정 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 2 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
+        params.value === 2 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}}/>
       ),
     },
     {
       field: 'role', headerName: '모니터 관리자', headerClass: 'header-style', cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 1 ? <CheckBox fontSize="small"/> : <CheckBoxOutlineBlank fontSize="small"/>
+        params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
     { field: 'phone', headerName: '연락처', headerClass: 'header-style', cellClass: 'cell-style' },
@@ -144,7 +144,7 @@ export default function AdminPage() {
       headerClass: 'header-style',
       cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => (
-        params.value === 1 ? <CheckBox fontSize="small" /> : <CheckBoxOutlineBlank fontSize="small" />
+        params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
     {// 편집 버튼 (슈퍼 관리자는 제외)
@@ -164,7 +164,7 @@ export default function AdminPage() {
               setOpenUpsert(true);
             }}
             >
-            <EditIcon />
+            <EditIcon fontSize="small" />
           </IconButton>
         );
       },

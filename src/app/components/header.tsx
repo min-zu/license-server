@@ -22,6 +22,7 @@ export default function Header() {
 
   const { data: session, update } = useSession();
   const role = session?.user?.role;
+  const id = session?.user?.id;
 
   // const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
@@ -59,19 +60,13 @@ export default function Header() {
         <div className="logo w-12 h-12 bg-gray-400" /> {/* 로고 자리 */}
         <p className="text-white">|</p>
         <nav className="flex gap-6">
-          <Link 
-            href="/main/license"
-            onClick={() => setNavState('license')}
-          >
+          <Link  href="/main/license"  onClick={() => setNavState('license')}>
             <p className={navState === 'license' ? 'text-white font-bold' : 'text-gray-300'}>License</p>
           </Link>
 
           <p className="text-white">|</p>
 
-          <Link 
-            href="/main/log"
-            onClick={() => setNavState('log')}
-          >
+          <Link href="/main/log" onClick={() => setNavState('log')}>
             <p className={navState === 'log' ? 'text-white font-bold' : 'text-gray-300'}>Log</p>
           </Link>
 
@@ -85,7 +80,6 @@ export default function Header() {
                 showToast("접근 권한이 없습니다.", "warning");
                 return;
               }
-          
               setNavState('admin');
             }}
           >
@@ -109,6 +103,8 @@ export default function Header() {
 
       <div className="flex items-center mr-4">
         <nav className="flex gap-6">
+          <p className="text-white text-13 mt-1">사용자 : {id}</p> 
+          <p className="text-white">|</p>
           <div
             onClick={() => {
               if (role === 3) {
@@ -122,12 +118,11 @@ export default function Header() {
 
           <p className="text-white">|</p>
 
-          <div
-            onClick={handleLogout}
-          >
+          <div onClick={handleLogout}>
             <Logout style={{ color: 'white', cursor: 'pointer' }} />
           </div>
         </nav>
+        
       {ToastComponent}      
       
       {openUpsert && (
