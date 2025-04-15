@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('uploadFile') as File;
 
-
     const arrayBuffer = await file.arrayBuffer();
     const content = Buffer.from(arrayBuffer).toString('utf-8');
 
@@ -20,15 +19,24 @@ export async function POST(request: NextRequest) {
       skip_empty_lines: true,
       trim: true,
     });
+
+    // 헤더 제거
+    const [header, ...dataRows] = records;
+
+    // 모든 셀이 빈 문자열일 경우 제거
+    const filteredRows = dataRows.filter(row =>
+      row.some(cell => cell.trim() !== '')
+    );
   
-    // console.log('파싱된 CSV:', records);
-    
+    if(filteredRows.length === 0) {
+      return NextResponse.json({ message: '파일이 비어있습니다.' }, { status: 400 });
+    }    
+
     const results: string[] = [];
     const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
 
-    for(let i = 1; i < records.length; i++) {
-      const row = records[i];
-
+    for(let i = 0; i < filteredRows.length; i++) {
+      const row = filteredRows[i];
       const trimmedRow = row.map(item => item.replace(/\r?\n|\r/g, '').trim());
 
       // 기본 필드 (앞쪽 공통 필드 9개)
@@ -43,6 +51,7 @@ export async function POST(request: NextRequest) {
         siteName,
         cfid,
         ...options // 나머지 옵션 필드들은 배열로 받음
+        // initCode
       ] = trimmedRow;
 
       let [fw, vpn, 행안부, ssl, dpi, ips, waf, av, as, tracker] = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
@@ -55,6 +64,10 @@ export async function POST(request: NextRequest) {
 
       const trimmed = hardwareCode.trim();
       const codes = trimmed.split('-').length >= 3;
+
+      if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM') && !hardwareStatus.toUpperCase().includes('SMC') && !hardwareStatus.toUpperCase().includes('XTM')) {
+        return NextResponse.json({ message: `${i + 1}행 장비선택 입력` }, { status: 400 });
+      }
 
       if(codes && trimmed.length < 22) {
         return NextResponse.json({ message: `${i + 1}행 시리얼 [${hardwareCode}] 22자 이상 입력` }, { status: 400 });
@@ -71,6 +84,29 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: `${i + 1}행 유효기간 오류` }, { status: 400 });
       }
 
+      if(manager === '') {
+        return NextResponse.json({ message: `${i + 1}행 발급요청사 입력` }, { status: 400 });
+      }
+
+      if(cpuName === '') {
+        return NextResponse.json({ message: `${i + 1}행 프로젝트/CPU명 입력` }, { status: 400 });
+      }
+
+      if(siteName === '') {
+        return NextResponse.json({ message: `${i + 1}행 고객사명명 입력` }, { status: 400 });
+      }
+
+      if(cfid === '') {
+        return NextResponse.json({ message: `${i + 1}행 고객사 E-mail/CFID 입력` }, { status: 400 });
+      }
+
+      // if(initCode === '') {
+      //   return NextResponse.json({ message: `${i + 1}행 하드웨어 인증키 입력` }, { status: 400 });
+      // }
+
+      for(let j = 0; j < options.length; j++) {
+        if(options[j] === '') options[j] = '0';
+      }
       
       let sql = '';
       const params = [];

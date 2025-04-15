@@ -388,6 +388,7 @@ export default function LicensePage() {
                 type="file"
                 accept=".csv"
                 hidden
+                key={Date.now()}
                 onChange={handleFileChange}
               />
             </Button>
