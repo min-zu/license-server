@@ -1,0 +1,128 @@
+/* 라이센스 페이지 관련 css */
+
+
+/* 라이센스 등록 모달 */
+.close-btn {
+  float: right;
+  width: 24px;
+  min-width: 24px !important; 
+  height: 24px!important;
+  padding: 0!important;
+  margin: 2px -5px 0 0!important;
+  color: #fff !important;
+  &:hover {
+    background-color: transparent !important;
+  }
+}
+
+/* 라이센스 상세보기 모달 */
+.license-detail-modal-wrap {
+  .css-rizt0-MuiTypography-root {
+    font-size: 13px !important;
+  }
+  .css-l6f5t6-MuiFormLabel-root {
+    font-size: 13px !important;
+  }
+}
+
+.license-detail-modal-wrap .detail-line-box {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.license-detail-modal-wrap .detail-line-box-item {
+  display: flex;
+  align-items: center;
+  width: 30%;
+  margin-bottom: 2px;
+}
+/* 
+.license-detail-modal-wrap .detail-line-box-item-label {
+  width: 110px;
+  text-align: left;
+  font-size: 13px;
+} */
+
+.license-detail-modal-wrap .MuiFormLabel-root {
+  width: 130px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.license-detail-modal-wrap {
+  p {
+    flex-grow: 1;
+  }
+}
+
+.license-detail-modal-wrap .MuiTextField-root .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input {
+  width: 100%;
+  height: 24px !important; 
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+}
+/* 
+.license-detail-modal-wrap .detail-line-box-item-edit .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input {
+  width: 100%;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+} */
+
+
+/* 라이센스 등록 모달 */
+.add-license-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+} 
+
+.add-license-form .MuiFormLabel-root {
+  font-size: 13px;
+  width: 140px;
+  text-align: left;
+}
+
+.add-license-form .MuiTextField-root {
+  width: 80%;
+  /* margin-right: 8px; */
+}
+
+.add-license-half-width {
+  width: 30% !important;
+  margin-right: 2% !important;
+}
+
+.add-license-form .MuiFormControlLabel-label {
+  font-size: 13px !important;
+}
+
+.add-license-form .MuiFormGroup-root {
+  flex-direction: row !important;
+}
+
+.add-license-help-btn {
+  margin-left: 5px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background-color: #7e7e7e !important;
+}
+
+.add-license-form .MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  font-size: 11px !important;
+
+}
+
+
+
+

@@ -6,16 +6,16 @@ interface PagenationProps {
     totalPages: number;
     currentPage: number;
     onChange?: (page: number) => void;
+    gridRef?: React.RefObject<any>;
   }
 }
 
-export default function Pagenation({ props }: PagenationProps) {
-  const { totalPages, currentPage, onChange } = props;
+export default function Pagenation1({ props }: PagenationProps) {
+  const { totalPages, currentPage, onChange, gridRef } = props;
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
-    if (onChange) {
-      onChange(value);
-    }
+    onChange?.(value);
+    gridRef?.current?.api?.paginationGoToPage?.(value - 1);
   };
 
   return (
@@ -23,6 +23,8 @@ export default function Pagenation({ props }: PagenationProps) {
       count={totalPages} 
       page={currentPage} 
       onChange={handleChange}
+      boundaryCount={1}
+      siblingCount={4}
     />
   );
 }

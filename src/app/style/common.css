@@ -1,0 +1,97 @@
+/* 공통 관련 css */
+/* grid 관련 css */
+.header-style {
+  text-align: center;
+  font-size: 12px;
+  flex: 1 1 auto;
+  padding: 0px !important;
+}
+
+.header-style .ag-header-cell-label {
+  justify-content: center;
+}
+
+.header-style .ag-header-cell-comp-wrapper {
+  justify-content: center;
+}
+
+.cell-style {
+  text-align: center;
+  font-size: 11px;
+}
+
+.cell_left {
+  display: flex !important;
+  justify-content: flex-start !important;
+  text-align: center !important;
+  /* padding-left: 10px !important; */
+}
+
+
+/* 알림창 관련 css */
+.alert-modal-content {
+  padding: 20px 30px !important;
+  font-size: 12px;
+  white-space: pre-wrap;
+  line-height: 1;
+}
+
+/* mui */
+
+/* 버튼 공통 css */
+.MuiButtonBase-root {
+  box-shadow: none !important;
+  min-width: 0px !important;
+  /* line-height: 0 !important; */
+  font-size: 13px !important;
+}
+
+/* 셀렉트 공통 css */
+.MuiSelect-select {
+  min-height: 0px !important;
+  height: 13px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.MuiMenu-list {
+  padding: 0px !important
+}
+
+.MuiMenuItem-gutters {
+  font-size: 11px !important;
+}
+
+
+/* input 공통 css */
+.MuiInputBase-input {
+  border: 1px solid silver;
+  border-radius: 4px !important;
+  min-height: 0px !important;
+  height: 13px !important;
+  font-size: 12px !important;
+}
+
+/* toggle 공통 css */
+.MuiToggleButtonGroup-root {
+  height: 30px !important;
+}
+
+/* formlabel */
+.MuiFormLabel-root {
+  color: #292929 !important;
+  font-size: 13px !important;
+}
+
+/* formhelpertext */
+.MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  font-size: 11px !important;
+}
+
+
+.split-line {
+  border-top: 1px solid #c5c5c5;
+}

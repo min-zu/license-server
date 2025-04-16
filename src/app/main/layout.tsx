@@ -1,18 +1,20 @@
 import { auth } from "@/auth";
+import { SessionProvider } from "next-auth/react";
+import SessionChecker from "../components/SessionChecker";
 import Header from "../components/header";
 import { redirect } from "next/navigation";
 
 export default async function mainLayout({ children }: { children: React.ReactNode }) {
-  // const session = await auth();
-  // if(!session) {
-  //   redirect("/login");
-  // }
+  const session = await auth();
+  if(!session) {
+    redirect("/login");
+  }
   return (
-    <div>
-      <div>
+    <SessionProvider>
+      <SessionChecker>
         <Header/>
-      </div>
-      {children}
-    </div>
+        {children}
+      </SessionChecker>
+    </SessionProvider>
   );
 }
