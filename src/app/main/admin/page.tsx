@@ -6,8 +6,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 // MUI 관련
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
@@ -20,8 +18,6 @@ import Pagenation from '@/app/components/pagenation';
 import UpsertModal from '@/app/components/upsertAdminModal';
 import { useToastState } from '@/app/components/useToast';
 
-// 커스텀 css
-import '@/app/style/login.css'
 
 export interface Admin {
   id: string;

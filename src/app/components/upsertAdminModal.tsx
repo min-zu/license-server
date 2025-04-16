@@ -8,9 +8,6 @@ import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW }
 import { useToastState } from "./useToast";
 import { Session } from "next-auth";
 
-// import '../style/common.css';
-// import '../style/login.css';
-
 interface ModalProps {
     open: boolean;
     onClose: () => void;

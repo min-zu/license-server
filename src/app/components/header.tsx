@@ -1,4 +1,10 @@
 'use client';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import '@/app/style/common.css';
+import '@/app/style/login.css';
+import '@/app/style/license.css';
+
 import Link from 'next/link';
 import { useEffect, useState } from "react";
 import { Button, Modal, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
@@ -9,8 +15,6 @@ import { signOut, useSession } from 'next-auth/react';
 import { usePathname } from "next/navigation";
 import { useToastState } from './useToast';
 
-import '@/app/style/common.css';
-import '@/app/style/login.css';
 
 export default function Header() {
   const pathname = usePathname();

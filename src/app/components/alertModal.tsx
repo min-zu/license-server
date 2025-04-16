@@ -4,7 +4,6 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { deleteLicenses } from '@/app/api/license/license';
 import { useToastState } from '@/app/components/useToast';
-import ToastAlert from './toastAleat';
 
 interface AlertModalProps {
   open: boolean;

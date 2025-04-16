@@ -1,22 +1,27 @@
 'use client';
 
+import { use, useCallback, useEffect, useRef, useState } from 'react';
+
+// ag-grid
 import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi } from 'ag-grid-community';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+
+// mui
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
-import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-import Pagenation from '@/app/components/pagenation';
-import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
-import ToastAlert, { ToastAlertProps } from '@/app/components/toastAleat';
-import { useToastState } from '@/app/components/useToast';
-import { addLog } from '@/app/api/log/log';
-import LicenseAddModal from '@/app/components/licenseAddModal';
 
-import '@/app/style/license.css';
+// 컴포넌트
+import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
+import LicenseAddModal from '@/app/components/licenseAddModal';
+import AlertModal from '@/app/components/alertModal'; // 도움말 모달 임포트
+import Pagenation from '@/app/components/pagenation';
+
+
+import { fetchLicenses, searchLicenses } from '@/app/api/license/license'; // API 요청 함수 임포트
+import { addLog } from '@/app/api/log/log';
+
+// toast
+import { useToastState } from '@/app/components/useToast';
 
 interface License {
   number: number;

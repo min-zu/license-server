@@ -26,8 +26,8 @@ body {
 .logo {
   width: 245px;
   height: 26px;
-  background: url('../../public/images/logo.png');
-  background-repeat: no-repeat;
+  background: url('../../public/images/logo.png') no-repeat center center;
+  background-size: contain;
 }
 
 /* font*/

@@ -189,7 +189,9 @@ export default function SignIn() {
         </Button>
         <Typography variant="body2" gutterBottom sx={{ textAlign: "left", color: '#fff' }}>
           ※ 본 시스템은 허가된 사용자만 이용할 수 있습니다.<br/>
-          부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, 유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 주의하시기 바랍니다.
+          부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, <br/>
+          유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 <br/>
+          주의하시기 바랍니다.
         </Typography>
       </Paper>
     </Box>

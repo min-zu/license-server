@@ -1,14 +1,17 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, styled, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
-import '../style/common.css';
-import '../style/license.css';
 import { useState, useEffect } from "react";
-import { checkHardwareCode } from "@/app/api/validation";
-import { useToastState } from "@/app/components/useToast";
-import { defaultOps, ituOps } from "@/app/data/config";
+import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, styled, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 
+// 데이터
+import { defaultOps, ituOps } from "@/app/data/config";
+import { checkHardwareCode } from "@/app/api/validation";
+
+// form
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
+// toast
+import { useToastState } from "@/app/components/useToast";
 
 export default function LicenseAddModal({ close, onUpdated }: { close: () => void, onUpdated: () => void }) {
   // 입력값

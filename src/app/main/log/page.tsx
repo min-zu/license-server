@@ -1,17 +1,15 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
+// ag-grid
 import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, ValidationModule, RowSelectionModule, CellStyleModule, ColDef, Module } from 'ag-grid-community';
-import { useEffect, useState, useRef } from 'react';
 import { Button, FormControl, MenuItem, Select, TextField } from '@mui/material';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-import '../../style/common.css';
-import '../../style/license.css';
 import Pagenation from '@/app/components/pagenation';
 import { fetchLogs, searchLogs } from '@/app/api/log/log'; // API 요청 함수 임포트
+
+// toast
 import { useToastState } from '@/app/components/useToast';
-import ToastAlert from '@/app/components/toastAleat';
 
 interface Log {
   number: number;
