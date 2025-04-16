@@ -49,7 +49,6 @@ export async function DELETE(request: Request) {
     const sql = `DELETE FROM license WHERE hardware_code IN (${placeholders})`;
     
     const result = await query(sql, codes);
-    console.log('result', result);
     return NextResponse.json({ success: true, result: result });
     
   } catch (e) {

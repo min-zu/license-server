@@ -251,7 +251,6 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                           return;
                         }
                         const dupMsg = await checkIdDuplicate(id);
-                        console.log(dupMsg);
                         if(dupMsg === '0') {
                           setIdDupMessage("");
                           setIsIdAvailable(true);

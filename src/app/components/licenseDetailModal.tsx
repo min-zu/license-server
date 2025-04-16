@@ -99,7 +99,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   }, [defaultValues, reset]);
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
-    console.log("onsubmit: ", data);
     try {
       const res = await fetch('/api/license/edit', {
         method: 'PUT',

@@ -222,7 +222,6 @@ export default function LicensePage() {
   const onSelectionChanged = (e: any) => {
     const selected = e.api.getSelectedRows();
     selectedRowsRef.current = selected;
-    console.log(selected);
 
     // timezone 처리 해야함 4/13
     setSelectedRows([...selected]);
@@ -261,7 +260,6 @@ export default function LicensePage() {
       });
 
       const result = await response.json();
-      console.log('result', result);
 
       if(response.ok) {
         showToast('파일 업로드 성공', 'success');

@@ -14,7 +14,6 @@ export const searchLicenses = async (searchField: string, searchText: string) =>
     },
     body: JSON.stringify({ searchField, searchText })
   });
-  console.log('response', response);
   if (!response.ok) {
     throw new Error('검색 중 오류가 발생했습니다.');
   }
