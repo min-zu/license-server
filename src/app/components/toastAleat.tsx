@@ -25,9 +25,10 @@ export default function ToastAlert({ open, setOpen, message, severity }: ToastAl
 
   return (
     <div>
-      <Slide direction="left" in={isOpen} mountOnEnter unmountOnExit>
-        <Snackbar open={isOpen} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={3000} onClose={handleClose}>
-          <Alert
+      {isOpen && (
+        <Slide direction="left" in={isOpen} mountOnEnter unmountOnExit>
+          <Snackbar open={isOpen} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={3000} onClose={handleClose}>
+            <Alert
             onClose={handleClose}
             severity={severity}
             variant="filled"
@@ -37,6 +38,7 @@ export default function ToastAlert({ open, setOpen, message, severity }: ToastAl
           </Alert>
         </Snackbar>
       </Slide>
+      )}
     </div>
   );
 };
