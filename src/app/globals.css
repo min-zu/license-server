@@ -80,46 +80,6 @@ body {
   font-size: 20px !important;
 }
 
-.text-21 {
-  font-size: 21px !important;
-}
-
-.text-22 {
-  font-size: 22px !important;
-}
-
-.text-23 {
-  font-size: 23px !important;
-}
-
-.text-24 {
-  font-size: 24px !important;
-}
-
-.text-25 {
-  font-size: 25px !important;
-}
-
-.text-26 {
-  font-size: 26px !important;
-}
-
-.text-27 {
-  font-size: 27px !important;
-}
-
-.text-28 {
-  font-size: 28px !important;
-}
-
-.text-29 {
-  font-size: 29px !important;
-}
-
-.text-30 {
-  font-size: 30px !important;
-}
-
 /* color */
 .text-white {
   color: #ffffff;
@@ -144,3 +104,45 @@ body {
     justify-content: center;
   }
 }
+
+/* login page */
+
+.login-page .MuiTextField-root {
+  margin-bottom: 10px !important;
+  & .MuiOutlinedInput-root {
+    & fieldset {
+      border-color: #929292 !important; 
+    }
+    &:hover fieldset {
+      border-color: #fff !important; 
+    }
+    &.Mui-focused fieldset {
+      border-color: #fff !important;
+    }
+  }
+  .MuiInputLabel-root{
+    color: #929292 !important;
+  }
+  &.Mui-focused {
+    color: #fff !important; 
+  }
+  & .MuiInputBase-input {
+    color: #fff !important;    
+    background-color: #464646 !important;
+  }
+}
+
+/* .login-page .MuiButtonBase-root {
+  background-color: #053345 !important;
+  color: #ffffff !important;
+  padding: 4px 10px !important;
+} */
+
+.login-page .MuiButton-root {
+  background-color: #747474 !important;
+  color: #ffffff !important;
+  padding: 6px 10px !important;
+  &:hover {
+    background-color: #808080 !important;
+  }
+} 

@@ -87,6 +87,7 @@ export default function SignIn() {
   return (
     // 전체 레이아웃
     <Box
+      className="login-page"
       sx={{
         minHeight: "100vh",
         display: "flex",
@@ -98,6 +99,7 @@ export default function SignIn() {
       {ToastComponent}
       {/* Login Form */}
       <Paper
+        className="login-form"
         component="form"
         onSubmit={handleLogin}
         sx={{
@@ -106,7 +108,7 @@ export default function SignIn() {
           width: 450,
           textAlign: "center",
           borderRadius: 2,
-          backgroundColor: "#333"
+          backgroundColor: "#053345"
         }}
       >
         <Box sx={{ textAlign: "center", mb: 6 }}>
@@ -124,29 +126,6 @@ export default function SignIn() {
           type="text"
           name="id"
           autoComplete="off"
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#fff', // 기본 테두리
-              },
-              '&:hover fieldset': {
-                borderColor: '#fff', // 마우스 호버 시
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#fff', // 포커스 시
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: '#fff', // 라벨 색
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#fff', // 포커스된 라벨 색
-            },
-            '& .MuiInputBase-input': {
-              color: '#fff', // 입력 텍스트 색
-            },
-          }}
         />
         <TextField
           fullWidth
@@ -155,29 +134,6 @@ export default function SignIn() {
           type="password"
           name="password"
           autoComplete="new-password"
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#fff', // 기본 테두리
-              },
-              '&:hover fieldset': {
-                borderColor: '#fff', // 마우스 호버 시
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#fff', // 포커스 시
-              },
-            },
-            '& .MuiInputLabel-root': {
-              color: '#fff', // 라벨 색
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#fff', // 포커스된 라벨 색
-            },
-            '& .MuiInputBase-input': {
-              color: '#fff', // 입력 텍스트 색
-            },
-          }}
         />
         <Button
           fullWidth
@@ -187,11 +143,9 @@ export default function SignIn() {
         >
           LOGIN
         </Button>
-        <Typography variant="body2" gutterBottom sx={{ textAlign: "left", color: '#fff' }}>
+        <Typography variant="body2" className="text-12" gutterBottom sx={{ textAlign: "left", color: '#fff' }}>
           ※ 본 시스템은 허가된 사용자만 이용할 수 있습니다.<br/>
-          부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, <br/>
-          유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 <br/>
-          주의하시기 바랍니다.
+          부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, 유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 주의하시기 바랍니다.
         </Typography>
       </Paper>
     </Box>

@@ -2,7 +2,7 @@
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import '@/app/style/common.css';
-import '@/app/style/login.css';
+import '@/app/style/admin.css';
 import '@/app/style/license.css';
 
 import Link from 'next/link';

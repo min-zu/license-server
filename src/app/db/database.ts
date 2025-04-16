@@ -2,8 +2,8 @@ import mysql from 'mysql2/promise';
 
 // DB 정보
 const database = mysql.createPool({
-  host: '127.0.0.1',
-  // host: 'localhost',
+  // host: '127.0.0.1',
+  host: 'localhost',
   user: 'root',
   password: 'future_01',
   database: 'license',

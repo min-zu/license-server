@@ -79,6 +79,7 @@
 
 /* formlabel */
 .MuiFormLabel-root {
+  color: #292929 !important;
   font-size: 13px !important;
 }
 
