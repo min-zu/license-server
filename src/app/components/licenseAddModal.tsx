@@ -64,7 +64,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       })
       .refine(async (value) => {
         const count = await checkHardwareCode(value);
-        console.log("count: ", count);
         return Number(count) === 0; // 중복이 없을 경우
       }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
@@ -180,7 +179,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     }
     // 업데이트된 소프트웨어 옵션을 데이터에 다시 설정
     data.softwareOpt = updatedSoftwareOpt;
-    console.log("onsubmit: ", data);
 
     const res = await fetch('/api/license/add', {
       method: 'POST',
@@ -191,7 +189,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     });
 
     const result = await res.json();
-    console.log("result: ", result);
 
     if (result.success) {
       onUpdated();

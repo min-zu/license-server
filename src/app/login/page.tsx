@@ -22,7 +22,6 @@ export default function SignIn() {
 
     // 토스트 플래그 확인
     const toastFlag = sessionStorage.getItem('loginToast');
-    console.log('메시지', toastFlag)
     if (toastFlag === 'loggedout') {
       showToast('로그아웃 되었습니다.', 'success');
       sessionStorage.removeItem('loginToast');
