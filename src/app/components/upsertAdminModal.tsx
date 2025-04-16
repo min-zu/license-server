@@ -28,7 +28,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
   const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
   
   // 관리자 권한
-  const [role, setRole] = useState<number>();
+  const [role, setRole] = useState<number>(2);
 
   // 계정 활성화
   const [status, setStatus] = useState<number>();
@@ -286,8 +286,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   exclusive
                   onChange={handleAdminChange}
                 >
-                  {role === 3
-                    ? [<ToggleButton disabled value={3} size="small">슈퍼 관리자</ToggleButton>]
+                  {mode === 'self'
+                    ? [<ToggleButton selected disabled value={role} size="small">{role === 2 ? '설정 관리자' : '모니터 관리자'}</ToggleButton>]
                     : [
                       <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
                       <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>

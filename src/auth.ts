@@ -76,6 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           status: users[0].status,
           id: users[0].id,
           name: users[0].name,
+          phone: users[0].phone,
           email: users[0].email,
           login_ts: users[0].login_ts,
         };
@@ -127,7 +128,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.phone = token.phone ?? "";
       session.user.email = token.email ?? "";
       session.user.login_ts = token.login_ts;
-      // console.log("Session", session);
+      console.log("Session", session);
       return session;
     },
   },
