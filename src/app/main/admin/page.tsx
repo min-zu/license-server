@@ -2,21 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-// AG Grid 관련
+// AG Grid
 import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
-// MUI 관련
+// MUI
 import { Box, Button, FormControl, MenuItem, Select, SelectChangeEvent, IconButton } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 
 // 컴포넌트
-import AlertModal from '@/app/components/alertModal';
-import Pagenation from '@/app/components/pagenation';
-import UpsertModal from '@/app/components/upsertAdminModal';
-import { useToastState } from '@/app/components/useToast';
+import AlertModal from '@/app/components/alertModal'; // 삭제 모달
+import Pagenation from '@/app/components/pagenation'; // 페이지네이션
+import UpsertModal from '@/app/components/upsertAdminModal'; // 추가/수정 모달
+import { useToastState } from '@/app/components/useToast'; // ToastAlert
 
 
 export interface Admin {
@@ -121,7 +121,7 @@ export default function AdminPage() {
     },
     { field: 'phone', headerName: '연락처', headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'email', headerName: '이메일', headerClass: 'header-style', cellClass: 'cell-style' },
-    {
+    {// 최근 로그인 날짜와 시간
       field: 'login_ts',
       headerName: '최근 로그인',
       headerClass: 'header-style',
@@ -134,7 +134,7 @@ export default function AdminPage() {
         return date.toLocaleString(); // 로컬 시간 형식으로 출력
       },
     },
-    {
+    {// 계정 활성화
       field: 'status',
       headerName: '활성화',
       headerClass: 'header-style',

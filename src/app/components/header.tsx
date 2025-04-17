@@ -112,7 +112,7 @@ export default function Header() {
           <div
             onClick={() => {
               if (role === 3) {
-                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "warning");
+                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "info");
                 return;
               }
               setOpenUpsert(true)}}
@@ -140,7 +140,7 @@ export default function Header() {
           mode="self"
           session={session}
           onAdded={async () => {
-            await update({ trigger: "update" });
+            await update({ trigger: "update" }); // 수정된 정보로 세션 업데이트
             showToast("내 정보가 수정되었습니다.", "success")
           }}
         />

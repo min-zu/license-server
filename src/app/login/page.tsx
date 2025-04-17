@@ -1,11 +1,22 @@
 'use client';
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ValidID, ValidPW } from "../api/validation";
+
+// Next.js
+import { useRouter } from "next/navigation";
+
+// Auth.js (NextAuth.js v5)
 import { getSession, signIn, signOut } from "next-auth/react";
+
+// MUI
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
+
+// 유효성 검사
+import { ValidID, ValidPW } from "../api/validation";
+
+// ToastAlert
 import { useToastState } from "../components/useToast";
+
 
 export default function SignIn() {
   // 라우터
@@ -22,14 +33,17 @@ export default function SignIn() {
 
     // 토스트 플래그 확인
     const toastFlag = sessionStorage.getItem('loginToast');
+    // 로그아웃
     if (toastFlag === 'loggedout') {
       showToast('로그아웃 되었습니다.', 'success');
       sessionStorage.removeItem('loginToast');
     }
+    // 세션 만료
     if (toastFlag === 'timedout') {
       showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
       sessionStorage.removeItem('loginToast');
     }
+    // 비정상 접근
     if (toastFlag === 'forced') {
       showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
       sessionStorage.removeItem('loginToast');
@@ -46,16 +60,16 @@ export default function SignIn() {
     const ID = formData.get("id")?.toString() ?? "";
     const PW = formData.get("password")?.toString() ?? "";
 
-    if (!ID) {return showToast("아이디를 입력해 주세요.","warning")}
-    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "warning")}
+    if (!ID) {return showToast("아이디를 입력해 주세요.","info")}
+    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "info")}
 
     // 입력값 유효성 검사
     const idCheck = ValidID(ID);
     const pwCheck = ValidPW(PW);
 
     // 유효성 검사 실패 시 에러 메시지
-    if (idCheck !== true) {return showToast(idCheck, "warning")};
-    if (pwCheck !== true) {return showToast(pwCheck, "warning")};
+    if (idCheck !== true) {return showToast(idCheck, "error")};
+    if (pwCheck !== true) {return showToast(pwCheck, "error")};
 
      // Auth.js(NextAuth v5)을 통한 로그인
     const result = await signIn("credentials", {
@@ -96,6 +110,7 @@ export default function SignIn() {
     >
       {/* ToastAlert */}
       {ToastComponent}
+
       {/* Login Form */}
       <Paper
         className="login-form"
@@ -110,6 +125,7 @@ export default function SignIn() {
           backgroundColor: "#053345"
         }}
       >
+        {/* 로고 */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Box
             component="img"
@@ -118,6 +134,8 @@ export default function SignIn() {
             sx={{ height: 40 }}
           />
         </Box>
+
+        {/* 아이디 */}
         <TextField
           fullWidth
           variant="outlined"
@@ -126,6 +144,8 @@ export default function SignIn() {
           name="id"
           autoComplete="off"
         />
+
+        {/* 비밀번호 */}
         <TextField
           fullWidth
           variant="outlined"
@@ -134,6 +154,7 @@ export default function SignIn() {
           name="password"
           autoComplete="new-password"
         />
+
         <Button
           fullWidth
           variant="contained"
@@ -142,6 +163,7 @@ export default function SignIn() {
         >
           LOGIN
         </Button>
+
         <Typography variant="body2" className="text-12" gutterBottom sx={{ textAlign: "left", color: '#fff' }}>
           ※ 본 시스템은 허가된 사용자만 이용할 수 있습니다.<br/>
           부당한 방법으로 시스템에 접속하거나 정보를 삭제, 변경, 유출하는 사용자는 관련법령에 따라 처벌 받을 수 있으니 주의하시기 바랍니다.

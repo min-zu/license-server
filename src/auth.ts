@@ -1,12 +1,19 @@
+// Auth.js (NextAuth.js v5)
 import NextAuth from "next-auth";
 import "next-auth/jwt"
 import Credentials from "next-auth/providers/credentials";
-import { ValidID, ValidPW } from "@/app/api/validation"
-import { query } from "@/app/db/database";
-import { RowDataPacket } from "mysql2/promise";
+
+// 비밀번호 암호화
 import bcrypt from "bcryptjs";
 
+// 유효성 검사
+import { ValidID, ValidPW } from "@/app/api/validation"
 
+// DB
+import { query } from "@/app/db/database";
+import { RowDataPacket } from "mysql2/promise"; // 타입
+
+// Auth.js User, Session, JWT 타입 확장
 declare module "next-auth" {
   interface User {
     role: number;
@@ -37,7 +44,9 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Auth.js 핸들러 및 함수 추출
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // 로그인 방식 : Credentials Provider 사용 (커스텀 로그인)
   providers: [
     Credentials({
       credentials: {
@@ -71,6 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // 로그인 성공 시 로그인 시간 업데이트
         await query("UPDATE admin SET login_ts = NOW() WHERE id = ?", [users[0].id]);
         
+        // 로그인 성공 시 세션에 저장할 사용자 정보 반환
         return {
           role: users[0].role,
           status: users[0].status,
@@ -83,10 +93,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     })
   ],
-  // 세션 관리 방법, 세션 유지 시간(초), 세션 갱신 주기(초)
+  // 세션 설정 (JWT 기반)
   session: {
-    strategy: "jwt",
-    maxAge: 900,
+    strategy: "jwt", // JWT 기반 세션
+    maxAge: 900, // 세션 유효 시간: 900초 (15분)
   },
   callbacks: {
     // JWT 콜백 함수: 로그인 성공 또는 세션 갱신 시 토큰 데이터를 설정하거나 갱신 
@@ -103,7 +113,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
       
-      // 세션 갱신 시: 최신 사용자 정보로 토큰 갱신
+      // 세션 갱신 시 (trigger: 'update'): DB에서 최신 사용자 정보 조회로 토큰 갱신
       if (trigger === 'update') {
         const rows = (await query("SELECT * FROM admin WHERE id = ?", [token.sub]) as RowDataPacket[]);
         const updated = rows[0];
@@ -119,7 +129,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
-    // 세션 콜백 함수: JWT 토큰 정보를 세션 객체에 저장
+    // 세션 콜백 함수: JWT 토큰 정보를 클라이언트로 반환될 세션 객체에 저장
     async session({ session, token }) {
       session.user.role = token.role;
       session.user.status = token.status;
