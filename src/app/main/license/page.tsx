@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 // ag-grid
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi } from 'ag-grid-community';
+import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi, PaginationModule } from 'ag-grid-community';
 
 // mui
 import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
@@ -45,8 +45,11 @@ export default function LicensePage() {
   const modules: Module[] = [
     ClientSideRowModelModule,
     CellStyleModule,
-    RowSelectionModule
+    RowSelectionModule,
+    PaginationModule
   ];
+  // AG Grid API에 접근하기 위한 참조 객체
+  const gridRef = useRef<any>(null);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -164,6 +167,14 @@ export default function LicensePage() {
   const onRowClicked = (event: any) => {
     setSelectedLicense(event.data); // 클릭한 행의 데이터 저장
     setDetailModalOpen(true); // 모달 열기
+  };
+
+  // 현재 페이지 번호와 전체 페이지 수
+  const handlePaginationChanged = (params: any) => {
+    const current = params.api.paginationGetCurrentPage() + 1;
+    const total = params.api.paginationGetTotalPages();
+    setCurrentPage(current);
+    setTotalPages(total);
   };
 
   // 페이지 변경
@@ -317,7 +328,8 @@ export default function LicensePage() {
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
-                setCurrentPage(1);
+                // setCurrentPage(1);
+                gridRef.current?.api?.paginationGoToPage?.(0);
               }}
             >
                 <MenuItem value={20}>20개</MenuItem> 
@@ -425,7 +437,8 @@ export default function LicensePage() {
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
           <AgGridReact
             getRowId={(params) => params.data.number} 
-            rowData={getCurrentPageData()}
+            // rowData={getCurrentPageData()}
+            rowData={licenses}
             rowHeight={30}
             headerHeight={30}
             columnDefs={columnDefs}
@@ -438,6 +451,10 @@ export default function LicensePage() {
             }}
             rowSelection="multiple"
             pagination={true}
+            suppressPaginationPanel={true}
+            paginationPageSize={pageSize}
+            onPaginationChanged={handlePaginationChanged}
+            ref={gridRef}
             onRowClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
           />
@@ -447,9 +464,12 @@ export default function LicensePage() {
           <div className="flex justify-center flex-grow">
             <Pagenation 
               props={{
-                totalPages,
-                currentPage,
-                onChange: handlePageChange
+                // totalPages,
+                // currentPage,
+                // onChange: handlePageChange
+                totalPages: totalPages,
+                currentPage: currentPage,
+                gridRef: gridRef,
               }}
             />
           </div>
