@@ -61,17 +61,17 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
             message: '제품 시리얼 번호는 24자입니다.',
           });
         }
-      })
-      .refine(async (value) => {
-        const trimmed = value.trim();
-        const codes = trimmed.split('-').length >= 3;
-        const isValidLength = (codes && trimmed.length >= 22) || (!codes && trimmed.length === 24);
+      }),
+      // .refine(async (value) => {
+      //   const trimmed = value.trim();
+      //   const codes = trimmed.split('-').length >= 3;
+      //   const isValidLength = (codes && trimmed.length >= 22) || (!codes && trimmed.length === 24);
 
-        if (!isValidLength) return true; // 조건 안 맞으면 중복 체크는 안 함
+      //   if (!isValidLength) return true; // 조건 안 맞으면 중복 체크는 안 함
 
-        const count = await checkHardwareCode(value);
-        return Number(count) === 0;
-      }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
+      //   const count = await checkHardwareCode(value);
+      //   return Number(count) === 0;
+      // }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
@@ -120,6 +120,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     handleSubmit, 
     formState: { errors },
     setValue,
+    setError,
     reset,
     clearErrors,
     watch,
@@ -173,6 +174,16 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   }, [watch, trigger, clearErrors, dirtyFields]);
 
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
+
+    const count = await checkHardwareCode(data.hardwareCode);
+    if (Number(count) !== 0) {
+      // 사용자에게 중복 메시지 보여주기
+      setError("hardwareCode", {
+        type: "manual",
+        message: "이미 사용 중인 제품 시리얼 번호입니다.",
+      });
+      return;
+    }
     
     const updatedSoftwareOpt = { ...data.softwareOpt };
     if(data.hardwareStatus === "ITU") {
