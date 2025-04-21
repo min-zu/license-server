@@ -1,5 +1,5 @@
 /* admin 페이지 관련 css */
-.ag-cell {
+.admin-grid .ag-cell {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
@@ -17,6 +17,7 @@
   width: 25% !important;
   font-size: 13px !important;
   text-align: left !important;
+  
 }
 
 .admin-form .MuiTextField-root {

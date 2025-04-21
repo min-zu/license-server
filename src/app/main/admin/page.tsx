@@ -234,7 +234,7 @@ export default function AdminPage() {
             setSelectedRows([]);
           }}
         />
-        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+        <div className="ag-theme-alpine admin-grid" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
         <AgGridReact
           modules={modules}
           rowData={rowData}

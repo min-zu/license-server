@@ -16,14 +16,15 @@
 }
 
 .cell-style {
-  text-align: center;
-  font-size: 11px;
+  text-align: center !important;
+  font-size: 11px !important;
 }
 
 .cell_left {
   display: flex !important;
   justify-content: flex-start !important;
   text-align: center !important;
+  font-size: 11px !important;
   /* padding-left: 10px !important; */
 }
 
