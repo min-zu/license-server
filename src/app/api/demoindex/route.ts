@@ -4,6 +4,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFileSync } from 'fs';
 
+const execAsync = promisify(exec);
+
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
@@ -74,9 +76,9 @@ export async function POST(request: NextRequest) {
 
   let license_key: string | null = null;
   if (hardware_code.startsWith('ITU')) {
-    // const result = exec(cmd);
-    const result = "DemoITUtest123hardwardCode456";
-    license_key = typeof result === 'string' ? result : null; // exec의 결과가 문자열인지 확인
+    // const _ituKey = await execAsync(cmd);
+    const _ituKey = "DemoITUtest123hardwardCode456";
+    license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
   } 
 
   const rows3 = await query("SELECT hardware_code, init_code, auth_code, process, cpu_name, cfid FROM license");

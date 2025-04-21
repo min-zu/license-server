@@ -6,7 +6,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { generateLicenseKey } from "../utils/licenseUtils";
 import { useToastState } from "./useToast";
 
 interface LicenseDetailModalProps {
