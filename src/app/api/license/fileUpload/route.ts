@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
     const file = formData.get('uploadFile') as File;
 
     const arrayBuffer = await file.arrayBuffer();
-    const content = Buffer.from(arrayBuffer).toString('utf-8');
+    const buffer = Buffer.from(arrayBuffer);
+    await fs.writeFile('/tmp/upload_license.csv', buffer);
+
+    const content = buffer.toString('utf-8');
 
     const records: string[][] = parse(content, {
       skip_empty_lines: true,
@@ -188,6 +191,10 @@ export async function POST(request: NextRequest) {
           );
         }
       }
+      await fs.appendFile(
+        '/tmp/upload_log',
+        `[${new Date().toISOString()}] SQL: ${sql}\nPARAMS: ${JSON.stringify(params)}\n\n`
+      );
       await query(sql, params);
     }
     return NextResponse.json({ message: '업로드 성공' }, { status: 200 });
