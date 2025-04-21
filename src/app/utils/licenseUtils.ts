@@ -28,6 +28,7 @@ export async function generateLicenseKey(data: any) {
       (Number(softwareOpt.av) || 0) * 8 + // option 7
       (Number(softwareOpt.AS) || 0) * 16 + // option 8
       (Number(softwareOpt.행안부) || 0) * 32; // option 3
+      (Number(softwareOpt.한전) || 0) * 64; // option 9
 
     const expireDate = new Date(limitTimeEnd).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);

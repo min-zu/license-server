@@ -21,7 +21,7 @@
 }
 
 .cell_left {
-  display: flex !important;
+  /* display: flex !important; */
   justify-content: flex-start !important;
   text-align: center !important;
   font-size: 11px !important;

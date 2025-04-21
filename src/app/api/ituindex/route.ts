@@ -27,16 +27,17 @@ export async function POST(request: NextRequest) {
   }
 
   if(check == 1) {
-    const data = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as FROM license WHERE hardware_code = ?;", [hardware_code]);
-    const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as } = (data as any[])[0];
+    const data = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?;", [hardware_code]);
+    const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (data as any[])[0];
 
     const function_map = 
       (Number(license_fw) || 0) * 1 +
       (Number(license_vpn) || 0) * 2 +
-      (Number(license_ssl) || 0) * 4 +
-      (Number(license_ips) || 0) * 8 +
-      (Number(license_av) || 0) * 16 +
-      (Number(license_as) || 0) * 32;
+      (Number(license_ips) || 0) * 4 +
+      (Number(license_av) || 0) * 8 +
+      (Number(license_as) || 0) * 16 +
+      (Number(license_ssl) || 0) * 32 +
+      (Number(license_tracker) || 0) * 64;
 
     const expireDate = new Date(limit_time_end).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);

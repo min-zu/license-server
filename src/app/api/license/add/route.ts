@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   const option7 = softwareOpt.av || 0;
   const option8 = softwareOpt.as || 0; 
   // const option9 = softwareOpt.apt || 0;
-  const option9 = softwareOpt.tracker || 0;
+  const option9 = softwareOpt.tracker || softwareOpt.한전 || 0; // 한전 임시
 
   let sql = '';
   const params = [];

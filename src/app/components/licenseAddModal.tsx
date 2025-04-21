@@ -63,8 +63,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         }
       })
       .refine(async (value) => {
+        const trimmed = value.trim();
+        const codes = trimmed.split('-').length >= 3;
+        const isValidLength = (codes && trimmed.length >= 22) || (!codes && trimmed.length === 24);
+
+        if (!isValidLength) return true; // 조건 안 맞으면 중복 체크는 안 함
+
         const count = await checkHardwareCode(value);
-        return Number(count) === 0; // 중복이 없을 경우
+        return Number(count) === 0;
       }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
