@@ -92,7 +92,20 @@
   font-size: 11px !important;
 }
 
+.split-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.split-wrap span {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #c5c5c5;
+}
 
 .split-line {
-  border-top: 1px solid #c5c5c5;
+  /* border-top: 1px solid #c5c5c5; */
+  flex-grow: 1;
+  height: 1px;
+  background-color: #c5c5c5;
 }

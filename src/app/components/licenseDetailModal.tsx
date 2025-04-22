@@ -138,7 +138,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           </div>
           <div className="flex flex-col gap-4 p-10 text-13" style={{ fontSize: '13px' }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>라이센스 정보</span>
+                <div className="split-line"></div>
+              </div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
                   <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
@@ -159,13 +162,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
-                      <TextField {...register("cpuName")} /> : 
+                      <TextField size="small" {...register("cpuName")} /> : 
                       <p>{watch("cpuName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
-                      <TextField {...register("cfid")} /> : 
+                      <TextField size="small" {...register("cfid")} /> : 
                       <p>{watch("cfid")}</p>}
                   </Box>
                 </Box>
@@ -190,13 +193,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(시작) :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("limitTimeStart")} type="date"/> : 
+                    <TextField size="small" {...register("limitTimeStart")} type="date"/> : 
                     <p>{watch("limitTimeStart")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(만료) :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("limitTimeEnd")} type="date"/> : 
+                    <TextField size="small" {...register("limitTimeEnd")} type="date"/> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box>
               </Box>
@@ -205,24 +208,27 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("issuer")} /> : 
+                    <TextField size="small" {...register("issuer")} /> : 
                     <p>{watch("issuer")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>담당자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("manager")} /> : 
+                    <TextField size="small" {...register("manager")} /> : 
                     <p>{watch("manager")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("siteName")} /> : 
+                    <TextField size="small" {...register("siteName")} /> : 
                     <p>{watch("siteName")}</p>}
                 </Box>
               </Box>
 
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>소프트웨어 옵션</span>
+                <div className="split-line"></div>
+              </div>
               
               <Controller
                   control={control}
@@ -249,7 +255,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   )}
                 />
               
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>제품 정보</span>
+                <div className="split-line"></div>
+              </div>
               
               <Box display="flex" alignItems="center">
                 <FormLabel>제품 시리얼번호 :</FormLabel> <p>{license.hardware_code}</p>
@@ -270,11 +279,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Button
                   className="default-btn"
                   onClick={() => {
-                    if (!isEdit) {
-                      setIsEdit(true);
-                    } else {
-                      handleSubmit(onSubmit)();
-                    };
+                    setIsEdit(!isEdit);
+                    // if (!isEdit) {
+                    //   setIsEdit(true);
+                    // } else {
+                    //   handleSubmit(onSubmit);
+                    // };
                   }}
                 >
                   {isEdit ? '저장' : '수정'}
