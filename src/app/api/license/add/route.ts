@@ -45,11 +45,12 @@ export async function POST(request: NextRequest) {
       (Number(softwareOpt.vpn) || 0) * 2 + // option 2
       (Number(softwareOpt.dpi) || 0) * 4 + // option 4
       (Number(softwareOpt.av) || 0) * 8 + // option 7
-      (Number(softwareOpt.AS) || 0) * 16 + // option 8
+      (Number(softwareOpt.as) || 0) * 16 + // option 8
       (Number(softwareOpt.행안부) || 0) * 32 + // option 3
       (Number(softwareOpt.한전) || 0) * 64; // option 9
 
-    const expireDate = new Date(limitTimeEnd).getTime()/1000;
+    const [y, m, d] = limitTimeEnd.split("-").map(Number);
+    const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);
 
     console.log("limitTimeStart: ", limitTimeStart);
