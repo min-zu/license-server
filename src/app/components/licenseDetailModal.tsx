@@ -297,7 +297,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           </div>
         </div>
       </div>
-     {ToastComponent}
+    {ToastComponent}
     </form>
   )
 }
