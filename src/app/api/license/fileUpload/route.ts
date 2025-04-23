@@ -130,7 +130,8 @@ export async function POST(request: NextRequest) {
           (Number(행안부) || 0) * 32 +
           (Number(한전) || 0) * 64;
         
-        const expireDate = new Date(endDate).getTime()/1000;
+        const [y, m, d] = endDate.split("-").map(Number);
+        const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
     
         console.log("functionMap: ", functionMap);

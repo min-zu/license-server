@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     } 
   }
 
-  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license _as, license_tracker FROM license WHERE hardware_code = ?", [hardware_code]);
+  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardware_code]);
   const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
 
   const function_map =  
@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
   const logPath2 = "/tmp/date.log";
+
+  console.log("functionMap: ", function_map);
+  console.log("hexExpire: ", hex_expire);
 
   try {
     writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
