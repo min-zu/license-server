@@ -48,50 +48,78 @@ export default function SessionChecker({
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // 외부 페이지 이동 시 unload 기록 (뒤로가기 복귀 판단용)
+  // 주소창에 url 직접 입력 + loginInit 쿠키 없음 -> 로그아웃
   useEffect(() => {
-    const handleUnload = () => {
-      sessionStorage.setItem('wasExternal', 'true')
-    }
-
-    window.addEventListener('unload', handleUnload)
-    return () => window.removeEventListener('unload', handleUnload)
-  }, [])
-
-  // 페이지 로드 시: 외부 이동 후 복귀 또는 주소창 입력 등의 비정상 진입 여부 확인
-  useEffect(() => {
-    const checkAndSignOut = async () => {
+    const checkDirectUrl = async () => {
       const navEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-      const navType = navEntry?.type
+      const navType = navEntry?.type;
       const isLogin = document.cookie.includes("loginInit=true");
-      const wasExternal = sessionStorage.getItem('wasExternal') === 'true'
-      
-      // 주소창에 url 직접 입력 + loginInit 쿠키 없음 -> 로그아웃
+  
       if (navType === 'navigate' && !isLogin) {
+        console.log('주소창 입력 + 로그인 쿠키 없음 → 로그아웃');
         sessionStorage.setItem('loginToast', 'forced');
         await signOut({ callbackUrl: '/login' });
-        return;
       }
 
-      // unload일때 새로고침인지 외부사이트인지 판단 후 처리
-      if (wasExternal) {
-        if (navType === 'reload') {
-          // 새로고침 후 뒤로가기인 경우 → 기록만 제거하고 통과
-          sessionStorage.removeItem('wasExternal');
-        } else if (navType === 'back_forward') {
-          // 외부에서 뒤로가기 복귀한 경우 → 비정상 접근 처리
-          sessionStorage.removeItem('wasExternal');
-          sessionStorage.setItem('loginToast', 'forced');
-          await signOut({ callbackUrl: '/login' });
-          return;
-        }
-      }
       // 정상 접근으로 판단되면 렌더링 허용
       setAllowRender(true);
     };
   
     if (typeof window !== "undefined") {
-      checkAndSignOut();
+      checkDirectUrl();
+    }
+  }, []);
+
+  // 외부 페이지 이동 시 sessionStorage에 기록
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('페이지 떠남 감지 → wasExternal 기록');
+        sessionStorage.setItem('wasExternal', 'true');
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleBeforeUnload);
+    return () => document.removeEventListener('visibilitychange', handleBeforeUnload);
+  }, [])
+
+  // 외부페이지에서 복귀 시 비정상 진입 여부 확인
+  useEffect(() => {
+    const checkExternalReturn = async () => {
+      const navEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      const navType = navEntry?.type;
+      const wasExternal = sessionStorage.getItem('wasExternal') === 'true';
+  
+      if (wasExternal) {
+        if (navType === 'back_forward') {
+          console.log('외부 이동 후 뒤로 복귀 감지');
+          sessionStorage.removeItem('wasExternal');
+          sessionStorage.setItem('loginToast', 'forced');
+          await signOut({ callbackUrl: '/login' });
+        } else {
+          console.log('탭 복귀 또는 기타 → wasExternal 제거');
+          sessionStorage.removeItem('wasExternal');
+        }
+      }
+    };
+  
+    if (typeof window !== "undefined") {
+      // 페이지 로드시 1회 검사
+      checkExternalReturn();
+  
+      // 복귀할 때(탭 전환 복귀) 검사
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          console.log('탭 복귀 감지');
+          checkExternalReturn();
+        }
+      };
+  
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, []);
 
