@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
+
+  console.log('ip', ip);
   
   // let check = 0;
 
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
   const logContent = `${hardware_code}\n${uuid}\n${init_code}`;
 
   try {
-    writeFileSync(logPath, logContent, { flag: 'w' });
+    // writeFileSync(logPath, logContent, { flag: 'w' });
   } catch (error) {
     console.error("log 파일 생성 실패: ", error);
   }
@@ -47,6 +49,10 @@ export async function POST(request: NextRequest) {
   }
 
   const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardware_code]);
+
+  if(rows2.length === 0) {
+    return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
+  }
   const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
 
   const function_map =  
@@ -70,7 +76,7 @@ export async function POST(request: NextRequest) {
   console.log("hexExpire: ", hex_expire);
 
   try {
-    writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
+    // writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
   } catch (error) {
     console.error("log 파일 생성 실패: ", error);
   }
