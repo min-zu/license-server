@@ -1,9 +1,17 @@
 import React from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Menu, MenuItem } from '@mui/material';
+
+// Auth.js (NextAuth.js v5)
 import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+
+// MUI
+import { Box, Button, Dialog, DialogContent, Menu, MenuItem } from '@mui/material';
+
+// 라이선스 삭제
 import { deleteLicenses } from '@/app/api/license/license';
+
+// ToastAlert
 import { useToastState } from '@/app/components/useToast';
+
 
 interface AlertModalProps {
   open: boolean;
@@ -26,7 +34,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     setAnchorEl(null);
   };
 
-  const router = useRouter();
   const { showToast, ToastComponent } = useToastState();
 
   const handleDeleteConfirm = async () => {
@@ -50,23 +57,24 @@ export default function AlertModal({ open, close, state, title, message, deleteI
       // 관리자 삭제
     } else if(state === 'admin') {
       try {
+        // 관리자 삭제 요청 API 호출
         const res = await fetch('/api/admin', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: deleteIds }),
         });
-          
+        // 응답 데이터 파싱
         const data = await res.json();
-
-        if (!res.ok) showToast('삭제 실패!', 'error');
-    
+        // 요청 실패 시
+        if (!res.ok) showToast('삭제 실패!', 'error'); // toastArlet
+        // 성공시
         showToast(deleteIds.length + '개의 계정이 삭제되었습니다.', 'success');
         onDeleted?.(deleteIds);
         close();
-    
+        // 삭제 된 데이터 중 로그인된 관리자 계정이 포함된 경우
         if (data.deletedSelf) {
-          await signOut({ redirect: false });
-          router.push('/login?loggedout=true');
+          sessionStorage.setItem('loginToast', 'loggedout');
+          await signOut({ callbackUrl:'/login' });
         }
       } catch (err) {
         console.error(err);

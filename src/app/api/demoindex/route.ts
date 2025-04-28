@@ -4,6 +4,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFileSync } from 'fs';
 
+const execAsync = promisify(exec);
+
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
@@ -11,6 +13,8 @@ export async function POST(request: NextRequest) {
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
+
+  console.log('ip', ip);
   
   // let check = 0;
 
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
   const logContent = `${hardware_code}\n${uuid}\n${init_code}`;
 
   try {
-    writeFileSync(logPath, logContent, { flag: 'w' });
+    // writeFileSync(logPath, logContent, { flag: 'w' });
   } catch (error) {
     console.error("log 파일 생성 실패: ", error);
   }
@@ -44,16 +48,21 @@ export async function POST(request: NextRequest) {
     } 
   }
 
-  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license _as FROM license WHERE hardware_code = ?", [hardware_code]);
-  const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as } = (rows2 as any[])[0];
+  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardware_code]);
+
+  if(rows2.length === 0) {
+    return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
+  }
+  const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
 
   const function_map =  
     (Number(license_fw) || 0) * 1 +
     (Number(license_vpn) || 0) * 2 +
-    (Number(license_ssl) || 0) * 4 +
-    (Number(license_ips) || 0) * 8 +
-    (Number(license_av) || 0) * 16 +
-    (Number(license_as) || 0) * 32;
+    (Number(license_ips) || 0) * 4 +
+    (Number(license_av) || 0) * 8 +
+    (Number(license_as) || 0) * 16 +
+    (Number(license_ssl) || 0) * 32 +
+    (Number(license_tracker) || 0) * 64;
 
   const today = new Date(); // 현재 날짜 객체
   const endDate = new Date(today); // 복사본 생성
@@ -63,8 +72,11 @@ export async function POST(request: NextRequest) {
   const hex_expire = Math.floor(expireDate).toString(16);
   const logPath2 = "/tmp/date.log";
 
+  console.log("functionMap: ", function_map);
+  console.log("hexExpire: ", hex_expire);
+
   try {
-    writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
+    // writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
   } catch (error) {
     console.error("log 파일 생성 실패: ", error);
   }
@@ -73,9 +85,9 @@ export async function POST(request: NextRequest) {
 
   let license_key: string | null = null;
   if (hardware_code.startsWith('ITU')) {
-    // const result = exec(cmd);
-    const result = "DemoITUtest123hardwardCode456";
-    license_key = typeof result === 'string' ? result : null; // exec의 결과가 문자열인지 확인
+    // const _ituKey = await execAsync(cmd);
+    const _ituKey = "DemoITUtest123hardwardCode456";
+    license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
   } 
 
   const rows3 = await query("SELECT hardware_code, init_code, auth_code, process, cpu_name, cfid FROM license");

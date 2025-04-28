@@ -1,6 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import { query } from "@/app/db/database";
-import { generateLicenseKey } from "@/app/utils/licenseUtils";
+import { exec } from 'child_process';
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 export async function GET(params: Request) {
   const url = new URL(params.url); 
@@ -19,8 +22,8 @@ export async function POST(request: NextRequest) {
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(',')[0].trim();
   const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
-  const license_key = await generateLicenseKey(data);
-
+  // const license_key = await generateLicenseKey(data);
+  
   const option0 = softwareOpt.basic || 0;
   const option1 = softwareOpt.fw || 0;
   const option2 = softwareOpt.vpn || 0;
@@ -31,7 +34,81 @@ export async function POST(request: NextRequest) {
   const option7 = softwareOpt.av || 0;
   const option8 = softwareOpt.as || 0; 
   // const option9 = softwareOpt.apt || 0;
-  const option9 = softwareOpt.tracker || 0;
+  const option9 = softwareOpt.tracker || softwareOpt.ot || 0; // ot 임시
+  
+  let license_key = null;
+
+  // 라이센스 키
+  if (hardwareCode.startsWith('ITU')) {
+    const functionMap = 
+      (Number(softwareOpt.fw) || 0) * 1 + // option 1
+      (Number(softwareOpt.vpn) || 0) * 2 + // option 2
+      (Number(softwareOpt.dpi) || 0) * 4 + // option 4
+      (Number(softwareOpt.av) || 0) * 8 + // option 7
+      (Number(softwareOpt.as) || 0) * 16 + // option 8
+      (Number(softwareOpt.행안부) || 0) * 32 + // option 3
+      (Number(softwareOpt.ot) || 0) * 64; // option 9
+
+    const [y, m, d] = limitTimeEnd.split("-").map(Number);
+    const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+    const hex_expire = Math.floor(expireDate).toString(16);
+
+    console.log("limitTimeStart: ", limitTimeStart);
+    console.log("limitTimeEnd: ", limitTimeEnd);
+    console.log("functionMap: ", functionMap);
+    console.log("hexExpire: ", hex_expire);
+
+    const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+    // const _ituKey = await execAsync(cmd);
+    const _ituKey = "addtestITU123hardwardCode456";
+    license_key = typeof _ituKey === 'string' ? _ituKey : null;
+
+  } else if (!hardwareCode.startsWith('ITU') && regInit !== "" && regInit !== undefined) {
+    console.log("regInit: ", regInit);
+    let license_module = "-F";
+    if(Number(softwareOpt.vpn) === 1) license_module += "V"; // option 2
+    if(Number(softwareOpt.ssl) === 1) license_module += "S"; // option 3
+    if(Number(softwareOpt.ips) === 1) license_module += "I"; // option 4
+    if(Number(softwareOpt.ddos) === 1) license_module += "D"; // option 5
+    if(Number(softwareOpt.waf) === 1) license_module += "W"; // option 6
+    if(Number(softwareOpt.av) === 1) license_module += "A"; // option 7
+    if(Number(softwareOpt.as) === 1) license_module += "P"; // option 8
+
+    // SMC / ITM
+    else if(hardwareCode.split('-').length >= 3){
+      let serial = hardwareCode;
+      const codes = hardwareCode.split('-');
+
+      if (codes.length > 3) { // cut dummy number
+        serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
+      }
+
+      console.log("regInit: ", regInit);
+      console.log("serial: ", serial);
+      console.log("limitTimeStart: ", limitTimeStart);
+      console.log("limitTimeEnd: ", limitTimeEnd);
+      const cmd = `../issue/fslicense -n -k ${regInit} -s ${serial} -b ${limitTimeStart} -e ${limitTimeEnd}`;
+      // const _itmKey = await execAsync(cmd);
+      const _itmKey = "addtestSMCITM123hardwardCode456";
+      license_key = typeof _itmKey === 'string' ? _itmKey : null;
+
+    } else {
+      // XTM
+      console.log("regInit: ", regInit);
+      console.log("limitTimeStart: ", limitTimeStart);
+      console.log("limitTimeEnd: ", limitTimeEnd);
+      console.log("hardwareCode: ", hardwareCode);
+      console.log("license_module: ", license_module);
+      const cmd = `../issue/issue_china -c ${regInit} -s ${limitTimeStart} -e ${limitTimeEnd} -r ${hardwareCode} ${license_module}`;
+      // const xtm_key = await execAsync(cmd);
+      const xtm_key = "addtestXTM123hardwardCode456";
+      license_key = typeof xtm_key === 'string' ? xtm_key : null;
+    }
+  } else {
+    license_key = null;
+  }
+
+  console.log("license_key: ", license_key);
 
   let sql = '';
   const params = [];

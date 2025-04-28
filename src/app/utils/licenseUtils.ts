@@ -1,5 +1,5 @@
 import { POST } from '@/app/api/cmd/route';
-
+// 삭제예정
 export async function generateLicenseKey(data: any) {
   const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
   let license_key: string | null = null;
@@ -27,7 +27,8 @@ export async function generateLicenseKey(data: any) {
       (Number(softwareOpt.dpi) || 0) * 4 + // option 4
       (Number(softwareOpt.av) || 0) * 8 + // option 7
       (Number(softwareOpt.AS) || 0) * 16 + // option 8
-      (Number(softwareOpt.행안부) || 0) * 32; // option 3
+      (Number(softwareOpt.행안부) || 0) * 32 + // option 3
+      (Number(softwareOpt.ot) || 0) * 64; // option 9
 
     const expireDate = new Date(limitTimeEnd).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);
@@ -37,11 +38,11 @@ export async function generateLicenseKey(data: any) {
 
     const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
     
-    // const res = await fetch('/api/cmd', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ cmd, status: 'write' }),
-    // });
+    const res = await fetch('/api/cmd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cmd, status: 'itu' }),
+    });
 
     // const result = await res.json();
     // console.log("result: ", result);

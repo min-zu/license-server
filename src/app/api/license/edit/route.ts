@@ -1,9 +1,17 @@
+// Next.js
 import { NextResponse, NextRequest } from "next/server";
+
+// DB
 import { query } from "@/app/db/database";
 
+
+// License 정보 업데이트 처리
 export async function PUT(request: NextRequest) {
   try {
+    // 요청 본문(JSON) 파싱
     const body = await request.json();
+
+    // body에서 필요한 값들을 꺼냄
     const {
       softwareOpt,
       limitTimeStart,
@@ -16,15 +24,19 @@ export async function PUT(request: NextRequest) {
       initCode,
     } = body;
 
+    // 필수값 검사: initCode가 없으면 error
     if (!initCode) {
       return NextResponse.json({ error: "initCode is required" }, { status: 400 });
     }
     
+    // ITU 장비 여부 판단: 수정사항에 cpuName과 cfid가 있으면 ITU (ITU가 아닐때 cpuName과 cfid 수정 안함)
     const isITU = "cpuName" in body && "cfid" in body;
 
+    // 초기화
     let updateQuery = "";
     let queryParams: any[] = [];
 
+    // ITU 장비일 경우: cpu_name, cfid 포함 쿼리
     if (isITU) {
       updateQuery = `
         UPDATE license
@@ -65,7 +77,10 @@ export async function PUT(request: NextRequest) {
         cfid,
         initCode,
       ];
-    } else {
+    }
+
+    //ITU 제외 다른 장비일 경우: cpu_name, cfid는 제외
+    else {
       updateQuery = `
         UPDATE license
         SET
@@ -103,6 +118,7 @@ export async function PUT(request: NextRequest) {
       ];
     }
 
+    // DB에 업데이트 실행
     await query(updateQuery, queryParams);
 
     return NextResponse.json({ message: "라이선스 업데이트 완료" });

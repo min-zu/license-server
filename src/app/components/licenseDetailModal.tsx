@@ -6,7 +6,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { generateLicenseKey } from "../utils/licenseUtils";
 import { useToastState } from "./useToast";
 
 interface LicenseDetailModalProps {
@@ -19,9 +18,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const { showToast, ToastComponent } = useToastState();
 
+  // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
   const isITU = license?.hardware_code?.startsWith("ITU");
-
-  console.log(license);
 
   // ITU 유효성 검사
   const ITUSchema = z.object({
@@ -47,8 +45,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     initCode: z.string().optional(),
   })
 
-
+  // 초기 렌더링 값 설정
   const { schema, defaultValues } = useMemo(() => {
+    // 공통
     const base = {
       softwareOpt: {
         FW: license.license_fw === "1" ? 1 : 0,
@@ -58,7 +57,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         WAF: license.license_waf === "1" ? 1 : 0,
         AV: license.license_av === "1" ? 1 : 0,
         AS: license.license_as === "1" ? 1 : 0,
-        Tracker: license.license_tracker === "1" ? 1 : 0,
+        [isITU ? "OT" : "Tracker"]: license.license_tracker === "1" ? 1 : 0,
       },
       limitTimeStart: new Date(license.limit_time_st).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: new Date(license.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
@@ -67,6 +66,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       siteName: license.site_nm,
       initCode: license.init_code,
     };
+    // ITU 장비: ITUSchema로 유효성 검사 및 렌더링 - 공통 + cpuName,cfid
     if (isITU) {
       return {
         schema: ITUSchema,
@@ -77,6 +77,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         },
       };
     }
+    // ITU 장비 제외 다른 장비: nonITUSchema로 유효성 검사 및 렌더링 - 공통
     return { schema: nonITUSchema, defaultValues: base };
   }, [license]);
 
@@ -85,7 +86,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     register,
     handleSubmit, 
     formState: { errors },
-    setValue,
     reset,
     watch,
   } = useForm<z.infer<typeof schema>>({
@@ -98,6 +98,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  // 저장 버튼 클릭 시 실행되는 submit 함수
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
       const res = await fetch('/api/license/edit', {
@@ -116,10 +117,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       }
   
       const result = await res.json();
-      console.log("업데이트 성공:", result);
       showToast("라이선스 수정 완료", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
-      onUpdated?.();
+      onUpdated?.(); // 데이터 갱신
   
     } catch (error) {
       console.error("서버 요청 중 오류 발생:", error);
@@ -138,7 +138,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           </div>
           <div className="flex flex-col gap-4 p-10 text-13" style={{ fontSize: '13px' }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>라이센스 정보</span>
+                <div className="split-line"></div>
+              </div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
                   <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
@@ -159,13 +162,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
-                      <TextField {...register("cpuName")} /> : 
+                      <TextField size="small" {...register("cpuName")} /> : 
                       <p>{watch("cpuName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
-                      <TextField {...register("cfid")} /> : 
+                      <TextField size="small" {...register("cfid")} /> : 
                       <p>{watch("cfid")}</p>}
                   </Box>
                 </Box>
@@ -190,13 +193,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(시작) :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("limitTimeStart")} type="date"/> : 
+                    <TextField size="small" {...register("limitTimeStart")} type="date"/> : 
                     <p>{watch("limitTimeStart")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(만료) :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("limitTimeEnd")} type="date"/> : 
+                    <TextField size="small" {...register("limitTimeEnd")} type="date"/> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box>
               </Box>
@@ -205,24 +208,27 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("issuer")} /> : 
+                    <TextField size="small" {...register("issuer")} /> : 
                     <p>{watch("issuer")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>담당자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("manager")} /> : 
+                    <TextField size="small" {...register("manager")} /> : 
                     <p>{watch("manager")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
-                    <TextField {...register("siteName")} /> : 
+                    <TextField size="small" {...register("siteName")} /> : 
                     <p>{watch("siteName")}</p>}
                 </Box>
               </Box>
 
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>소프트웨어 옵션</span>
+                <div className="split-line"></div>
+              </div>
               
               <Controller
                   control={control}
@@ -237,7 +243,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                               checked={field.value[label] === 1}
                               disabled={!isEdit}
                               onChange={(e) => {
-                                // 여기에 체크박스 변경 로직 추가
                                 const newValue = e.target.checked ? { ...field.value, [label]: 1 } : { ...field.value, [label]: 0 };
                                 field.onChange(newValue);
                               }}
@@ -250,7 +255,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   )}
                 />
               
-              <div className="split-line"></div>
+              <div className="split-wrap">
+                <span>제품 정보</span>
+                <div className="split-line"></div>
+              </div>
               
               <Box display="flex" alignItems="center">
                 <FormLabel>제품 시리얼번호 :</FormLabel> <p>{license.hardware_code}</p>
@@ -271,11 +279,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Button
                   className="default-btn"
                   onClick={() => {
-                    if (!isEdit) {
-                      setIsEdit(true);
-                    } else {
-                      handleSubmit(onSubmit)();
-                    };
+                    setIsEdit(!isEdit);
+                    // if (!isEdit) {
+                    //   setIsEdit(true);
+                    // } else {
+                    //   handleSubmit(onSubmit);
+                    // };
                   }}
                 >
                   {isEdit ? '저장' : '수정'}
@@ -288,7 +297,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           </div>
         </div>
       </div>
-     {ToastComponent}
+    {ToastComponent}
     </form>
   )
 }

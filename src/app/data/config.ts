@@ -23,4 +23,5 @@ export const ituOps = [
   { label: 'DPI', value: 'dpi' },
   { label: 'AV', value: 'av' },
   { label: 'AS', value: 'as' },
+  { label: 'OT', value: 'ot' },
 ] 

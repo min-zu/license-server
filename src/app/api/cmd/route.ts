@@ -7,6 +7,7 @@ import { join } from 'path';
 const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
+  // 삭제예정
   const { cmd, status } = await req.json();
 
   if(status === 'write') {

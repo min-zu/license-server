@@ -1,9 +1,19 @@
+// Next.js
 import { NextRequest, NextResponse } from "next/server";
+
+// DB
 import { query } from "@/app/db/database";
-import { RowDataPacket } from "mysql2/promise";
-import bcrypt from "bcryptjs";
-import { ValidID, ValidPW, ValidName, ValidPhone, ValidEmail } from "../validation";
+import { RowDataPacket } from "mysql2/promise"; // 타입
+
+// Auth.js(NextAuth.js v5)
 import { auth } from "@/auth";
+
+// 비밀번호 암호화
+import bcrypt from "bcryptjs";
+
+// 유효성 검사
+import { ValidID, ValidPW, ValidName, ValidPhone, ValidEmail } from "../validation";
+
 
 // admin 테이블 조회
 export async function GET(req: Request) {

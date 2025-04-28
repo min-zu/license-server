@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 // ag-grid
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, ValidationModule, RowSelectionModule, CellStyleModule, ColDef, Module } from 'ag-grid-community';
+import { ClientSideRowModelModule, ValidationModule, RowSelectionModule, CellStyleModule, ColDef, Module, PaginationModule } from 'ag-grid-community';
 import { Button, FormControl, MenuItem, Select, TextField } from '@mui/material';
 import Pagenation from '@/app/components/pagenation';
 import { fetchLogs, searchLogs } from '@/app/api/log/log'; // API 요청 함수 임포트
@@ -25,9 +25,13 @@ export default function LogPage() {
     ClientSideRowModelModule,
     ValidationModule,
     RowSelectionModule,
-    CellStyleModule
+    CellStyleModule,
+    PaginationModule
   ];
   const [logs, setLogs] = useState<Log[]>([]);
+
+  // AG Grid API에 접근하기 위한 참조 객체
+  const gridRef = useRef<any>(null);
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');
@@ -93,6 +97,14 @@ export default function LogPage() {
     }
   };
 
+  // 현재 페이지 번호와 전체 페이지 수
+  const handlePaginationChanged = (params: any) => {
+    const current = params.api.paginationGetCurrentPage() + 1;
+    const total = params.api.paginationGetTotalPages();
+    setCurrentPage(current);
+    setTotalPages(total);
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -116,7 +128,8 @@ export default function LogPage() {
             value={pageSize}
             onChange={(e) => {
               setPageSize(Number(e.target.value));
-              setCurrentPage(1);
+              // setCurrentPage(1);
+              gridRef.current?.api?.paginationGoToPage?.(0);
             }}
           >
             <MenuItem value={20}>20개</MenuItem>
@@ -179,7 +192,8 @@ export default function LogPage() {
 
       <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
         <AgGridReact
-          rowData={getCurrentPageData()}
+          // rowData={getCurrentPageData()}
+          rowData={logs}
           rowHeight={30}
           headerHeight={30}
           columnDefs={columnDefs}
@@ -190,7 +204,11 @@ export default function LogPage() {
             resizable: true,
             headerClass: 'text-center' // 헤더 텍스트 가운데 정렬
           }}
-          pagination={false}
+          pagination={true}
+          suppressPaginationPanel={true}
+          paginationPageSize={pageSize}
+          onPaginationChanged={handlePaginationChanged}
+          ref={gridRef}
         />
       </div>
 
@@ -198,9 +216,12 @@ export default function LogPage() {
         <div className="flex justify-center flex-grow">
           <Pagenation 
             props={{
-              totalPages,
-              currentPage,
-              onChange: handlePageChange
+              // totalPages,
+              // currentPage,
+              // onChange: handlePageChange
+              totalPages: totalPages,
+              currentPage: currentPage,
+              gridRef: gridRef,
             }}
           />
         </div>
