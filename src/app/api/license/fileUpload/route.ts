@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
 
       console.log("options: ", options);
 
-      let [fw, vpn, 행안부, ssl, dpi, ips, ddos, waf, av, as, tracker, 한전] = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
+      let [fw, vpn, 행안부, ssl, dpi, ips, ddos, waf, av, as, tracker, ot] = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
 
       if(hardwareStatus.toUpperCase() === 'ITU') {
-        [fw, vpn, 행안부, dpi, av, as, 한전] = options;
+        [fw, vpn, 행안부, dpi, av, as, ot] = options;
       } else {
         [fw, vpn, ssl, ips, ddos, waf, av, as, tracker] = options;
       }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
 
       if(hardwareStatus.toUpperCase() === 'ITU') {
-        // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, dpi, av, as, 행안부, 한전}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
+        // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, dpi, av, as, 행안부, ot}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
         const functionMap = 
           (Number(fw) || 0) * 1 +
           (Number(vpn) || 0) * 2 +
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
           (Number(av) || 0) * 8 +
           (Number(as) || 0) * 16 +
           (Number(행안부) || 0) * 32 +
-          (Number(한전) || 0) * 64;
+          (Number(ot) || 0) * 64;
         
         const [y, m, d] = endDate.split("-").map(Number);
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
   
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, dpi, 행안부, 0, 0, av, as, 한전
+            0, fw, vpn, dpi, 행안부, 0, 0, av, as, ot
           );
         } else {
           sql = `INSERT INTO license (
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
   
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, dpi, 행안부, 0, 0, av, as, 한전
+            0, fw, vpn, dpi, 행안부, 0, 0, av, as, ot
           );
         }
       }

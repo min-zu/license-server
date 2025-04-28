@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const option7 = softwareOpt.av || 0;
   const option8 = softwareOpt.as || 0; 
   // const option9 = softwareOpt.apt || 0;
-  const option9 = softwareOpt.tracker || softwareOpt.한전 || 0; // 한전 임시
+  const option9 = softwareOpt.tracker || softwareOpt.ot || 0; // ot 임시
   
   let license_key = null;
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       (Number(softwareOpt.av) || 0) * 8 + // option 7
       (Number(softwareOpt.as) || 0) * 16 + // option 8
       (Number(softwareOpt.행안부) || 0) * 32 + // option 3
-      (Number(softwareOpt.한전) || 0) * 64; // option 9
+      (Number(softwareOpt.ot) || 0) * 64; // option 9
 
     const [y, m, d] = limitTimeEnd.split("-").map(Number);
     const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
