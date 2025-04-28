@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
   
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, dpi, 행안부, 0, 0, av, as, ot
+            0, fw, vpn, 행안부, dpi, 0, 0, av, as, ot
           );
         } else {
           sql = `INSERT INTO license (
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
   
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, dpi, 행안부, 0, 0, av, as, ot
+            0, fw, vpn, 행안부, dpi, 0, 0, av, as, ot
           );
         }
       }
