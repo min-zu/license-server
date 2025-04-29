@@ -5,6 +5,10 @@ import path from 'path';
 import { query } from '@/app/db/database'; // DB 쿼리 유틸 유틸
 import { writeFile } from 'fs/promises';
 import os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +39,7 @@ export async function POST(request: NextRequest) {
     }    
 
     const results: string[] = [];
-    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
+    const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
     for(let i = 0; i < filteredRows.length; i++) {
       const row = filteredRows[i];
@@ -69,7 +73,7 @@ export async function POST(request: NextRequest) {
       const trimmed = hardwareCode.trim();
       const codes = trimmed.split('-').length >= 3;
 
-      if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM') && !hardwareStatus.toUpperCase().includes('SMC') && !hardwareStatus.toUpperCase().includes('XTM')) {
+      if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM')) {
         return NextResponse.json({ message: `${i + 1}행 장비선택 입력` }, { status: 400 });
       }
 
@@ -120,7 +124,6 @@ export async function POST(request: NextRequest) {
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
 
       if(hardwareStatus.toUpperCase() === 'ITU') {
-        // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, dpi, av, as, 행안부, ot}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
         const functionMap = 
           (Number(fw) || 0) * 1 +
           (Number(vpn) || 0) * 2 +
@@ -134,12 +137,10 @@ export async function POST(request: NextRequest) {
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
     
-        console.log("functionMap: ", functionMap);
-        console.log("hexExpire: ", hex_expire);
-    
-        const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
-        // const _ituKey = await execAsync(cmd);
-        const _ituKey = "fileImportAddtestITU123hardwardCode456";
+        const cmd = `/home/future/license/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        const _ituKey = result.stdout.replace(/\n/g, '');
+        // const _ituKey = "fileImportAddtestITU123hardwardCode456";
         license_key = typeof _ituKey === 'string' ? _ituKey : null;
   
         if(license_key) {        

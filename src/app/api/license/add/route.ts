@@ -20,7 +20,7 @@ export async function GET(params: Request) {
 export async function POST(request: NextRequest) {
   const data = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
-  const clientIp = forwarded?.split(',')[0].trim();
+  const clientIp = forwarded?.split(":").pop() || null;
   const { hardwareStatus, hardwareCode, softwareOpt, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid, regInit } = data;
   // const license_key = await generateLicenseKey(data);
   
@@ -53,14 +53,11 @@ export async function POST(request: NextRequest) {
     const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);
 
-    console.log("limitTimeStart: ", limitTimeStart);
-    console.log("limitTimeEnd: ", limitTimeEnd);
-    console.log("functionMap: ", functionMap);
-    console.log("hexExpire: ", hex_expire);
+    const cmd = `/home/future/license/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+    const result = await execAsync(cmd);
+    const _ituKey = result.stdout.replace(/\n/g, '');
 
-    const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
-    // const _ituKey = await execAsync(cmd);
-    const _ituKey = "addtestITU123hardwardCode456";
+    // const _ituKey = "addtestITU123hardwardCode456";
     license_key = typeof _ituKey === 'string' ? _ituKey : null;
 
   } else if (!hardwareCode.startsWith('ITU') && regInit !== "" && regInit !== undefined) {
@@ -83,27 +80,31 @@ export async function POST(request: NextRequest) {
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      console.log("regInit: ", regInit);
-      console.log("serial: ", serial);
-      console.log("limitTimeStart: ", limitTimeStart);
-      console.log("limitTimeEnd: ", limitTimeEnd);
-      const cmd = `../issue/fslicense -n -k ${regInit} -s ${serial} -b ${limitTimeStart} -e ${limitTimeEnd}`;
-      // const _itmKey = await execAsync(cmd);
-      const _itmKey = "addtestSMCITM123hardwardCode456";
+      const startDate = limitTimeStart.split('-').map(Number);
+      const endDate = limitTimeEnd.split('-').map(Number);
+
+      const startDateStr = `${startDate[0]}${startDate[1]}${startDate[2]}`;
+      const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
+
+      const cmd = `/home/future/license/fslicense3 -n -k ${regInit} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
+
+      const result = await execAsync(cmd);
+      const _itmKey = result.stdout.replace(/\n/g, '');
       license_key = typeof _itmKey === 'string' ? _itmKey : null;
 
-    } else {
-      // XTM
-      console.log("regInit: ", regInit);
-      console.log("limitTimeStart: ", limitTimeStart);
-      console.log("limitTimeEnd: ", limitTimeEnd);
-      console.log("hardwareCode: ", hardwareCode);
-      console.log("license_module: ", license_module);
-      const cmd = `../issue/issue_china -c ${regInit} -s ${limitTimeStart} -e ${limitTimeEnd} -r ${hardwareCode} ${license_module}`;
-      // const xtm_key = await execAsync(cmd);
-      const xtm_key = "addtestXTM123hardwardCode456";
-      license_key = typeof xtm_key === 'string' ? xtm_key : null;
-    }
+    } 
+    //   else {
+    //   // XTM 사용안함
+    //   console.log("regInit: ", regInit);
+    //   console.log("limitTimeStart: ", limitTimeStart);
+    //   console.log("limitTimeEnd: ", limitTimeEnd);
+    //   console.log("hardwareCode: ", hardwareCode);
+    //   console.log("license_module: ", license_module);
+    //   const cmd = `../issue/issue_china -c ${regInit} -s ${limitTimeStart} -e ${limitTimeEnd} -r ${hardwareCode} ${license_module}`;
+    //   // const xtm_key = await execAsync(cmd);
+    //   const xtm_key = "addtestXTM123hardwardCode456";
+    //   license_key = typeof xtm_key === 'string' ? xtm_key : null;
+    // }
   } else {
     license_key = null;
   }

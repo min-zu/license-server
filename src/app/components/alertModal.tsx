@@ -120,7 +120,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
                   link.download = 'defaultImport.csv';
                   link.click();
                 }}
-              >ITM/SMC/XTM 샘플파일</MenuItem>
+              >ITM 샘플파일</MenuItem>
             </Menu>
             </>
           ) : (

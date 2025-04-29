@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const hardware_code = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
-  const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
+  const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
   
   let check = 0;
 
@@ -29,13 +29,13 @@ export async function POST(request: NextRequest) {
   }
 
   if(check == 1) {
-    const data = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?;", [hardware_code]);
-    const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (data as any[])[0];
+    const data = await query("SELECT limit_time_st, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?;", [hardware_code]);
+    const { limit_time_start, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (data as any[])[0];
 
     let license_key: string | null = null;
     if (hardware_code.startsWith('ITU')) {
           
-        const function_map = 
+      const function_map = 
         (Number(license_fw) || 0) * 1 +
         (Number(license_vpn) || 0) * 2 +
         (Number(license_ips) || 0) * 4 +
@@ -44,16 +44,15 @@ export async function POST(request: NextRequest) {
         (Number(license_ssl) || 0) * 32 +
         (Number(license_tracker) || 0) * 64;
 
-      const expireDate = new Date(limit_time_end).getTime()/1000;
+      const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const [y, m, d] = date.split("-").map(Number);
+      const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
       const hex_expire = Math.floor(expireDate).toString(16);
 
-      
-      console.log('function_map', function_map);
-      console.log('hex_expire', hex_expire);
-      
-      const cmd = `/var/www/issue/license ${hardware_code} ${function_map} ${hex_expire}`;
-      // const _ituKey = await execAsync(cmd);
-      const _ituKey = "ituindexITUtest123hardwardCode456";
+      const cmd = `/home/future/license/license ${hardware_code} ${function_map} ${hex_expire}`;
+      const result = await execAsync(cmd);
+      const _ituKey = result.stdout.replace(/\n/g, '');
+      // const _ituKey = "ituindexITUtest123hardwardCode456";
       license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
 
     } else if (hardware_code.split('-').length >= 3) {
@@ -65,9 +64,15 @@ export async function POST(request: NextRequest) {
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      const cmd = `/var/www/issue/fslicense -n -k ${init_code} -s ${serial} -e ${limit_time_end}`;
-      // const _itmKey = await execAsync(cmd);
-      const _itmKey = "ituindexSMCITMtest123hardwardCode456";
+      const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const endDate = date.split('-').map(Number);
+      const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
+
+      const cmd = `/home/future/license/fslicense3 -n -k ${init_code} -s ${serial} -e ${endDateStr}`;
+
+      const result = await execAsync(cmd);
+      const _itmKey = result.stdout.replace(/\n/g, '');
+      // const _itmKey = "ituindexSMCITMtest123hardwardCode456";
       license_key = typeof _itmKey === 'string' ? _itmKey : null; // exec의 결과가 문자열인지 확인
     }
 

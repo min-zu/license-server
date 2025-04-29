@@ -346,8 +346,6 @@ export default function LicensePage() {
                 <MenuItem value={'all'}>전체</MenuItem>
                 <MenuItem value={'ITU'}>ITU</MenuItem>
                 <MenuItem value={'ITM'}>ITM</MenuItem> 
-                <MenuItem value={'XTM'}>XTM</MenuItem> 
-                <MenuItem value={'SMC'}>SMC</MenuItem>
               </Select>
             </FormControl>
 
@@ -533,7 +531,7 @@ export default function LicensePage() {
               <br />
               고객사명, 프로젝트명, 고객사 E-mail, 소프트웨어 옵션]
               <div className="split-line my-4 border-t border-gray-300" />
-              * 장비선택(ITU, ITM, XTM, SMC)
+              * 장비선택(ITU, ITM)
               <br />
               * 유효기간(YYYYMMDD 형식), * 라이센스 옵션(1: 사용함, 0: 사용안함)
             </div>

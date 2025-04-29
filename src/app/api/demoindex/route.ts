@@ -9,10 +9,10 @@ const execAsync = promisify(exec);
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const hardware_code = searchParams.get('serial') || '';
+  const hardwareCode = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
-  const ip = request.headers.get('x-forwarded-for') || '0.0.0.0';
+  const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
   console.log('ip', ip);
   
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   //   `---\n`
   // ].join('\n');
   const logPath = "/tmp/serial.log";
-  const logContent = `${hardware_code}\n${uuid}\n${init_code}`;
+  const logContent = `${hardwareCode}\n${uuid}\n${init_code}`;
 
   try {
     // writeFileSync(logPath, logContent, { flag: 'w' });
@@ -38,24 +38,24 @@ export async function POST(request: NextRequest) {
   const rows = await query("SELECT hardware_code, init_code, process FROM license");
 
   for (const row of rows as any[]) {
-    if (row.hardware_code === hardware_code) {
+    if (row.hardware_code === hardwareCode) {
       if(row.process === 0) {
         // return NextResponse.json({ success: false, message: "Inactive license" });
       } else {
-        await query(`UPDATE license SET init_code = ?, license_date = NOW(), ip = ?, process = 0, auth_code = '0' WHERE hardware_code = ?`, [init_code, ip, hardware_code]);
+        await query(`UPDATE license SET init_code = ?, license_date = NOW(), ip = ?, process = 0, auth_code = '0' WHERE hardware_code = ?`, [init_code, ip, hardwareCode]);
         // return NextResponse.json({ success: true, message: "License updated successfully"});
       }
     } 
   }
 
-  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardware_code]);
+  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardwareCode]);
 
   if(rows2.length === 0) {
     return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
   }
   const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
 
-  const function_map =  
+  const functionMap =  
     (Number(license_fw) || 0) * 1 +
     (Number(license_vpn) || 0) * 2 +
     (Number(license_ips) || 0) * 4 +
@@ -65,14 +65,17 @@ export async function POST(request: NextRequest) {
     (Number(license_tracker) || 0) * 64;
 
   const today = new Date(); // 현재 날짜 객체
-  const endDate = new Date(today); // 복사본 생성
+  const endDate = new Date(); 
   endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
+
+  console.log("endDate: ", endDate);
 
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
   const logPath2 = "/tmp/date.log";
 
-  console.log("functionMap: ", function_map);
+  console.log("functionMap: ", functionMap);
   console.log("hexExpire: ", hex_expire);
 
   try {
@@ -81,30 +84,33 @@ export async function POST(request: NextRequest) {
     console.error("log 파일 생성 실패: ", error);
   }
 
-  const cmd = `/var/www/issue/license ${hardware_code} ${function_map} ${hex_expire}`;
+  // const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
 
   let license_key: string | null = null;
-  if (hardware_code.startsWith('ITU')) {
+  if (hardwareCode.startsWith('ITU')) {
+    const cmd = `/home/future/license/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+    const result = await execAsync(cmd);
+    const _ituKey = result.stdout.replace(/\n/g, '');
     // const _ituKey = await execAsync(cmd);
-    const _ituKey = "DemoITUtest123hardwardCode456";
+    // const _ituKey = "DemoITUtest123hardwardCode456";
     license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
   } 
 
   const rows3 = await query("SELECT hardware_code, init_code, auth_code, process, cpu_name, cfid FROM license");
   
   for (const row of rows3 as any[]) {
-    if (row.hardware_code === hardware_code)
+    if (row.hardware_code === hardwareCode)
       if(row.auth_code === '0') {
-      await query(`UPDATE license SET init_code = ? WHERE hardware_code = ?`, [init_code, hardware_code]);
-      await query(`UPDATE license SET limit_time_st = ? WHERE hardware_code = ?`, [today, hardware_code]);
-      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_code = ?`, [endDate.toISOString().split("T")[0], hardware_code]);
-      await query(`UPDATE license SET license_date = ? WHERE hardware_code = ?`, [today, hardware_code]);
-      await query(`UPDATE license SET auth_code = ? WHERE hardware_code = ?`, [license_key, hardware_code]);
+      await query(`UPDATE license SET init_code = ? WHERE hardware_code = ?`, [init_code, hardwareCode]);
+      await query(`UPDATE license SET limit_time_st = ? WHERE hardware_code = ?`, [today, hardwareCode]);
+      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_code = ?`, [endDate.toISOString().split("T")[0], hardwareCode]);
+      await query(`UPDATE license SET license_date = ? WHERE hardware_code = ?`, [today, hardwareCode]);
+      await query(`UPDATE license SET auth_code = ? WHERE hardware_code = ?`, [license_key, hardwareCode]);
 
       return NextResponse.json({ success: true, message: "License updated successfully"});
       } else {
         let comment = '';
-        await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardware_code, init_code, row.process, row.cpu_name, row.cfid, comment]);
+        await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareCode, init_code, row.process, row.cpu_name, row.cfid, comment]);
         return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
 
       }

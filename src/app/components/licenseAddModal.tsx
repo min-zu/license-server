@@ -42,7 +42,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   };
 
   const addSchema = z.object({
-    hardwareStatus: z.enum(["ITU", "ITM", "XTM", "SMC"]),
+    hardwareStatus: z.enum(["ITU", "ITM"]),
     hardwareCode: z.string()
       .min(1, { message: '제품 시리얼 번호를 입력해주세요.' })
       .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, { message: '제품 시리얼 번호는 영문과 숫자를 각각 1개 이상 포함해야 합니다.' })
@@ -155,7 +155,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     },
   });
 
-  // "ITU", "ITM", "XTM", "SMC" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
+  // "ITU", "ITM" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
   const fieldsToCheck = ["hardwareCode", "manager", "cpuName", "siteName", "cfid"] as const;
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                   }
                 }}
               >
-                {["ITU", "ITM", "XTM", "SMC"].map((type) => (
+                {["ITU", "ITM"].map((type) => (
                   <ToggleButton key={type} value={type}>{type}</ToggleButton>
                 ))}
               </ToggleButtonGroup>
