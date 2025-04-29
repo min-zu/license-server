@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from "next/server";
 import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from "fs/promises";
+
 
 const execAsync = promisify(exec);
 
@@ -54,6 +56,23 @@ export async function POST(request: NextRequest) {
       const _ituKey = result.stdout.replace(/\n/g, '');
       // const _ituKey = "ituindexITUtest123hardwardCode456";
       license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
+
+      // Log
+      const logPath = "/home/future/license/log/ituindexcmd.log";
+      const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+serial_num: ${hardware_code}
+uuid: ${uuid}
+hardware_key: ${init_code}
+enddate: ${date}
+${cmd}
+
+`;
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
 
     } else if (hardware_code.split('-').length >= 3) {
       

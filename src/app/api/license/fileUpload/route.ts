@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parse } from 'csv-parse/sync';
 import fs from 'fs/promises';
-import path from 'path';
 import { query } from '@/app/db/database'; // DB 쿼리 유틸 유틸
-import { writeFile } from 'fs/promises';
-import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -17,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile('/tmp/upload_license.csv', buffer);
+    await fs.writeFile('/home/future/license/log/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
@@ -272,10 +269,19 @@ export async function POST(request: NextRequest) {
       }
 
       */
-      await fs.appendFile(
-        '/tmp/upload_log',
-        `[${new Date().toISOString()}] SQL: ${sql}\nPARAMS: ${JSON.stringify(params)}\n\n`
-      );
+      // Log
+      const logPath = '/home/future/license/log/upload_log';
+      const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+SQL: ${sql}
+PARAMS: ${JSON.stringify(params)}
+
+`;
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
       await query(sql, params);
     }
     return NextResponse.json({ message: '업로드 성공' }, { status: 200 });

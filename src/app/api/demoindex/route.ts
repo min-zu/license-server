@@ -2,7 +2,8 @@ import { NextResponse, NextRequest } from "next/server";
 import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { writeFileSync } from 'fs';
+import fs from 'fs/promises';
+
 
 const execAsync = promisify(exec);
 
@@ -15,25 +16,6 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
   console.log('ip', ip);
-  
-  // let check = 0;
-
-  /**log */
-  // const logPath = "/tmp/serial.log";
-  // const logContent = [
-  //   `hardware_code: ${hardware_code}`,
-  //   `uuid: ${uuid}`,
-  //   `init_code: ${init_code}`,
-  //   `---\n`
-  // ].join('\n');
-  const logPath = "/tmp/serial.log";
-  const logContent = `${hardwareCode}\n${uuid}\n${init_code}`;
-
-  try {
-    // writeFileSync(logPath, logContent, { flag: 'w' });
-  } catch (error) {
-    console.error("log 파일 생성 실패: ", error);
-  }
 
   const rows = await query("SELECT hardware_code, init_code, process FROM license");
 
@@ -73,16 +55,9 @@ export async function POST(request: NextRequest) {
 
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
-  const logPath2 = "/tmp/date.log";
 
   console.log("functionMap: ", functionMap);
   console.log("hexExpire: ", hex_expire);
-
-  try {
-    // writeFileSync(logPath2, endDate.toISOString().split("T")[0], "utf8");
-  } catch (error) {
-    console.error("log 파일 생성 실패: ", error);
-  }
 
   // const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
 
@@ -94,7 +69,24 @@ export async function POST(request: NextRequest) {
     // const _ituKey = await execAsync(cmd);
     // const _ituKey = "DemoITUtest123hardwardCode456";
     license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
-  } 
+
+    // Log
+    const logPath = "/home/future/license/log/demoindexcmd.log";
+    const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+serial_num: ${hardwareCode}
+uuid: ${uuid}
+hardware_key: ${init_code}
+enddate: ${endDate}
+${cmd}
+
+`;
+    try {
+      await fs.appendFile(logPath, logContent)
+    } catch (error) {
+      console.error("log 파일 생성 실패: ", error);
+    }
+  }
 
   const rows3 = await query("SELECT hardware_code, init_code, auth_code, process, cpu_name, cfid FROM license");
   

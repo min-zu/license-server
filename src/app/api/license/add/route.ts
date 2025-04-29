@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from "next/server";
 import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from "util";
+import fs from "fs/promises";
+
 
 const execAsync = promisify(exec);
 
@@ -60,6 +62,22 @@ export async function POST(request: NextRequest) {
     // const _ituKey = "addtestITU123hardwardCode456";
     license_key = typeof _ituKey === 'string' ? _ituKey : null;
 
+    // Log
+    const logPath = "/home/future/license/log/itucmd.log";
+    const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+serial_num: ${hardwareCode}
+function_map: ${functionMap}
+limit_time_end: ${limitTimeEnd}
+${cmd}
+
+`;
+    try {
+      await fs.appendFile(logPath, logContent)
+    } catch (error) {
+      console.error("log 파일 생성 실패: ", error);
+    }
+
   } else if (!hardwareCode.startsWith('ITU') && regInit !== "" && regInit !== undefined) {
     console.log("regInit: ", regInit);
     let license_module = "-F";
@@ -91,6 +109,23 @@ export async function POST(request: NextRequest) {
       const result = await execAsync(cmd);
       const _itmKey = result.stdout.replace(/\n/g, '');
       license_key = typeof _itmKey === 'string' ? _itmKey : null;
+
+      // Log
+      const logPath = "/home/future/license/log/itmcmd.log";
+      const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+serial_num: ${hardwareCode}
+hardware_key: ${regInit}
+limit_time_st: ${limitTimeStart}
+limit_time_end: ${limitTimeEnd}
+${cmd}
+
+`;
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
 
     } 
     //   else {

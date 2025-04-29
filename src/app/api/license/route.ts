@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/app/db/database";
+import fs from "fs/promises"
 
 export async function GET(params:Request) {
   try {
@@ -49,6 +50,19 @@ export async function DELETE(request: Request) {
     const sql = `DELETE FROM license WHERE hardware_code IN (${placeholders})`;
     
     const result = await query(sql, codes);
+
+    const logPath = "/home/future/license/log/droplic.log"
+    const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+Deleted Codes: ${JSON.stringify(codes)}
+
+`;
+    try {
+      await fs.appendFile(logPath, logContent)
+    } catch (error) {
+      console.error("log 파일 생성 실패: ", error);
+    }
+
     return NextResponse.json({ success: true, result: result });
     
   } catch (e) {
