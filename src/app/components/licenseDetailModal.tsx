@@ -1,5 +1,6 @@
 import { Box, Button, Checkbox, FormControl, FormControlLabel, FormLabel, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from 'next-auth/react';
 import { defaultOps, ituOps } from "@/app/data/config";
 
 import { useForm, Controller } from "react-hook-form";
@@ -17,6 +18,10 @@ interface LicenseDetailModalProps {
 const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated }) => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const { showToast, ToastComponent } = useToastState();
+
+  // role
+  const { data: session } = useSession();
+  const role = session?.user?.role;
 
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
   const isITU = license?.hardware_code?.startsWith("ITU");
@@ -276,19 +281,21 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               <div className="split-line"></div>
 
               <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
-                <Button
-                  className="default-btn"
-                  onClick={() => {
-                    setIsEdit(!isEdit);
-                    // if (!isEdit) {
-                    //   setIsEdit(true);
-                    // } else {
-                    //   handleSubmit(onSubmit);
-                    // };
-                  }}
-                >
-                  {isEdit ? '저장' : '수정'}
-                </Button>
+                {role !== 1 && (
+                  <Button
+                    className="default-btn"
+                    onClick={() => {
+                      setIsEdit(!isEdit);
+                      // if (!isEdit) {
+                      //   setIsEdit(true);
+                      // } else {
+                      //   handleSubmit(onSubmit);
+                      // };
+                    }}
+                  >
+                    {isEdit ? '저장' : '수정'}
+                  </Button>
+                )}
                 <Button className="close-text-btn" onClick={close}>
                   취소
                 </Button>

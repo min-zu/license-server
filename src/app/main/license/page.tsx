@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 // ag-grid
 import { AgGridReact } from 'ag-grid-react';
@@ -22,6 +23,7 @@ import { addLog } from '@/app/api/log/log';
 
 // toast
 import { useToastState } from '@/app/components/useToast';
+
 
 interface License {
   number: number;
@@ -51,6 +53,11 @@ export default function LicensePage() {
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
+
+  // role
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -304,24 +311,28 @@ export default function LicensePage() {
     <div className="p-4">
         <div className="flex justify-between items-center w-full mb-4">
           <div className="flex items-center gap-1">
-            <Button
-              variant="contained"
-              color="error"
-              size="small"
-              onClick={() => deleteSelectedRows()} // 선택된 체크박스 데이터 가져오기
-            >
-              삭제
-            </Button>
+            {role !== 1 && (
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => deleteSelectedRows()} // 선택된 체크박스 데이터 가져오기
+              >
+                삭제
+              </Button>
+            )}
 
-            <Button
-              className="default-btn"
-              size="small"
-              onClick={() => {
-                setIsAddModalOpen(true);
-              }}
-            >
-              라이센스 등록
-            </Button>
+            {role !== 1 && (
+              <Button
+                className="default-btn"
+                size="small"
+                onClick={() => {
+                  setIsAddModalOpen(true);
+                }}
+              >
+                라이센스 등록
+              </Button>
+            )}
 
             <FormControl size="small" sx={{ width: 80}}>
             <Select
@@ -393,44 +404,46 @@ export default function LicensePage() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button
-              className="default-btn"
-              component="label"
-              size="small"
-            >
-              파일 선택
-              <input
-                type="file"
-                accept=".csv"
-                hidden
-                key={Date.now()}
-                onChange={handleFileChange}
+          {role !== 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                className="default-btn"
+                component="label"
+                size="small"
+              >
+                파일 선택
+                <input
+                  type="file"
+                  accept=".csv"
+                  hidden
+                  key={Date.now()}
+                  onChange={handleFileChange}
+                />
+              </Button>
+
+              <TextField
+                size="small"
+                placeholder={selectedFile ? selectedFile.name : "선택된 파일 없음"}
+                disabled
               />
-            </Button>
 
-            <TextField
-              size="small"
-              placeholder={selectedFile ? selectedFile.name : "선택된 파일 없음"}
-              disabled
-            />
+              <Button
+                className="default-btn"
+                size="small"
+                onClick={handleFileUpload}
+              >
+                등록
+              </Button>
 
-            <Button
-              className="default-btn"
-              size="small"
-              onClick={handleFileUpload}
-            >
-              등록
-            </Button>
-
-            <Button
-              className="default-btn"
-              size="small"
-              onClick={() => setIsHelpModalOpen(true)}
-            >
-              ?
-            </Button>
-          </div>
+              <Button
+                className="default-btn"
+                size="small"
+                onClick={() => setIsHelpModalOpen(true)}
+              >
+                ?
+              </Button>
+            </div>
+          )}
         </div>
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
           <AgGridReact
