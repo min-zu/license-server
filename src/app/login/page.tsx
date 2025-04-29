@@ -11,9 +11,6 @@ import { getSession, signIn, signOut } from "next-auth/react";
 // MUI
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 
-// 유효성 검사
-import { ValidID, ValidPW } from "../api/validation";
-
 // ToastAlert
 import { useToastState } from "../components/useToast";
 
@@ -60,16 +57,8 @@ export default function SignIn() {
     const ID = formData.get("id")?.toString() ?? "";
     const PW = formData.get("password")?.toString() ?? "";
 
-    if (!ID) {return showToast("아이디를 입력해 주세요.","info")}
-    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "info")}
-
-    // 입력값 유효성 검사
-    const idCheck = ValidID(ID);
-    const pwCheck = ValidPW(PW);
-
-    // 유효성 검사 실패 시 에러 메시지
-    if (idCheck !== true) {return showToast(idCheck, "error")};
-    if (pwCheck !== true) {return showToast(pwCheck, "error")};
+    if (!ID) {return showToast("아이디를 입력해 주세요.","warning")}
+    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "warning")}
 
      // Auth.js(NextAuth v5)을 통한 로그인
     const result = await signIn("credentials", {
