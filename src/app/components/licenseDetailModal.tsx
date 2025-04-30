@@ -26,6 +26,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
   const isITU = license?.hardware_code?.startsWith("ITU");
 
+  // 라이선스 키 관리
+  const [authCode, setAuthCode] = useState<string>(license.auth_code || "");
+
+  useEffect(() => {
+    setAuthCode(license.auth_code || "");
+  }, [license.auth_code]);
+
   // ITU 유효성 검사
   const ITUSchema = z.object({
     softwareOpt: z.record(z.number()),
@@ -36,6 +43,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     cpuName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
     siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
     cfid: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
+    hardwareCode: z.string().optional(),
     initCode: z.string().optional(),
   })
 
@@ -47,6 +55,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     issuer: z.string().optional(),
     manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
     siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    hardwareCode: z.string().optional(),
     initCode: z.string().optional(),
   })
 
@@ -59,7 +68,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         VPN: license.license_vpn === "1" ? 1 : 0,
         [isITU ? "행안부" : "SSL"]: license?.license_ssl === "1" ? 1 : 0,
         [isITU ? "DPI" : "IPS"]: license?.license_ips === "1" ? 1 : 0,
-        WAF: license.license_waf === "1" ? 1 : 0,
         AV: license.license_av === "1" ? 1 : 0,
         AS: license.license_as === "1" ? 1 : 0,
         [isITU ? "OT" : "Tracker"]: license.license_tracker === "1" ? 1 : 0,
@@ -69,6 +77,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       issuer: license.issuer,
       manager: license.manager,
       siteName: license.site_nm,
+      hardwareCode: license.hardware_code,
       initCode: license.init_code,
     };
     // ITU 장비: ITUSchema로 유효성 검사 및 렌더링 - 공통 + cpuName,cfid
@@ -124,6 +133,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       showToast("라이선스 수정 완료", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
+      if (result.auth_code) {
+        setAuthCode(result.auth_code);
+      }
       onUpdated?.(); // 데이터 갱신
   
     } catch (error) {
@@ -278,7 +290,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </p>
               </Box>
               <Box display="flex" alignItems="center">
-                <FormLabel>인증키 :</FormLabel> <p>{license.auth_code}</p>
+                <FormLabel>인증키 :</FormLabel> <p>{authCode}</p>
               </Box>
 
               <div className="split-line"></div>
@@ -287,14 +299,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 {role !== 1 && (
                   <Button
                     className="default-btn"
-                    onClick={() => {
-                      setIsEdit(!isEdit);
-                      // if (!isEdit) {
-                      //   setIsEdit(true);
-                      // } else {
-                      //   handleSubmit(onSubmit);
-                      // };
-                    }}
+                    onClick={isEdit ? handleSubmit(onSubmit) : () => setIsEdit(true)}
                   >
                     {isEdit ? '저장' : '수정'}
                   </Button>
