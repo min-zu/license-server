@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest) {
         newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
         // Log
-        const logPath = "/home/future/license/log/edititucmd.log";
+        const logPath = "/home/future/license/log/edit_itulicense.log";
         const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 serial_num: ${hardwareCode}
@@ -129,7 +129,7 @@ ${cmd}
         newLicenseKey = typeof _itmKey === 'string' ? _itmKey : null;
 
         // Log
-        const logPath = "/home/future/license/log/itmcmd.log";
+        const logPath = "/home/future/license/log/edit_itmlicense.log";
         const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 serial_num: ${hardwareCode}

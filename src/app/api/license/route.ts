@@ -51,7 +51,7 @@ export async function DELETE(request: Request) {
     
     const result = await query(sql, codes);
 
-    const logPath = "/home/future/license/log/droplic.log"
+    const logPath = "/home/future/license/log/delete_license.log"
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 Deleted Codes: ${JSON.stringify(codes)}

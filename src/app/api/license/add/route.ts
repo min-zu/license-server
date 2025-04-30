@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     license_key = typeof _ituKey === 'string' ? _ituKey : null;
 
     // Log
-    const logPath = "/home/future/license/log/itucmd.log";
+    const logPath = "/home/future/license/log/add_itulicense.log";
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 serial_num: ${hardwareCode}
@@ -111,7 +111,7 @@ ${cmd}
       license_key = typeof _itmKey === 'string' ? _itmKey : null;
 
       // Log
-      const logPath = "/home/future/license/log/itmcmd.log";
+      const logPath = "/home/future/license/log/add_itmlicense.log";
       const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 serial_num: ${hardwareCode}

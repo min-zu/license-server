@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
 
     // Log
-    const logPath = "/home/future/license/log/demoindexcmd.log";
+    const logPath = "/home/future/license/log/demoindex_license.log";
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 serial_num: ${hardwareCode}

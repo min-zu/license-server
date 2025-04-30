@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
 
       */
       // Log
-      const logPath = '/home/future/license/log/upload_log';
+      const logPath = '/home/future/license/upload_license.log';
       const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 SQL: ${sql}
