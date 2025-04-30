@@ -98,7 +98,7 @@ export default function LicensePage() {
   const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
-    { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px' }, cellClass: 'cell_left', width: 100 },
+    { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px' }, cellClass: 'cell-style', width: 100 },
     { field: 'reg_date', headerName: '등록일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         const value = params.value;
@@ -108,7 +108,7 @@ export default function LicensePage() {
         return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
-    { field: 'hardware_code', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-style', width: 220 },
+    { field: 'hardware_code', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
       headerName: item.split('_')[1].toUpperCase(),
@@ -145,9 +145,9 @@ export default function LicensePage() {
       }
     },
     { field: 'ip', headerName: 'IP', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
-    { field: 'issuer', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
-    { field: 'manager', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
-    { field: 'site_nm', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-style', width: 150 },
+    { field: 'issuer', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
+    { field: 'manager', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
+    { field: 'site_nm', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-left', width: 150 },
   ]);
 
   // 라이센스 데이터 조회

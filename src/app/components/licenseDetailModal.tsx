@@ -159,7 +159,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </Box>
               </Box>
 
-              {license.hardware_code.startsWith('ITU') ? (
+              {license.hardware_status.toUpperCase() === 'ITU' ? (
                 <Box className="detail-line-box">
                   <Box className="detail-line-box-item">
                     <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.process}</p> 
@@ -229,36 +229,39 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                     <p>{watch("siteName")}</p>}
                 </Box>
               </Box>
-
-              <div className="split-wrap">
-                <span>소프트웨어 옵션</span>
-                <div className="split-line"></div>
-              </div>
-              
-              <Controller
-                  control={control}
-                  name="softwareOpt"
-                  render={({ field }) => (
-                    <Box className="detail-line-box">
-                      {(license.hardware_code.startsWith('ITU') ? ituOps : defaultOps).map(({ label, value }) => (
-                        <FormControlLabel
-                          key={label}
-                          control={
-                            <Checkbox 
-                              checked={field.value[label] === 1}
-                              disabled={!isEdit}
-                              onChange={(e) => {
-                                const newValue = e.target.checked ? { ...field.value, [label]: 1 } : { ...field.value, [label]: 0 };
-                                field.onChange(newValue);
-                              }}
-                            />
-                          }
-                          label={label}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                />
+              {license.hardware_status.toUpperCase() === 'ITU' && (
+                <>
+                <div className="split-wrap">
+                  <span>소프트웨어 옵션</span>
+                  <div className="split-line"></div>
+                </div>
+                
+                <Controller
+                    control={control}
+                    name="softwareOpt"
+                    render={({ field }) => (
+                      <Box className="detail-line-box">
+                        {ituOps.map(({ label, value }) => (
+                          <FormControlLabel
+                            key={label}
+                            control={
+                              <Checkbox 
+                                checked={field.value[label] === 1}
+                                disabled={!isEdit}
+                                onChange={(e) => {
+                                  const newValue = e.target.checked ? { ...field.value, [label]: 1 } : { ...field.value, [label]: 0 };
+                                  field.onChange(newValue);
+                                }}
+                              />
+                            }
+                            label={label}
+                          />
+                        ))}
+                      </Box>
+                    )}
+                  />
+                </>
+              )}
               
               <div className="split-wrap">
                 <span>제품 정보</span>

@@ -7,15 +7,13 @@ import fs from 'fs/promises';
 
 const execAsync = promisify(exec);
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   const hardwareCode = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
   const init_code = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
-
-  console.log('ip', ip);
 
   const rows = await query("SELECT hardware_code, init_code, process FROM license");
 
@@ -30,12 +28,12 @@ export async function POST(request: NextRequest) {
     } 
   }
 
-  const rows2 = await query("SELECT limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardwareCode]);
+  const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardwareCode]);
 
   if(rows2.length === 0) {
-    return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
+    return NextResponse.json('');
   }
-  const { limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
+  const { hardware_status, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
 
   const functionMap =  
     (Number(license_fw) || 0) * 1 +
@@ -51,18 +49,13 @@ export async function POST(request: NextRequest) {
   endDate.setMonth(endDate.getMonth() + 1);
   endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
 
-  console.log("endDate: ", endDate);
-
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
-
-  console.log("functionMap: ", functionMap);
-  console.log("hexExpire: ", hex_expire);
 
   // const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
 
   let license_key: string | null = null;
-  if (hardwareCode.startsWith('ITU')) {
+  if (hardware_status.toUpperCase() === 'ITU') {
     const cmd = `/home/future/license/license ${hardwareCode} ${functionMap} ${hex_expire}`;
     const result = await execAsync(cmd);
     const _ituKey = result.stdout.replace(/\n/g, '');
@@ -99,11 +92,11 @@ ${cmd}
       await query(`UPDATE license SET license_date = ? WHERE hardware_code = ?`, [today, hardwareCode]);
       await query(`UPDATE license SET auth_code = ? WHERE hardware_code = ?`, [license_key, hardwareCode]);
 
-      return NextResponse.json({ success: true, message: "License updated successfully"});
+      return NextResponse.json(license_key);
       } else {
         let comment = '';
         await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareCode, init_code, row.process, row.cpu_name, row.cfid, comment]);
-        return NextResponse.json({ success: false, message: 'Invalid hardware code' }, { status: 400 });
+        return NextResponse.json(comment);
 
       }
     } 

@@ -74,7 +74,18 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       // }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
-    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
+    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
+      .superRefine((value, ctx) => {
+        const startDate = getValues('limitTimeStart');
+        const endDate = new Date(value);
+        
+        if (value <= startDate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '만료일을 확인해주세요.',
+          });
+        }
+      }),
     issuer: z.string().optional(),
     manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
     cpuName: z.string(),
@@ -125,6 +136,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     clearErrors,
     watch,
     trigger,
+    getValues,
     formState: { dirtyFields }
   } = useForm<z.infer<typeof addSchema>>({
     resolver: zodResolver(addSchema),
@@ -261,24 +273,25 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 helperText={errors.hardwareCode?.message}
                 {...register('hardwareCode', {
                   onChange: (e) => {
-                    const value = e.target.value.trim();
-                    setValue('hardwareCode', value);
+                    const value = e.target.value;
+                    setValue('hardwareCode', value.replace(/\s/g, ''));
                   }
                 })}
               />
               {textFieldTooltip(`ITU : ITU201AXXXXXXXXXXXXXXXXX (24 codes)\nITM : 3XXXXX-XXXXXX-XXXXXXXX[-N]\n(대소문자구분 22 codes | 번호추가[-N] 시 24 codes)`)}
             </Box>
-
-            <Box display="flex" alignItems="center">
-              <FormLabel>
-                <span>&nbsp;&nbsp;</span>소프트웨어 옵션
+            
+            {selectedHardware === 'ITU' && (
+              <Box display="flex" alignItems="center">
+                <FormLabel>
+                  <span>&nbsp;&nbsp;</span>소프트웨어 옵션
               </FormLabel>
               <Controller
                 control={control}
                 name="softwareOpt"
                 render={({ field }) => (
                   <FormGroup className="flex flex-wrap justify-between" style={{ flexDirection: 'row' }}>
-                    {(selectedHardware === 'ITU' ? ituOps : defaultOps).map((item) => (
+                    {ituOps.map((item) => (
                       <FormControlLabel
                         key={item.value}
                         control={
@@ -297,7 +310,8 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                   </FormGroup>
                 )}
               />
-            </Box>
+              </Box>
+            )}
 
             <Box display="flex" alignItems="center" >
               <FormLabel>
@@ -390,7 +404,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('regInit')}
+                {...register('regInit', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('regInit', value.replace(/\s/g, ''));
+                  }
+                })}
               />
               {textFieldTooltip('수동 발급시에만 입력하세요!')}
             </Box>

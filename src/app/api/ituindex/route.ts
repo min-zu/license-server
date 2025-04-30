@@ -7,7 +7,7 @@ import fs from "fs/promises";
 
 const execAsync = promisify(exec);
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   const hardware_code = searchParams.get('serial') || '';
@@ -31,11 +31,11 @@ export async function POST(request: NextRequest) {
   }
 
   if(check == 1) {
-    const data = await query("SELECT limit_time_st, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?;", [hardware_code]);
-    const { limit_time_start, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (data as any[])[0];
+    const data = await query("SELECT hardware_status, limit_time_st, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?;", [hardware_code]);
+    const { hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (data as any[])[0];
 
     let license_key: string | null = null;
-    if (hardware_code.startsWith('ITU')) {
+    if (hardware_status.toUpperCase() === 'ITU') {
           
       const function_map = 
         (Number(license_fw) || 0) * 1 +
@@ -74,7 +74,7 @@ ${cmd}
         console.error("log 파일 생성 실패: ", error);
       }
 
-    } else if (hardware_code.split('-').length >= 3) {
+    } else if (hardware_status.toUpperCase() === 'ITM') {
       
       let serial = hardware_code;
       const codes = hardware_code.split('-');
@@ -109,8 +109,8 @@ ${cmd}
         }
       }
     }
-    return NextResponse.json({ license_key });
+    return NextResponse.json(license_key);
   } else {
-    return NextResponse.json({ error: 'Invalid hardware code' }, { status: 400 });
+    return NextResponse.json('');
   }
 }
