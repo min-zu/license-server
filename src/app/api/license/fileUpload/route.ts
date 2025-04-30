@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile('/home/future/license/log/upload_license.csv', buffer);
+    await fs.writeFile('/home/future/license/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
 
       */
       // Log
-      const logPath = '/home/future/license/upload_license.log';
+      const logPath = '/home/future/license/log/upload_license.log';
       const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
 SQL: ${sql}
