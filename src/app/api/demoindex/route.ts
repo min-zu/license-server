@@ -10,39 +10,39 @@ const execAsync = promisify(exec);
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const hardwareCode = searchParams.get('serial') || '';
+  const hardwareSerial = searchParams.get('serial') || '';
   const uuid = searchParams.get('uuid') || '';
-  const init_code = searchParams.get('hardware') || 'testcode';
+  const hardwareCode = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
-  const rows = await query("SELECT hardware_code, init_code, process FROM license");
+  const rows = await query("SELECT hardware_serial, hardware_code, demo_cnt FROM license");
 
   for (const row of rows as any[]) {
-    if (row.hardware_code === hardwareCode) {
-      if(row.process === 0) {
+    if (row.hardware_serial === hardwareSerial) {
+      if(row.demo_cnt === 0) {
         // return NextResponse.json({ success: false, message: "Inactive license" });
       } else {
-        await query(`UPDATE license SET init_code = ?, license_date = NOW(), ip = ?, process = 0, auth_code = '0' WHERE hardware_code = ?`, [init_code, ip, hardwareCode]);
+        await query(`UPDATE license SET hardware_code = ?, license_date = NOW(), ip = ?, demo_cnt = 0, license_key = '0' WHERE hardware_serial = ?`, [hardwareCode, ip, hardwareSerial]);
         // return NextResponse.json({ success: true, message: "License updated successfully"});
       }
     } 
   }
 
-  const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker FROM license WHERE hardware_code = ?", [hardwareCode]);
+  const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot FROM license WHERE hardware_serial = ?", [hardwareSerial]);
 
   if(rows2.length === 0) {
     return NextResponse.json('');
   }
-  const { hardware_status, limit_time_end, license_fw, license_vpn, license_ssl, license_ips, license_av, license_as, license_tracker } = (rows2 as any[])[0];
+  const { hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot } = (rows2 as any[])[0];
 
   const functionMap =  
     (Number(license_fw) || 0) * 1 +
     (Number(license_vpn) || 0) * 2 +
-    (Number(license_ips) || 0) * 4 +
+    (Number(license_dpi) || 0) * 4 +
     (Number(license_av) || 0) * 8 +
     (Number(license_as) || 0) * 16 +
-    (Number(license_ssl) || 0) * 32 +
-    (Number(license_tracker) || 0) * 64;
+    (Number(license_s2) || 0) * 32 +
+    (Number(license_ot) || 0) * 64;
 
   const today = new Date(); // 현재 날짜 객체
   const endDate = new Date(); 
@@ -52,11 +52,11 @@ export async function GET(request: NextRequest) {
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
 
-  // const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+  // const cmd = `/var/www/issue/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
 
   let license_key: string | null = null;
   if (hardware_status.toUpperCase() === 'ITU') {
-    const cmd = `/home/future/license/license ${hardwareCode} ${functionMap} ${hex_expire}`;
+    const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
     const result = await execAsync(cmd);
     const _ituKey = result.stdout.replace(/\n/g, '');
     // const _ituKey = await execAsync(cmd);
@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
     const logPath = "/home/future/license/log/demoindex_license.log";
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareCode}
+serial_num: ${hardwareSerial}
 uuid: ${uuid}
-hardware_key: ${init_code}
+hardware_key: ${hardwareCode}
 enddate: ${endDate}
 ${cmd}
 
@@ -81,21 +81,21 @@ ${cmd}
     }
   }
 
-  const rows3 = await query("SELECT hardware_code, init_code, auth_code, process, cpu_name, cfid FROM license");
+  const rows3 = await query("SELECT hardware_serial, hardware_code, license_key, demo_cnt, project_name, customer_email FROM license");
   
   for (const row of rows3 as any[]) {
-    if (row.hardware_code === hardwareCode)
-      if(row.auth_code === '0') {
-      await query(`UPDATE license SET init_code = ? WHERE hardware_code = ?`, [init_code, hardwareCode]);
-      await query(`UPDATE license SET limit_time_st = ? WHERE hardware_code = ?`, [today, hardwareCode]);
-      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_code = ?`, [endDate.toISOString().split("T")[0], hardwareCode]);
-      await query(`UPDATE license SET license_date = ? WHERE hardware_code = ?`, [today, hardwareCode]);
-      await query(`UPDATE license SET auth_code = ? WHERE hardware_code = ?`, [license_key, hardwareCode]);
+    if (row.hardware_serial === hardwareSerial)
+      if(row.license_key === '0') {
+      await query(`UPDATE license SET hardware_code = ? WHERE hardware_serial = ?`, [hardwareCode, hardwareSerial]);
+      await query(`UPDATE license SET limit_time_st = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
+      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_serial = ?`, [endDate.toISOString().split("T")[0], hardwareSerial]);
+      await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
+      await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
 
       return NextResponse.json(license_key);
       } else {
         let comment = '';
-        await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareCode, init_code, row.process, row.cpu_name, row.cfid, comment]);
+        await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareSerial, hardwareCode, row.demo_cnt, row.project_name, row.customer_email, comment]);
         return NextResponse.json(comment);
 
       }

@@ -24,27 +24,27 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const role = session?.user?.role;
 
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
-  const isITU = license?.hardware_code?.startsWith("ITU");
+  const isITU = license?.hardwareSerial?.startsWith("ITU");
 
   // 라이선스 키 관리
-  const [authCode, setAuthCode] = useState<string>(license.auth_code || "");
+  const [licenseKey, setLicenseKey] = useState<string>(license.license_key || "");
 
   useEffect(() => {
-    setAuthCode(license.auth_code || "");
-  }, [license.auth_code]);
+    setLicenseKey(license.license_key || "");
+  }, [license.license_key]);
 
   // ITU 유효성 검사
   const ITUSchema = z.object({
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
-    issuer: z.string().optional(),
-    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    cpuName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
-    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    cfid: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
+    regUser: z.string().optional(),
+    regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    projectName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
+    customerEmail: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
+    hardwareSerial: z.string().optional(),
     hardwareCode: z.string().optional(),
-    initCode: z.string().optional(),
   })
 
   // ITU 제외 유효성 검사
@@ -52,11 +52,11 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
-    issuer: z.string().optional(),
-    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    regUser: z.string().optional(),
+    regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    hardwareSerial: z.string().optional(),
     hardwareCode: z.string().optional(),
-    initCode: z.string().optional(),
   })
 
   // 초기 렌더링 값 설정
@@ -66,19 +66,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       softwareOpt: {
         FW: license.license_fw === "1" ? 1 : 0,
         VPN: license.license_vpn === "1" ? 1 : 0,
-        [isITU ? "행안부" : "SSL"]: license?.license_ssl === "1" ? 1 : 0,
-        [isITU ? "DPI" : "IPS"]: license?.license_ips === "1" ? 1 : 0,
+        S2: license?.license_s2 === "1" ? 1 : 0,
+        DPI: license?.license_dpi === "1" ? 1 : 0,
         AV: license.license_av === "1" ? 1 : 0,
         AS: license.license_as === "1" ? 1 : 0,
-        [isITU ? "OT" : "Tracker"]: license.license_tracker === "1" ? 1 : 0,
+        OT: license.license_ot === "1" ? 1 : 0,
       },
-      limitTimeStart: new Date(license.limit_time_st).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
+      limitTimeStart: new Date(license.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: new Date(license.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      issuer: license.issuer,
-      manager: license.manager,
-      siteName: license.site_nm,
-      hardwareCode: license.hardware_code,
-      initCode: license.init_code,
+      issuer: license.reg_user,
+      manager: license.reg_request,
+      siteName: license.customer,
+      hardwareCode: license.hardware_serial,
+      initCode: license.hardware_code,
     };
     // ITU 장비: ITUSchema로 유효성 검사 및 렌더링 - 공통 + cpuName,cfid
     if (isITU) {
@@ -86,8 +86,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         schema: ITUSchema,
         defaultValues: {
           ...base,
-          cpuName: license.cpu_name,
-          cfid: license.cfid,
+          cpuName: license.project_name,
+          cfid: license.customer_email,
         },
       };
     }
@@ -133,8 +133,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       showToast("라이선스 수정 완료", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
-      if (result.auth_code) {
-        setAuthCode(result.auth_code);
+      if (result.license_key) {
+        setLicenseKey(result.license_key);
       }
       onUpdated?.(); // 데이터 갱신
   
@@ -174,19 +174,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               {license.hardware_status.toUpperCase() === 'ITU' ? (
                 <Box className="detail-line-box">
                   <Box className="detail-line-box-item">
-                    <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.process}</p> 
+                    <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.demo_cnt}</p> 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("cpuName")} /> : 
-                      <p>{watch("cpuName")}</p>} 
+                      <TextField size="small" {...register("projectName")} /> : 
+                      <p>{watch("projectName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("cfid")} /> : 
-                      <p>{watch("cfid")}</p>}
+                      <TextField size="small" {...register("customerEmail")} /> : 
+                      <p>{watch("customerEmail")}</p>}
                   </Box>
                 </Box>
               ) : (
@@ -225,20 +225,20 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("issuer")} /> : 
-                    <p>{watch("issuer")}</p>}
+                    <TextField size="small" {...register("regUser")} /> : 
+                    <p>{watch("regUser")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>담당자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("manager")} /> : 
-                    <p>{watch("manager")}</p>}
+                    <TextField size="small" {...register("regRequest")} /> : 
+                    <p>{watch("regRequest")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("siteName")} /> : 
-                    <p>{watch("siteName")}</p>}
+                    <TextField size="small" {...register("customer")} /> : 
+                    <p>{watch("customer")}</p>}
                 </Box>
               </Box>
               {license.hardware_status.toUpperCase() === 'ITU' && (
@@ -281,16 +281,16 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </div>
               
               <Box display="flex" alignItems="center">
-                <FormLabel>제품 시리얼번호 :</FormLabel> <p>{license.hardware_code}</p>
+                <FormLabel>제품 시리얼번호 :</FormLabel> <p>{license.hardware_serial}</p>
               </Box>
               <Box display="flex" alignItems="center">
                 <FormLabel>하드웨어 인증키 :</FormLabel>
                 <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word', maxWidth: '100%' }}>
-                  {license.init_code.length > 60 ? `${license.init_code.slice(0, 60)}\n${license.init_code.slice(60)}` : license.init_code}
+                  {license.hardware_code.length > 60 ? `${license.hardware_code.slice(0, 60)}\n${license.hardware_code.slice(60)}` : license.hardware_code}
                 </p>
               </Box>
               <Box display="flex" alignItems="center">
-                <FormLabel>인증키 :</FormLabel> <p>{authCode}</p>
+                <FormLabel>인증키 :</FormLabel> <p>{licenseKey}</p>
               </Box>
 
               <div className="split-line"></div>

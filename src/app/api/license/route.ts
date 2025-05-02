@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const params = [];
 
     if (searchText && searchField) {
-      if (searchField.includes('date') || searchField.includes('_st') || searchField.includes('_end')) {
+      if (searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end')) {
         sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
         if(!searchText.includes('-')) {
           params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
@@ -47,14 +47,14 @@ export async function DELETE(request: Request) {
     const { codes } = await request.json(); // codes로 변경
 
     const placeholders = codes.map(() => '?').join(',');
-    const sql = `DELETE FROM license WHERE hardware_code IN (${placeholders})`;
+    const sql = `DELETE FROM license WHERE hardware_serial IN (${placeholders})`;
     
     const result = await query(sql, codes);
 
     const logPath = "/home/future/license/log/delete_license.log"
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-Deleted Codes: ${JSON.stringify(codes)}
+Deleted serials: ${JSON.stringify(codes)}
 
 `;
     try {

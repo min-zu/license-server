@@ -28,16 +28,16 @@ import { useToastState } from '@/app/components/useToast';
 interface License {
   number: number;
   reg_date: string;
-  hardware_code: string;
+  hardware_serial: string;
   hardware_status: string;
   software_opt: object;
   license_date: string;
-  limit_time_st: string;
+  limit_time_start: string;
   limit_time_end: string;
   ip: string;
-  issuer: string;
-  manager: string;
-  site_nm: string;
+  reg_user: string;
+  reg_request: string;
+  customer: string;
 
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
@@ -94,8 +94,8 @@ export default function LicensePage() {
   const addModalClose = () => setIsAddModalOpen(false);
   const detailModalClose = () => setDetailModalOpen(false);
 
-  const softwareOptions = ['license_basic', 'license_fw', 'license_vpn', 'license_ssl', 'license_ips', 'license_waf', 'license_av', 'license_as', 'license_tracker'];
-  const searchOptions = ['hardware_code', 'cfid', 'reg_date', 'license_date', 'limit_time_st', 'limit_time_end', 'issuer', 'manager', 'site_nm'];
+  const softwareOptions = ['license_fw', 'license_vpn', 'license_s2', 'license_dpi', 'license_av', 'license_as', 'license_ot'];
+  const searchOptions = ['hardware_serial', 'customer_email', 'reg_date', 'license_date', 'limit_time_start', 'limit_time_end', 'reg_user', 'reg_request', 'customer'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px' }, cellClass: 'cell-style', width: 100 },
@@ -108,7 +108,7 @@ export default function LicensePage() {
         return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
-    { field: 'hardware_code', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
+    { field: 'hardware_serial', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
       headerName: item.split('_')[1].toUpperCase(),
@@ -126,7 +126,7 @@ export default function LicensePage() {
         return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
-    { field: 'limit_time_st', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
+    { field: 'limit_time_start', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         const value = params.value;
         if(!value) return '';
@@ -145,9 +145,9 @@ export default function LicensePage() {
       }
     },
     { field: 'ip', headerName: 'IP', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
-    { field: 'issuer', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
-    { field: 'manager', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
-    { field: 'site_nm', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-left', width: 150 },
+    { field: 'reg_user', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
+    { field: 'reg_request', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
+    { field: 'customer', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-left', width: 150 },
   ]);
 
   // 라이센스 데이터 조회
@@ -250,7 +250,7 @@ export default function LicensePage() {
       showToast('삭제할 데이터를 선택해주세요.', 'warning');
       return;
     }
-    setDeleteIds(selectedRows.map((row) => row.hardware_code));
+    setDeleteIds(selectedRows.map((row) => row.hardware_serial));
     setIsDeleteModalOpen(true);
   };
 
@@ -297,7 +297,7 @@ export default function LicensePage() {
     loadLicenses();
     setHardwareStatus('all');
     setSearchText('');
-    setSearchField('hardware_code');
+    setSearchField('hardware_serial');
   }
 
   // 페이지 데이터 조회

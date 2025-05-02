@@ -8,18 +8,17 @@
 export const defaultOps = [
   { label: 'FW', value: 'fw' },
   { label: 'VPN', value: 'vpn' },
-  { label: 'SSL', value: 'ssl' },
-  { label: 'IPS', value: 'ips' },
-  { label: 'WAF', value: 'waf' },
+  { label: 'S2', value: 's2' },
+  { label: 'DPI', value: 'dpi' },
   { label: 'AV', value: 'av' },
   { label: 'AS', value: 'as' },
-  { label: 'Tracker', value: 'tracker' },
+  { label: 'OT', value: 'ot' },
 ]
 
 export const ituOps = [
   { label: 'FW', value: 'fw' },
   { label: 'VPN', value: 'vpn' },
-  { label: '행안부', value: '행안부' },
+  { label: 'S2', value: 's2' },
   { label: 'DPI', value: 'dpi' },
   { label: 'AV', value: 'av' },
   { label: 'AS', value: 'as' },

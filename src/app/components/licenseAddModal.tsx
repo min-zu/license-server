@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLa
 
 // 데이터
 import { defaultOps, ituOps } from "@/app/data/config";
-import { checkHardwareCode } from "@/app/api/validation";
+import { checkHardwareSerial } from "@/app/api/validation";
 
 // form
 import { useForm, Controller } from "react-hook-form";
@@ -43,7 +43,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
   const addSchema = z.object({
     hardwareStatus: z.enum(["ITU", "ITM"]),
-    hardwareCode: z.string()
+    hardwareSerial: z.string()
       .min(1, { message: '제품 시리얼 번호를 입력해주세요.' })
       .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, { message: '제품 시리얼 번호는 영문과 숫자를 각각 1개 이상 포함해야 합니다.' })
       .superRefine((value, ctx) => {
@@ -86,28 +86,28 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           });
         }
       }),
-    issuer: z.string().optional(),
-    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    cpuName: z.string(),
-    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    cfid: z.string(),
-    regInit: z.string().optional(),
+    regUser: z.string().optional(),
+    regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    projectName: z.string(),
+    customerEmail: z.string(),
+    hardwareCode: z.string().optional(),
   }).superRefine((data, ctx) => {
-    const { hardwareStatus, cfid, cpuName } = data;
+    const { hardwareStatus, customerEmail, projectName } = data;
     const isITU = hardwareStatus === 'ITU';
     const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 
-    if (!cpuName || cpuName.trim() === '') {
+    if (!projectName || projectName.trim() === '') {
       ctx.addIssue({
-        path: ["cpuName"],
+        path: ["projectName"],
         code: z.ZodIssueCode.custom,
         message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
       });
     }
     
-    if (!cfid || cfid.trim() === '') {
+    if (!customerEmail || customerEmail.trim() === '') {
       ctx.addIssue({
-        path: ["cfid"],
+        path: ["customerEmail"],
         code: z.ZodIssueCode.custom,
         message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
       });
@@ -115,9 +115,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     }
 
     if (isITU) {
-      if (!emailRegex.test(cfid)) {
+      if (!emailRegex.test(customerEmail)) {
         ctx.addIssue({
-          path: ["cfid"],
+          path: ["customerEmail"],
           code: z.ZodIssueCode.custom,
           message: '이메일 형식이 올바르지 않습니다.',
         })
@@ -143,32 +143,29 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     mode: 'onChange',
     defaultValues: {
       hardwareStatus: "ITU",
-      hardwareCode: "",
+      hardwareSerial: "",
       softwareOpt: {  
         // FW: 0,
         // VPN: 0,
-        // SSL: 0,
-        // 행안부 :0,
-        // IPS: 0,
+        // S2: 0,
         // DPI: 0,
-        // WAF: 0,
         // AV: 0,
         // AS: 0,
-        // Tracker: 0,
+        // OT: 0,
       },
       limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: "2036-12-31",
-      issuer: "",
-      manager: "",
-      cpuName: "",
-      siteName: "",
-      cfid: "",
-      regInit: "",
+      regUser: "",
+      regRequest: "",
+      customer: "",
+      projectName: "",
+      customerEmail: "",
+      hardwareCode: "",
     },
   });
 
   // "ITU", "ITM" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
-  const fieldsToCheck = ["hardwareCode", "manager", "cpuName", "siteName", "cfid"] as const;
+  const fieldsToCheck = ["hardwareSerial", "regRequest", "customer", "projectName", "customerEmail"] as const;
 
   useEffect(() => {
   const subscription = watch((_value, { name }) => {
@@ -187,10 +184,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
 
-    const count = await checkHardwareCode(data.hardwareCode);
+    const count = await checkHardwareSerial(data.hardwareSerial);
     if (Number(count) !== 0) {
       // 사용자에게 중복 메시지 보여주기
-      setError("hardwareCode", {
+      setError("hardwareSerial", {
         type: "manual",
         message: "이미 사용 중인 제품 시리얼 번호입니다.",
       });
@@ -269,12 +266,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               <TextField 
                 size="small" 
                 inputProps={{ maxLength: 24 }}
-                error={errors.hardwareCode !== undefined}
-                helperText={errors.hardwareCode?.message}
-                {...register('hardwareCode', {
+                error={errors.hardwareSerial !== undefined}
+                helperText={errors.hardwareSerial?.message}
+                {...register('hardwareSerial', {
                   onChange: (e) => {
                     const value = e.target.value;
-                    setValue('hardwareCode', value.replace(/\s/g, ''));
+                    setValue('hardwareSerial', value.replace(/\s/g, ''));
                   }
                 })}
               />
@@ -346,7 +343,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('issuer')} 
+                {...register('regUser')} 
               />
             </Box>
 
@@ -356,9 +353,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.manager !== undefined}
-                helperText={errors.manager?.message}
-                {...register('manager')}
+                error={errors.regRequest !== undefined}
+                helperText={errors.regRequest?.message}
+                {...register('regRequest')}
               />
             </Box>
 
@@ -368,9 +365,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>  
               <TextField 
                 size="small" 
-                error={errors.cpuName !== undefined}
-                helperText={errors.cpuName?.message}
-                {...register('cpuName')}
+                error={errors.projectName !== undefined}
+                helperText={errors.projectName?.message}
+                {...register('projectName')}
               />
             </Box>
 
@@ -380,9 +377,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.siteName !== undefined}
-                helperText={errors.siteName?.message}
-                {...register('siteName')}
+                error={errors.customer !== undefined}
+                helperText={errors.customer?.message}
+                {...register('customer')}
               />
             </Box>
 
@@ -392,9 +389,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.cfid !== undefined}
-                helperText={errors.cfid?.message}
-                {...register('cfid')} 
+                error={errors.customerEmail !== undefined}
+                helperText={errors.customerEmail?.message}
+                {...register('customerEmail')} 
               />
             </Box>
 
@@ -404,10 +401,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('regInit', {
+                {...register('hardwareCode', {
                   onChange: (e) => {
                     const value = e.target.value;
-                    setValue('regInit', value.replace(/\s/g, ''));
+                    setValue('hardwareCode', value.replace(/\s/g, ''));
                   }
                 })}
               />
