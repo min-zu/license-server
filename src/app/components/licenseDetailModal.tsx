@@ -24,7 +24,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const role = session?.user?.role;
 
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
-  const isITU = license?.hardwareSerial?.startsWith("ITU");
+  const isITU = license?.hardware_serial?.startsWith("ITU");
 
   // 라이선스 키 관리
   const [licenseKey, setLicenseKey] = useState<string>(license.license_key || "");
@@ -32,7 +32,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   useEffect(() => {
     setLicenseKey(license.license_key || "");
   }, [license.license_key]);
-
+  
   // ITU 유효성 검사
   const ITUSchema = z.object({
     softwareOpt: z.record(z.number()),
@@ -74,11 +74,11 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       },
       limitTimeStart: new Date(license.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: new Date(license.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      issuer: license.reg_user,
-      manager: license.reg_request,
-      siteName: license.customer,
-      hardwareCode: license.hardware_serial,
-      initCode: license.hardware_code,
+      regUser: license.reg_user,
+      regRequest: license.reg_request,
+      customer: license.customer,
+      hardwareSerial: license.hardware_serial,
+      hardwareCode: license.hardware_code,
     };
     // ITU 장비: ITUSchema로 유효성 검사 및 렌더링 - 공통 + cpuName,cfid
     if (isITU) {
@@ -86,8 +86,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         schema: ITUSchema,
         defaultValues: {
           ...base,
-          cpuName: license.project_name,
-          cfid: license.customer_email,
+          projectName: license.project_name,
+          customerEmail: license.customer_email,
         },
       };
     }

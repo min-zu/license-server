@@ -69,7 +69,7 @@ export default function LicensePage() {
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
-  const [searchField, setSearchField] = useState('hardware_code');
+  const [searchField, setSearchField] = useState('hardware_serial');
   const [hardwareStatus, setHardwareStatus] = useState('all');
 
   // 모달 열기 상태
