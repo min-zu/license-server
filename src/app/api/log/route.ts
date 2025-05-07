@@ -27,12 +27,12 @@ export async function POST(request: Request) {
       
       if (log.length > 1) {
         const results = await Promise.all(log.map((item: any) => {
-          const params = [item.number, item.hardware_code, formatDate(item.license_date), item.manager, item.site_nm];
+          const params = [item.number, item.hardware_serial, formatDate(item.license_date), item.reg_request, item.customer];
           return query(sql, params);
         }));
         return NextResponse.json(results);
       } else {
-        const params = [log[0].number, log[0].hardware_code, formatDate(log[0].license_date), log[0].manager, log[0].site_nm];
+        const params = [log[0].number, log[0].hardware_serial, formatDate(log[0].license_date), log[0].reg_request, log[0].customer];
         const result = await query(sql, params);
         return NextResponse.json(result);
       }
