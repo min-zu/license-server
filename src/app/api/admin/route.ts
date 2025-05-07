@@ -16,9 +16,9 @@ import { ValidID, ValidPW, ValidName, ValidPhone, ValidEmail } from "../validati
 
 
 // admin 테이블 조회
-export async function GET(req: Request) {
+export async function GET(request: NextRequest) {
   // (Server Only) 요청 URL에서 mode, id 파라미터 추출
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const mode = searchParams.get("mode");
   const id = searchParams.get("id");
 
@@ -57,9 +57,9 @@ export async function GET(req: Request) {
 }
 
 // 관리자 추가
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   // 관리자 추가에 필요한 ID, 이름, 휴대폰 번호, 이메일, 비밀번호, 권한 추출
-  const data = await req.json();
+  const data = await request.json();
   const { id, role, name, phone, email, passwd } = data;
   
   // 유효성 검사
@@ -94,9 +94,9 @@ export async function POST(req: NextRequest) {
 }
 
 // 관리자 수정
-export async function PUT(req: NextRequest) {
+export async function PUT(request: NextRequest) {
   // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
-  const data = await req.json();
+  const data = await request.json();
   const { id, role, name, phone, email, passwd, status } = data;
 
   try {
@@ -183,12 +183,12 @@ export async function PUT(req: NextRequest) {
 }
 
 // 관리자 삭제
-export async function DELETE(req: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
     // 로그인한 관리자 세션 정보
     const session = await auth();
     // 삭제할 ID 추출
-    const { ids } = await req.json();
+    const { ids } = await request.json();
 
     // ID 배열이 없거나 형식이 잘못된경우 예외 처리
     if (!ids || !Array.isArray(ids) || ids.length === 0) {

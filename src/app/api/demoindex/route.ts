@@ -52,14 +52,12 @@ export async function GET(request: NextRequest) {
   const expireDate = new Date(endDate).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
 
-  // const cmd = `/var/www/issue/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-
   let license_key: string | null = null;
   if (hardware_status.toUpperCase() === 'ITU') {
     const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
     const result = await execAsync(cmd);
     const _ituKey = result.stdout.replace(/\n/g, '');
-    // const _ituKey = await execAsync(cmd);
+
     // const _ituKey = "DemoITUtest123hardwardCode456";
     license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
 

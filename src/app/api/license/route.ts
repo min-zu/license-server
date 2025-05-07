@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/app/db/database";
 import fs from "fs/promises"
 
-export async function GET(params:Request) {
+export async function GET(request:NextRequest) {
   try {
     const rows = await query("SELECT * FROM license ORDER BY number DESC;");
     return NextResponse.json(rows)
@@ -11,7 +11,7 @@ export async function GET(params:Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { searchField, searchText } = await request.json();
     
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const { codes } = await request.json(); // codes로 변경
 
@@ -51,6 +51,7 @@ export async function DELETE(request: Request) {
     
     const result = await query(sql, codes);
 
+    // Log
     const logPath = "/home/future/license/log/delete_license.log"
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/app/db/database";
 
-export async function GET(params:Request) {
+export async function GET(request:NextRequest) {
   try {
     const rows = await query("SELECT * FROM license_log ORDER BY number DESC;");
     return NextResponse.json(rows)
@@ -10,7 +10,7 @@ export async function GET(params:Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { state, searchField, searchText, log } = await request.json();
 

@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
         const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
         const result = await execAsync(cmd);
         const _ituKey = result.stdout.replace(/\n/g, '');
+
         // const _ituKey = "fileImportAddtestITU123hardwardCode456";
         licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
   

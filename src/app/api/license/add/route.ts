@@ -93,9 +93,10 @@ ${cmd}
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
       const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
-
       const result = await execAsync(cmd);
       const _itmKey = result.stdout.replace(/\n/g, '');
+
+      // const _itmKey = "addtestITM123hardwardCode456";
       licenseKey = typeof _itmKey === 'string' ? _itmKey : null;
 
       // Log
