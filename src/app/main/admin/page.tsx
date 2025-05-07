@@ -41,7 +41,7 @@ export default function AdminPage() {
   // 현재 페이지 번호
   const [currentPage, setCurrentPage] = useState(1);
   // 페이지당 보여줄 행(관리자) 수
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   // mode ('add' = 추가, 'other' = 수정)
   const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
   // 수정 대상 정보
@@ -180,7 +180,6 @@ export default function AdminPage() {
         <div className="flex justify-between items-end mb-4" >
           <FormControl size="small" sx={{ width: 90 }}>
             <Select value={pageSize.toString()} onChange={handlePageSizeChange}>
-              <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={20}>20개</MenuItem>
               <MenuItem value={50}>50개</MenuItem>
               <MenuItem value={100}>100개</MenuItem>
