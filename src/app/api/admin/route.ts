@@ -58,7 +58,7 @@ export async function GET(req: Request) {
 
 // 관리자 추가
 export async function POST(req: NextRequest) {
-  // 관리자 추가에 필요한 ID, 이름, 연락처, 이메일, 비밀번호, 권한 추출
+  // 관리자 추가에 필요한 ID, 이름, 휴대폰 번호, 이메일, 비밀번호, 권한 추출
   const data = await req.json();
   const { id, role, name, phone, email, passwd } = data;
   
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
 // 관리자 수정
 export async function PUT(req: NextRequest) {
-  // 관리자 수정에 필요한 ID, 권한, 이름, 연락처, 이메일, 비밀번호, 계정 활성화 상태 추출
+  // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
   const data = await req.json();
   const { id, role, name, phone, email, passwd, status } = data;
 
@@ -133,7 +133,7 @@ export async function PUT(req: NextRequest) {
       values.push(name);
     }
     
-    // 연락처 변경이 있는 경우 유효성 검사 후 추가
+    // 휴대폰 번호 변경이 있는 경우 유효성 검사 후 추가
     if (phone !== undefined && phone !== existing.phone) {
       const phoneCheck = ValidPhone(phone);
       if (phoneCheck !== true) return NextResponse.json({ success: false, error: phoneCheck }, { status: 400 });

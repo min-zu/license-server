@@ -34,15 +34,15 @@ export const ValidName = (name: unknown): string | true => {
 };
 
 
-// 연락처 유효성 검사
+// 휴대폰 번호 유효성 검사
 export const ValidPhone = (phone: unknown): string | true => {
   // 값이 비어있으면 검사 생략
   if (phone === undefined || phone === null || (typeof phone === "string" && phone.trim() === "")) return true;
   // 문자열 타입인지 확인
-  if (typeof phone !== "string") return "연락처 형식 오류";
-  // 전화번호 형식 확인 (010-1234-5678 또는 010-123-4567, 02-123-4567 또는 02-1234-5678 같은 형식)
-  const phonePattern = /^\d{2,3}-\d{3,4}-\d{4}$/;
-  if (!phonePattern.test(phone)) return "연락처 형식 오류";
+  if (typeof phone !== "string") return "휴대폰 번호 형식 오류";
+  // 휴대폰 번호 형식 확인
+  const phonePattern = /^\d{3}-\d{4}-\d{4}$/;
+  if (!phonePattern.test(phone)) return "휴대폰 번호 형식 오류";
   return true;
 };
 
