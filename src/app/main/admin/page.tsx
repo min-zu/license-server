@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 // AG Grid
-import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule } from 'ag-grid-community';
+import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule, CellStyleModule } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
@@ -31,7 +31,7 @@ export interface Admin {
 
 export default function AdminPage() {
   // ag-Grid에서 사용할 모듈 설정
-  const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule, PaginationModule];
+  const modules: Module[] = [ClientSideRowModelModule, CellStyleModule, RowSelectionModule, PaginationModule];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
   // 전체 관리자 데이터
@@ -233,23 +233,23 @@ export default function AdminPage() {
             setSelectedRows([]);
           }}
         />
-        <div className="ag-theme-alpine admin-grid" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
-        <AgGridReact
-          modules={modules}
-          rowData={rowData}
-          columnDefs={columnDefs}
-          rowSelection={rowSelection}
-          defaultColDef={defaultColDef}
-          theme="legacy"
-          rowHeight={30}
-          headerHeight={30}
-          onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
-          pagination={true}
-          suppressPaginationPanel={true}
-          paginationPageSize={pageSize}
-          onPaginationChanged={handlePaginationChanged}
-          ref={gridRef}
-        />
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+          <AgGridReact
+            modules={modules}
+            rowData={rowData}
+            columnDefs={columnDefs}
+            rowSelection={rowSelection}
+            defaultColDef={defaultColDef}
+            theme="legacy"
+            rowHeight={30}
+            headerHeight={30}
+            onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
+            pagination={true}
+            suppressPaginationPanel={true}
+            paginationPageSize={pageSize}
+            onPaginationChanged={handlePaginationChanged}
+            ref={gridRef}
+          />
         </div>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>

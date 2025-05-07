@@ -56,7 +56,6 @@ export default function SessionChecker({
       const isLogin = document.cookie.includes("loginInit=true");
   
       if (navType === 'navigate' && !isLogin) {
-        console.log('주소창 입력 + 로그인 쿠키 없음 → 로그아웃');
         sessionStorage.setItem('loginToast', 'forced');
         await signOut({ callbackUrl: '/login' });
       }
@@ -74,7 +73,6 @@ export default function SessionChecker({
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (document.visibilityState === 'hidden') {
-        console.log('페이지 떠남 감지 → wasExternal 기록');
         sessionStorage.setItem('wasExternal', 'true');
       }
     }
@@ -92,12 +90,10 @@ export default function SessionChecker({
   
       if (wasExternal) {
         if (navType === 'back_forward') {
-          console.log('외부 이동 후 뒤로 복귀 감지');
           sessionStorage.removeItem('wasExternal');
           sessionStorage.setItem('loginToast', 'forced');
           await signOut({ callbackUrl: '/login' });
         } else {
-          console.log('탭 복귀 또는 기타 → wasExternal 제거');
           sessionStorage.removeItem('wasExternal');
         }
       }
@@ -110,7 +106,6 @@ export default function SessionChecker({
       // 복귀할 때(탭 전환 복귀) 검사
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
-          console.log('탭 복귀 감지');
           checkExternalReturn();
         }
       };
