@@ -52,31 +52,32 @@ export async function PUT(request: NextRequest) {
 
     // 라이선스 키 재발급 해야하는지 확인
     const isSoftwareOptChanged = 
-      currentData.license_fw !== softwareOpt.fw ||
-      currentData.license_vpn !== softwareOpt.vpn ||
-      currentData.license_s2 !== softwareOpt.s2 ||
-      currentData.license_dpi !== softwareOpt.dpi ||
-      currentData.license_av !== softwareOpt.av ||
-      currentData.license_as !== softwareOpt.as ||
-      currentData.license_ot !== softwareOpt.ot;
+      Number(currentData.license_fw) !== softwareOpt.FW ||
+      Number(currentData.license_vpn) !== softwareOpt.VPN ||
+      Number(currentData.license_s2) !== softwareOpt.S2 ||
+      Number(currentData.license_dpi) !== softwareOpt.DPI ||
+      Number(currentData.license_av) !== softwareOpt.AV ||
+      Number(currentData.license_as) !== softwareOpt.AS ||
+      Number(currentData.license_ot) !== softwareOpt.OT;
 
     const isLimitTimeStartChanged = kstStartDate !== limitTimeStart;
+
     const isLimitTimeEndChanged = kstEndDate !== limitTimeEnd;
 
     const needReissue = isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
 
-    // 3. 다르면 라이선스 키 새로 발급
+    // 3. 다르면(needReissue값이 true면) 라이선스 키 새로 발급
     let newLicenseKey = null;
     if (needReissue) {
       if (isITU) {
         const functionMap = 
-          (Number(softwareOpt.fw) || 0) * 1 + // option 1
-          (Number(softwareOpt.vpn) || 0) * 2 + // option 2
-          (Number(softwareOpt.dpi) || 0) * 4 + // option 4
-          (Number(softwareOpt.av) || 0) * 8 + // option 7
-          (Number(softwareOpt.as) || 0) * 16 + // option 8
-          (Number(softwareOpt.s2) || 0) * 32 + // option 3
-          (Number(softwareOpt.ot) || 0) * 64; // option 9
+          (Number(softwareOpt.FW) || 0) * 1 + // option 1
+          (Number(softwareOpt.VPN) || 0) * 2 + // option 2
+          (Number(softwareOpt.DPI) || 0) * 4 + // option 4
+          (Number(softwareOpt.AV) || 0) * 8 + // option 7
+          (Number(softwareOpt.AS) || 0) * 16 + // option 8
+          (Number(softwareOpt.S2) || 0) * 32 + // option 3
+          (Number(softwareOpt.OT) || 0) * 64; // option 9
         
         const [y, m, d] = limitTimeEnd.split("-").map(Number);
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
@@ -181,13 +182,13 @@ ${cmd}
         queryParams = [
           limitTimeStart,
           limitTimeEnd,
-          softwareOpt.fw,
-          softwareOpt.vpn,
-          softwareOpt.s2,
-          softwareOpt.dpi,
-          softwareOpt.av,
-          softwareOpt.as,
-          softwareOpt.ot,
+          softwareOpt.FW,
+          softwareOpt.VPN,
+          softwareOpt.S2,
+          softwareOpt.DPI,
+          softwareOpt.AV,
+          softwareOpt.AS,
+          softwareOpt.OT,
           newLicenseKey,
           regUser,
           regRequest,
@@ -197,7 +198,6 @@ ${cmd}
           hardwareSerial,
         ];
       }
-  
       //ITU 제외 다른 장비일 경우: cpu_name, cfid는 제외
       else {
         updateQuery = `
@@ -223,13 +223,13 @@ ${cmd}
         queryParams = [
           limitTimeStart,
           limitTimeEnd,
-          softwareOpt.fw,
-          softwareOpt.vpn,
-          softwareOpt.s2,
-          softwareOpt.dpi,
-          softwareOpt.av,
-          softwareOpt.as,
-          softwareOpt.ot,
+          softwareOpt.FW,
+          softwareOpt.VPN,
+          softwareOpt.S2,
+          softwareOpt.DPI,
+          softwareOpt.AV,
+          softwareOpt.AS,
+          softwareOpt.OT,
           newLicenseKey,
           regUser,
           regRequest,
@@ -264,13 +264,13 @@ ${cmd}
         queryParams = [
           limitTimeStart,
           limitTimeEnd,
-          softwareOpt.fw,
-          softwareOpt.vpn,
-          softwareOpt.s2,
-          softwareOpt.dpi,
-          softwareOpt.av,
-          softwareOpt.as,
-          softwareOpt.ot,
+          softwareOpt.FW,
+          softwareOpt.VPN,
+          softwareOpt.S2,
+          softwareOpt.DPI,
+          softwareOpt.AV,
+          softwareOpt.AS,
+          softwareOpt.OT,
           regUser,
           regRequest,
           customer,
@@ -303,13 +303,13 @@ ${cmd}
         queryParams = [
           limitTimeStart,
           limitTimeEnd,
-          softwareOpt.fw,
-          softwareOpt.vpn,
-          softwareOpt.s2,
-          softwareOpt.dpi,
-          softwareOpt.av,
-          softwareOpt.as,
-          softwareOpt.ot,
+          softwareOpt.FW,
+          softwareOpt.VPN,
+          softwareOpt.S2,
+          softwareOpt.DPI,
+          softwareOpt.AV,
+          softwareOpt.AS,
+          softwareOpt.OT,
           regUser,
           regRequest,
           customer,
