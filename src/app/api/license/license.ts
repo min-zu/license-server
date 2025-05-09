@@ -6,13 +6,13 @@ export const fetchLicenses = async () => {
   return await response.json();
 };
 
-export const searchLicenses = async (searchField: string, searchText: string) => {
+export const searchLicenses = async (hardwareStatus: string, searchField: string, searchText: string) => {
   const response = await fetch('/api/license', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ searchField, searchText })
+    body: JSON.stringify({ hardwareStatus, searchField, searchText })
   });
   if (!response.ok) {
     throw new Error('검색 중 오류가 발생했습니다.');

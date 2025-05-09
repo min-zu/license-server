@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
     const hex_expire = Math.floor(expireDate).toString(16);
 
     const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-    const result = await execAsync(cmd);
-    const _ituKey = result.stdout.replace(/\n/g, '');
+    // const result = await execAsync(cmd);
+    // const _ituKey = result.stdout.replace(/\n/g, '');
 
-    // const _ituKey = "addtestITU123hardwardCode456";
+    const _ituKey = "addtestITU123hardwardCode456";
     licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
     // Log
@@ -68,11 +68,11 @@ limit_time_end: ${limitTimeEnd}
 ${cmd}
 
 `;
-    try {
-      await fs.appendFile(logPath, logContent)
-    } catch (error) {
-      console.error("log 파일 생성 실패: ", error);
-    }
+    // try {
+    //   await fs.appendFile(logPath, logContent)
+    // } catch (error) {
+    //   console.error("log 파일 생성 실패: ", error);
+    // }
 
   } else if (!hardwareSerial.startsWith('ITU') && hardwareCode !== "" && hardwareCode !== undefined) {
     console.log("regInit: ", hardwareCode);
@@ -126,14 +126,14 @@ ${cmd}
   let sql = '';
   const params = [];
   if(hardwareSerial !== "") {
-    if(hardwareSerial.startsWith("ITU")) {
+    if(hardwareStatus.toUpperCase() === "ITU") {
       if(licenseKey) {        
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, demo_cnt,
+          number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
           ) VALUES (
-            0, now(), now(), 0, 1,
+            0, now(), now(), 0, 1, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -162,11 +162,11 @@ ${cmd}
     } else {
       if(licenseKey) {
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, process,
+          number, reg_date, license_date, reissuance, process, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
           ) VALUES (
-            0, now(), now(), 0, 0,
+            0, now(), now(), 0, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?
           )`;

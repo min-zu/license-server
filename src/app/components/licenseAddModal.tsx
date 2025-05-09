@@ -265,7 +265,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                inputProps={{ maxLength: 24 }}
+                // inputProps={{ maxLength: 24 }}
                 error={errors.hardwareSerial !== undefined}
                 helperText={errors.hardwareSerial?.message}
                 {...register('hardwareSerial', {
@@ -301,7 +301,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                             }}
                           />
                         }
-                        label={item.label}
+                        label={item.value === 's2' ? '행안부' : item.value === 'ot' ? '산업용 프로토콜' : item.label}
                       />
                     ))}
                   </FormGroup>
@@ -315,7 +315,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 <span className="text-red-500">*</span> 유효기간(시작)
               </FormLabel>
               <TextField
-                className="add-license-half-width" 
+                className="add-license-half-width add-date-input" 
                 size="small"
                 type="date"
                 error={errors.limitTimeStart !== undefined}
@@ -327,7 +327,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 <span className="text-red-500">*</span> 유효기간(만료)
               </FormLabel>
               <TextField
-                className="add-license-half-width"
+                className="add-license-half-width add-date-input"
                 size="small"
                 type="date"
                 error={errors.limitTimeEnd !== undefined}
@@ -343,7 +343,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('regUser')} 
+                {...register('regUser', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('regUser', value.trim());
+                  }
+                })} 
               />
             </Box>
 
@@ -355,7 +360,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 size="small" 
                 error={errors.regRequest !== undefined}
                 helperText={errors.regRequest?.message}
-                {...register('regRequest')}
+                {...register('regRequest', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('regRequest', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -367,7 +377,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 size="small" 
                 error={errors.projectName !== undefined}
                 helperText={errors.projectName?.message}
-                {...register('projectName')}
+                {...register('projectName', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('projectName', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -379,7 +394,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 size="small" 
                 error={errors.customer !== undefined}
                 helperText={errors.customer?.message}
-                {...register('customer')}
+                {...register('customer', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('customer', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -391,7 +411,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 size="small" 
                 error={errors.customerEmail !== undefined}
                 helperText={errors.customerEmail?.message}
-                {...register('customerEmail')} 
+                {...register('customerEmail', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('customerEmail', value.trim());
+                  }
+                })}
               />
             </Box>
 

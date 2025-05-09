@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { useToastState } from "./useToast";
+import AlertModal from "./alertModal";
 
 interface LicenseDetailModalProps {
   close: () => void; // close prop 추가
@@ -17,6 +18,7 @@ interface LicenseDetailModalProps {
 
 const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated }) => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const { showToast, ToastComponent } = useToastState();
 
   // role
@@ -102,6 +104,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     mode: 'onChange',
@@ -131,7 +134,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       }
   
       const result = await res.json();
-      showToast("라이선스 수정 완료", "success");
+      showToast("라이센스 정보 수정이 완료되었습니다.", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
       if (result.license_key) {
         setLicenseKey(result.license_key);
@@ -179,13 +182,23 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("projectName")} /> : 
+                      <TextField size="small" {...register("projectName", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('projectName', value.trim());
+                        }
+                      })} /> : 
                       <p>{watch("projectName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("customerEmail")} /> : 
+                      <TextField size="small" {...register("customerEmail", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('customerEmail', value.trim());
+                        }
+                      })} /> : 
                       <p>{watch("customerEmail")}</p>}
                   </Box>
                 </Box>
@@ -225,19 +238,34 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("regUser")} /> : 
+                    <TextField size="small" {...register("regUser", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        setValue('regUser', value.trim());
+                      }
+                    })} /> : 
                     <p>{watch("regUser")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>담당자 :</FormLabel> 
+                  <FormLabel>발급요청사(총판사) :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("regRequest")} /> : 
+                    <TextField size="small" {...register("regRequest", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        setValue('regRequest', value.trim());
+                      }
+                    })} /> : 
                     <p>{watch("regRequest")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("customer")} /> : 
+                    <TextField size="small" {...register("customer", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        setValue('customer', value.trim());
+                      }
+                    })} /> : 
                     <p>{watch("customer")}</p>}
                 </Box>
               </Box>
@@ -266,7 +294,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                                 }}
                               />
                             }
-                            label={label}
+                            label={value === 's2' ? '행안부' : value === 'ot' ? '산업용 프로토콜' : label}
                           />
                         ))}
                       </Box>
@@ -299,7 +327,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 {role !== 1 && (
                   <Button
                     className="default-btn"
-                    onClick={isEdit ? handleSubmit(onSubmit) : () => setIsEdit(true)}
+                    onClick={() => isEdit ? setIsEditModalOpen(true) : setIsEdit(true)}
                   >
                     {isEdit ? '저장' : '수정'}
                   </Button>
@@ -308,10 +336,20 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   취소
                 </Button>
               </Box>
-            </Box>
+            </Box>  
           </div>
         </div>
       </div>
+      <AlertModal
+        open={isEditModalOpen}
+        close={() => setIsEditModalOpen(false)}
+        state="edit"
+        title="라이센스 수정"
+        message={`수정사항을 적용 하시겠습니까?`}
+        onConfirm={() => {
+          handleSubmit(onSubmit)();
+        }}
+      />
     {ToastComponent}
     </form>
   )

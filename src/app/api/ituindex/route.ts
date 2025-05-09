@@ -101,8 +101,7 @@ ${cmd}
     for (const row of rows2 as any[]) {
       if (row.hardware_serial === hardwareSerial){
         if(row.license_key === '0') {
-          await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [licenseKey, hardwareSerial]);
-          await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
+          await query(`UPDATE license SET license_key = ?, license_date = ?, reg_auto = ? WHERE hardware_serial = ?`, [licenseKey, today, 1, hardwareSerial]);
         } else {
           let comment = '';
           await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareSerial, hardwareCode, row.process, row.cpu_name, row.cfid, comment]);

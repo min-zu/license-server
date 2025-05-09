@@ -13,10 +13,14 @@ export async function GET(request:NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { searchField, searchText } = await request.json();
+    const { hardwareStatus, searchField, searchText } = await request.json();
     
     let sql = "SELECT * FROM license WHERE ";
     const params = [];
+
+    if(hardwareStatus === "ITU" || hardwareStatus === "ITM") {
+      sql += `hardware_status = '${hardwareStatus}' AND`;
+    }
 
     if (searchText && searchField) {
       if (searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end')) {
@@ -55,7 +59,7 @@ export async function DELETE(request: NextRequest) {
     const logPath = "/home/future/license/log/delete_license.log"
     const logContent =
 `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-Deleted serials: ${JSON.stringify(codes)}
+Deleted serials: ${JSON.stringify(codes)} 
 
 `;
     try {

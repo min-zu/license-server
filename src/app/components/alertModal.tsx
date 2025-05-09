@@ -43,7 +43,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     if(state === 'license') {
       try {
         const res = await deleteLicenses(deleteIds);
-        console.log('res', res);
         if(res.success) {
           showToast(res.result.affectedRows + '개의 데이터가 삭제되었습니다.', 'success');
           onConfirm && onConfirm();
@@ -82,6 +81,11 @@ export default function AlertModal({ open, close, state, title, message, deleteI
       }
     }
   };
+
+  const handleEditConfirm = () => {
+    onConfirm && onConfirm();
+    close();
+  }
 
   return (
     <>
@@ -126,7 +130,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
           ) : (
             <Button
               className="default-btn"
-              onClick={() => { handleDeleteConfirm(); } }>
+              onClick={() => { state === 'edit' ? handleEditConfirm() : handleDeleteConfirm(); } }>
               확인
             </Button>
           )}

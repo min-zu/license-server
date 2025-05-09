@@ -123,7 +123,12 @@
   right: 0px;
   bottom: 0px;
   font-size: 11px !important;
+}
 
+.add-license-form .add-date-input .MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 16px;
+  font-size: 11px !important;
 }
 
 

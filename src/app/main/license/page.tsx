@@ -38,6 +38,7 @@ interface License {
   reg_user: string;
   reg_request: string;
   customer: string;
+  reg_auto: number;
 
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
@@ -111,7 +112,7 @@ export default function LicensePage() {
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
-      headerName: item.split('_')[1].toUpperCase(),
+      headerName: item === 'license_s2' ? '행안부' : item === 'license_ot' ? '산업용 프로토콜' : item.split('_')[1].toUpperCase(),
       headerStyle: { textAlign: 'center', fontSize: '10px', padding: '0px' },
       cellClass: 'cell-style',
       flex: 1,
@@ -128,7 +129,7 @@ export default function LicensePage() {
     },
     { field: 'limit_time_start', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
-        const value = params.value;
+        const value = params.value; 
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
@@ -148,6 +149,12 @@ export default function LicensePage() {
     { field: 'reg_user', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
     { field: 'reg_request', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
     { field: 'customer', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-left', width: 150 },
+    { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 80,
+      valueFormatter: (params: any) => {
+        const value = params.value;
+        return value === 1 ? '자동' : value === 0 ? '수동' : '';
+      }
+    },
   ]);
 
   // 라이센스 데이터 조회
@@ -214,6 +221,8 @@ export default function LicensePage() {
 
   useEffect(() => {
     handelStatusChange(hardwareStatus);
+    setSearchText('');
+    setSearchField('hardware_serial');
   }, [hardwareStatus]);
   
   // 검색
@@ -225,7 +234,7 @@ export default function LicensePage() {
     }
 
     try {
-      const data = await searchLicenses(searchField, searchText);
+      const data = await searchLicenses(hardwareStatus, searchField, searchText);
       setLicenses(data);
       setTotalPages(Math.ceil(data.length / pageSize));
       setCurrentPage(1);
