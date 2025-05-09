@@ -1,8 +1,5 @@
 import React from 'react';
 
-// Auth.js (NextAuth.js v5)
-import { signOut } from 'next-auth/react';
-
 // MUI
 import { Box, Button, Dialog, DialogContent, Menu, MenuItem } from '@mui/material';
 
@@ -70,11 +67,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         showToast(deleteIds.length + '개의 계정이 삭제되었습니다.', 'success');
         onDeleted?.(deleteIds);
         close();
-        // 삭제 된 데이터 중 로그인된 관리자 계정이 포함된 경우
-        if (data.deletedSelf) {
-          sessionStorage.setItem('loginToast', 'loggedout');
-          await signOut({ callbackUrl:'/login' });
-        }
       } catch (err) {
         console.error(err);
         showToast('삭제 중 오류 발생', 'error');

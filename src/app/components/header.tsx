@@ -12,11 +12,12 @@ import { AccountCircle, Logout } from '@mui/icons-material';
 import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useToastState } from './useToast';
 
 
 export default function Header() {
+  const router = useRouter()
   const pathname = usePathname();
   const [navState, setNavState] = useState(() => {
     if (pathname.includes("/main/license")) return "license";
@@ -41,9 +42,15 @@ export default function Header() {
   
   // 로그아웃
   const handleLogout = async () => {
-    sessionStorage.setItem('loginToast', 'loggedout');
-    await signOut({ callbackUrl:'/login' });
+    localStorage.setItem('loginToast', 'loggedout');
 
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', () => {
+      history.pushState(null, '', location.href);
+    });
+
+    await signOut({ redirect: false });
+    window.location.replace('/login');
   };
 
   useEffect(() => {

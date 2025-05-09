@@ -456,7 +456,7 @@ export default function LicensePage() {
         </div>
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
           <AgGridReact
-            getRowId={(params) => params.data.number} 
+            getRowId={(params) => String(params.data.number)}
             // rowData={getCurrentPageData()}
             rowData={licenses}
             rowHeight={30}

@@ -24,26 +24,26 @@ export default function SignIn() {
   
   useEffect(() => {
     // 로그아웃 시 unload발생 -> 오탐 방지로 제거
-    if (sessionStorage.getItem('wasExternal') === 'true') {
-      sessionStorage.removeItem('wasExternal');
+    if (localStorage.getItem('wasExternal') === 'true') {
+      localStorage.removeItem('wasExternal');
     }
 
     // 토스트 플래그 확인
-    const toastFlag = sessionStorage.getItem('loginToast');
+    const toastFlag = localStorage.getItem('loginToast');
     // 로그아웃
     if (toastFlag === 'loggedout') {
       showToast('로그아웃 되었습니다.', 'success');
-      sessionStorage.removeItem('loginToast');
+      localStorage.removeItem('loginToast');
     }
     // 세션 만료
     if (toastFlag === 'timedout') {
       showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
-      sessionStorage.removeItem('loginToast');
+      localStorage.removeItem('loginToast');
     }
     // 비정상 접근
     if (toastFlag === 'forced') {
       showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
-      sessionStorage.removeItem('loginToast');
+      localStorage.removeItem('loginToast');
     }
   }, []);
 
