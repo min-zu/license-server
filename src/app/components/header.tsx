@@ -7,17 +7,15 @@ import '@/app/style/license.css';
 
 import Link from 'next/link';
 import { useEffect, useState } from "react";
-import { Button, Modal, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { AccountCircle, Logout } from '@mui/icons-material';
-import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useToastState } from './useToast';
 
 
 export default function Header() {
-  const router = useRouter()
   const pathname = usePathname();
   const [navState, setNavState] = useState(() => {
     if (pathname.includes("/main/license")) return "license";
@@ -29,28 +27,12 @@ export default function Header() {
   const role = session?.user?.role;
   const id = session?.user?.id;
 
-  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
-  // const handleClose = () => setIsModalOpen(false);
-  
-  // const handleChange = (
-  //   event: React.MouseEvent<HTMLElement>,
-  //   newClick: string,
-  // ) => {
-  //   setNavState(newClick);
-  // };
   
   // 로그아웃
   const handleLogout = async () => {
     localStorage.setItem('loginToast', 'loggedout');
-
-    history.pushState(null, '', location.href);
-    window.addEventListener('popstate', () => {
-      history.pushState(null, '', location.href);
-    });
-
-    await signOut({ redirect: false });
-    window.location.replace('/login');
+    await signOut({ callbackUrl: '/login' });
   };
 
   useEffect(() => {
@@ -96,19 +78,6 @@ export default function Header() {
           >
             <p className={navState === 'admin' ? 'text-white font-bold' : 'text-gray-300'}>Admin</p>
           </Link>
-          
-          {/* {navState === 'license' && (
-            <Button
-              variant="contained"
-              color="primary" 
-              size="small"
-              onClick={() => {
-                setIsModalOpen(true);
-              }}
-            >
-              라이센스 등록
-            </Button>
-          )} */}
         </nav>
       </div>
 

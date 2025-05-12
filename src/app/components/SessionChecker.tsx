@@ -7,7 +7,6 @@ import { useIdleTimer } from 'react-idle-timer'
 
 // Auth.js (NextAuth.js v5)
 import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 
 export default function SessionChecker({
@@ -15,8 +14,6 @@ export default function SessionChecker({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter()
-  
   // 화면 렌더링 허용 여부
   const [allowRender, setAllowRender] = useState(false);
 
@@ -27,14 +24,7 @@ export default function SessionChecker({
       // 현재 페이지가 보이는 상태일 경우에만 세션만료 수행
       if (document.visibilityState === 'visible') {
         localStorage.setItem('loginToast', 'timedout')
-
-        history.pushState(null, '', location.href);
-        window.addEventListener('popstate', () => {
-          history.pushState(null, '', location.href);
-        });
-
-        await signOut({ redirect: false });
-        window.location.replace('/login');
+        await signOut({ callbackUrl: '/login' });
         return;
       } else {
         // 보이지 않는 경우에는 기록만 남기고 세션만료는 나중에 처리
@@ -51,19 +41,15 @@ export default function SessionChecker({
         const expired = localStorage.getItem('loginToast') === 'timedout';
         if (expired) {
           (async () => {
-            history.pushState(null, '', location.href);
-            window.addEventListener('popstate', () => {
-              history.pushState(null, '', location.href);
-            });
-
-            await signOut({ redirect: false });
-            window.location.replace('/login');
+            await signOut({ callbackUrl: '/login' });
             return;
           })();
         }
       }
-      // 정상 접근으로 판단되면 렌더링 허용
-      setAllowRender(true);
+      else {
+        // 정상 접근으로 판단되면 렌더링 허용
+        setAllowRender(true);
+      }
     };
   
     document.addEventListener('visibilitychange', handleVisibility);
@@ -79,18 +65,13 @@ export default function SessionChecker({
 
       if (navType === 'navigate' && !isLogin) {
         localStorage.setItem('loginToast', 'forced');
-
-        history.pushState(null, '', location.href);
-        window.addEventListener('popstate', () => {
-          history.pushState(null, '', location.href);
-        });
-
-        await signOut({ redirect: false });
-        window.location.replace('/login');
+        await signOut({ callbackUrl: '/login' });
+        return;
       }
-
-      // 정상 접근으로 판단되면 렌더링 허용
-      setAllowRender(true);
+      else {
+        // 정상 접근으로 판단되면 렌더링 허용
+        setAllowRender(true);
+      }
     };
   
     if (typeof window !== "undefined") {
@@ -120,21 +101,15 @@ export default function SessionChecker({
       if (wasExternal && (e?.persisted || navType === 'back_forward')) {
         localStorage.removeItem('wasExternal')
         localStorage.setItem('loginToast', 'forced')
-
-        history.pushState(null, '', location.href);
-        window.addEventListener('popstate', () => {
-          history.pushState(null, '', location.href);
-        });
-
-        await signOut({ redirect: false });
-        window.location.replace('/login');
+        await signOut({ callbackUrl: '/login' });
         return;
       }
       else {
         localStorage.removeItem('wasExternal');
+        // 정상 접근으로 판단되면 렌더링 허용
+        setAllowRender(true);
       }
-      // 정상 접근으로 판단되면 렌더링 허용
-      setAllowRender(true);
+      
     }
 
     if (typeof window !== "undefined") {

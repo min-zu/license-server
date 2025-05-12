@@ -21,6 +21,15 @@ export default function SignIn() {
 
   // toastAleat
   const { showToast, ToastComponent } = useToastState();
+
+  useEffect(() => {
+    (async () => {
+      const session = await getSession();
+      if (session) {
+        await signOut({ redirect: false });
+      }
+    })();
+  }, []);
   
   useEffect(() => {
     // 로그아웃 시 unload발생 -> 오탐 방지로 제거
