@@ -32,27 +32,35 @@ export default function SignIn() {
   }, []);
   
   useEffect(() => {
+    if (typeof window === 'undefined') return; // SSR 방지
+
     // 로그아웃 시 unload발생 -> 오탐 방지로 제거
-    if (localStorage.getItem('wasExternal') === 'true') {
-      localStorage.removeItem('wasExternal');
+    if (sessionStorage.getItem('wasExternal') === 'true') {
+      sessionStorage.removeItem('wasExternal');
     }
 
     // 토스트 플래그 확인
-    const toastFlag = localStorage.getItem('loginToast');
-    // 로그아웃
-    if (toastFlag === 'loggedout') {
-      showToast('로그아웃 되었습니다.', 'success');
-      localStorage.removeItem('loginToast');
-    }
-    // 세션 만료
-    if (toastFlag === 'timedout') {
-      showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
-      localStorage.removeItem('loginToast');
-    }
-    // 비정상 접근
-    if (toastFlag === 'forced') {
-      showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
-      localStorage.removeItem('loginToast');
+    if (window.location.search) {
+      // 파라미터 값이 있는 경우, URL을 '/login'으로 변경하되 파라미터 값은 toastFlag에 저장
+      const urlParams = new URLSearchParams(window.location.search);
+      let toastFlag = urlParams.get('toast');
+      window.history.replaceState(null, '', '/login'); // 경로는 '/login'으로, 해시 값 제거
+
+      // 로그아웃
+      if (toastFlag === 'loggedout') {
+        showToast('로그아웃 되었습니다.', 'success');
+        toastFlag = "";
+      }
+      // 세션 만료
+      if (toastFlag === 'timedout') {
+        showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
+        toastFlag = "";
+      }
+      // 비정상 접근
+      if (toastFlag === 'forced') {
+        showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
+        toastFlag = "";
+      }
     }
   }, []);
 

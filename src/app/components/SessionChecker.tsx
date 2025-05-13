@@ -23,12 +23,11 @@ export default function SessionChecker({
     onIdle: async () => {
       // 현재 페이지가 보이는 상태일 경우에만 세션만료 수행
       if (document.visibilityState === 'visible') {
-        localStorage.setItem('loginToast', 'timedout')
-        await signOut({ callbackUrl: '/login' });
+        await signOut({ redirectTo: '/login?toast=timedout' });
         return;
       } else {
         // 보이지 않는 경우에는 기록만 남기고 세션만료는 나중에 처리
-        localStorage.setItem('loginToast', 'timedout')
+        sessionStorage.setItem('loginToast', 'timedout')
       }
     },
     debounce: 500, // 이벤트 감지 최소 간격 (선택)
@@ -38,10 +37,11 @@ export default function SessionChecker({
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        const expired = localStorage.getItem('loginToast') === 'timedout';
+        const expired = sessionStorage.getItem('loginToast') === 'timedout';
         if (expired) {
           (async () => {
-            await signOut({ callbackUrl: '/login' });
+            sessionStorage.removeItem('loginToast');
+            await signOut({ redirectTo: '/login?toast=timedout' });
             return;
           })();
         }
@@ -64,8 +64,7 @@ export default function SessionChecker({
       const isLogin = document.cookie.includes("loginInit=true");
 
       if (navType === 'navigate' && !isLogin) {
-        localStorage.setItem('loginToast', 'forced');
-        await signOut({ callbackUrl: '/login' });
+        await signOut({ redirectTo: '/login?toast=forced' });
         return;
       }
       else {
@@ -79,11 +78,11 @@ export default function SessionChecker({
     }
   }, []);
 
-  // 외부 페이지 이동 시 localStorage에 기록
+  // 외부 페이지 이동 시 sessionStorage에 기록
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (document.visibilityState === 'hidden') {
-        localStorage.setItem('wasExternal', 'true');
+        sessionStorage.setItem('wasExternal', 'true');
       }
     }
 
@@ -94,18 +93,17 @@ export default function SessionChecker({
   // 외부페이지에서 복귀 시 비정상 진입 여부 확인
   useEffect(() => {
     const checkExternalReturn = async (e?: PageTransitionEvent) => {
-      const wasExternal = localStorage.getItem('wasExternal') === 'true'
+      const wasExternal = sessionStorage.getItem('wasExternal') === 'true'
       const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
       const navType = navEntry?.type
 
       if (wasExternal && (e?.persisted || navType === 'back_forward')) {
-        localStorage.removeItem('wasExternal')
-        localStorage.setItem('loginToast', 'forced')
-        await signOut({ callbackUrl: '/login' });
+        sessionStorage.removeItem('wasExternal')
+        await signOut({ redirectTo: '/login?toast=forced' });
         return;
       }
       else {
-        localStorage.removeItem('wasExternal');
+        sessionStorage.removeItem('wasExternal');
         // 정상 접근으로 판단되면 렌더링 허용
         setAllowRender(true);
       }

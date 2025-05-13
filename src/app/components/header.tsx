@@ -31,8 +31,7 @@ export default function Header() {
   
   // 로그아웃
   const handleLogout = async () => {
-    localStorage.setItem('loginToast', 'loggedout');
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ redirectTo: '/login?toast=loggedout' });
   };
 
   useEffect(() => {
