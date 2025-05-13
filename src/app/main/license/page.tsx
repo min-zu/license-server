@@ -544,17 +544,19 @@ export default function LicensePage() {
             open={isHelpModalOpen}
             close={() => setIsHelpModalOpen(false)}
             state="help"
-            title="일괄등록 도움말"
+            title="ITU 라이센스 일괄등록 도움말"
             message={
             <div style={{lineHeight: '2'}}>
-              파일업로드 형식은 CSV 이며 구성항목은 아래와 같습니다.
+              파일업로드 형식은 CSV 이며 ITU 라이센스에 한해 등록이 가능합니다.
               <br />
-              [장비선택, 시리얼, 유효기간(시작), 유효기간(만료), 발급자, 발급요청사(총판사),
+              구성항목은 아래와 같습니다.
+              <br />
+              [시리얼, 유효기간(시작), 유효기간(만료), 발급자, 발급요청사(총판사),
               <br />
               고객사명, 프로젝트명, 고객사 E-mail, 소프트웨어 옵션]
               <div className="split-line my-4 border-t border-gray-300" />
-              * 장비선택(ITU, ITM)
-              <br />
+              {/* * 장비선택(ITU, ITM)
+              <br /> */}
               * 유효기간(YYYYMMDD 형식), * 라이센스 옵션(1: 사용함, 0: 사용안함)
             </div>
             } 

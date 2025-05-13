@@ -92,10 +92,17 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         <Box display="flex" justifyContent="center" gap={0.5} mt={2} mb={2}>
           {state === 'help' ? (
             <>
-            <Button className="default-btn" onClick={handleSampleClick}>
+            <Button 
+              className="default-btn" 
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/sample/ituImport.csv';
+                link.download = 'ituImport.csv';
+                link.click();
+              }}>
               샘플파일 다운로드
             </Button>
-            <Menu
+            {/* <Menu
               anchorEl={anchorEl}
               open={sampleOpen}
               onClose={handleSampleClose}
@@ -117,7 +124,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
                   link.click();
                 }}
               >ITM 샘플파일</MenuItem>
-            </Menu>
+            </Menu> */}
             </>
           ) : (
             <Button
