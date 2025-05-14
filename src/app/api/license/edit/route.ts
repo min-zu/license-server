@@ -85,29 +85,29 @@ export async function PUT(request: NextRequest) {
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
 
-        // const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-        // const result = await execAsync(cmd);
-        // const _ituKey = result.stdout.replace(/\n/g, '');
+        const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        const _ituKey = result.stdout.replace(/\n/g, '');
 
-        const _ituKey = "addtestITU123hardwardCode456";
+        // const _ituKey = "addtestITU123hardwardCode456";
 
         newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
         // Log
-//         const logPath = "/home/future/license/log/edit_itulicense.log";
-//         const logContent =
-// `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-// serial_num: ${hardwareSerial}
-// function_map: ${functionMap}
-// limit_time_end: ${limitTimeEnd}
-// ${cmd}
+        const logPath = "/home/future/license/log/edit_itulicense.log";
+        const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+serial_num: ${hardwareSerial}
+function_map: ${functionMap}
+limit_time_end: ${limitTimeEnd}
+${cmd}
 
-// `;
-//         try {
-//           await fs.appendFile(logPath, logContent)
-//         } catch (error) {
-//           console.error("log 파일 생성 실패: ", error);
-//         }
+`;
+        try {
+          await fs.appendFile(logPath, logContent)
+        } catch (error) {
+          console.error("log 파일 생성 실패: ", error);
+        }
       }
 
       else if(hardwareSerial.split('-').length >= 3){
