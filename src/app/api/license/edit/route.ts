@@ -19,6 +19,8 @@ export async function PUT(request: NextRequest) {
   try {
     // 요청 본문(JSON) 파싱
     const body = await request.json();
+    const forwarded = request.headers.get('x-forwarded-for');
+    const clientIp = forwarded?.split(":").pop() || null;
 
     // body에서 필요한 값들을 꺼냄
     const {
@@ -83,29 +85,29 @@ export async function PUT(request: NextRequest) {
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
 
-        const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-        const result = await execAsync(cmd);
-        const _ituKey = result.stdout.replace(/\n/g, '');
+        // const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
+        // const result = await execAsync(cmd);
+        // const _ituKey = result.stdout.replace(/\n/g, '');
 
-        // const _ituKey = "addtestITU123hardwardCode456";
+        const _ituKey = "addtestITU123hardwardCode456";
 
         newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
         // Log
-        const logPath = "/home/future/license/log/edit_itulicense.log";
-        const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareSerial}
-function_map: ${functionMap}
-limit_time_end: ${limitTimeEnd}
-${cmd}
+//         const logPath = "/home/future/license/log/edit_itulicense.log";
+//         const logContent =
+// `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+// serial_num: ${hardwareSerial}
+// function_map: ${functionMap}
+// limit_time_end: ${limitTimeEnd}
+// ${cmd}
 
-`;
-        try {
-          await fs.appendFile(logPath, logContent)
-        } catch (error) {
-          console.error("log 파일 생성 실패: ", error);
-        }
+// `;
+//         try {
+//           await fs.appendFile(logPath, logContent)
+//         } catch (error) {
+//           console.error("log 파일 생성 실패: ", error);
+//         }
       }
 
       else if(hardwareSerial.split('-').length >= 3){
@@ -160,7 +162,6 @@ ${cmd}
         updateQuery = `
           UPDATE license
           SET
-            license_date = now(),
             limit_time_start = ?,
             limit_time_end = ?,
             license_fw = ?,
@@ -170,7 +171,9 @@ ${cmd}
             license_av = ?,
             license_as = ?,
             license_ot = ?,
+            license_date = now(),
             license_key = ?,
+            ip = ?,
             reg_user = ?,
             reg_request = ?,
             customer = ?,
@@ -190,6 +193,7 @@ ${cmd}
           softwareOpt.AS,
           softwareOpt.OT,
           newLicenseKey,
+          clientIp,
           regUser,
           regRequest,
           customer,
@@ -203,7 +207,6 @@ ${cmd}
         updateQuery = `
           UPDATE license
           SET
-            license_date = now(),
             limit_time_start = ?,
             limit_time_end = ?,
             license_fw = ?,
@@ -213,7 +216,9 @@ ${cmd}
             license_av = ?,
             license_as = ?,
             license_ot = ?,
+            license_date = now(),
             license_key = ?,
+            ip = ?,
             reg_user = ?,
             reg_request = ?,
             customer = ?
@@ -231,6 +236,7 @@ ${cmd}
           softwareOpt.AS,
           softwareOpt.OT,
           newLicenseKey,
+          clientIp,
           regUser,
           regRequest,
           customer,
@@ -253,6 +259,7 @@ ${cmd}
             license_av = ?,
             license_as = ?,
             license_ot = ?,
+            ip = ?,
             reg_user = ?,
             reg_request = ?,
             customer = ?,
@@ -271,6 +278,7 @@ ${cmd}
           softwareOpt.AV,
           softwareOpt.AS,
           softwareOpt.OT,
+          clientIp,
           regUser,
           regRequest,
           customer,
@@ -294,6 +302,7 @@ ${cmd}
             license_av = ?,
             license_as = ?,
             license_ot = ?,
+            ip = ?,
             reg_user = ?,
             reg_request = ?,
             customer = ?
@@ -310,6 +319,7 @@ ${cmd}
           softwareOpt.AV,
           softwareOpt.AS,
           softwareOpt.OT,
+          clientIp,
           regUser,
           regRequest,
           customer,
@@ -321,13 +331,16 @@ ${cmd}
     // DB에 업데이트 실행
     await query(updateQuery, queryParams);
 
+    // 업데이트 후, 최신 데이터 조회
+    const updatedRows = await query(
+      `SELECT * FROM license WHERE hardware_serial = ?`,
+      [hardwareSerial]
+    );
+
     const response: any = {
-      message: "라이선스 업데이트 완료"
+      message: "라이선스 업데이트 완료",
+      updated: updatedRows
     };
-    
-    if (newLicenseKey) {
-      response.license_key = newLicenseKey;
-    }
 
     return NextResponse.json(response);
   } catch (error) {

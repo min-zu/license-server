@@ -29,11 +29,21 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const isITU = license?.hardware_serial?.startsWith("ITU");
 
   // 라이선스 키 관리
+  const [licenseDate, setLicenseDate] = useState<string>(license.license_date || "");
   const [licenseKey, setLicenseKey] = useState<string>(license.license_key || "");
+  const [ip, setIp] = useState<string>(license.ip || "");
+
+  useEffect(() => {
+    setLicenseKey(license.license_date || "");
+  }, [license.license_date]);
 
   useEffect(() => {
     setLicenseKey(license.license_key || "");
   }, [license.license_key]);
+
+  useEffect(() => {
+    setIp(license.ip || "");
+  }, [license.ip]);
   
   // ITU 유효성 검사
   const ITUSchema = z.object({
@@ -134,18 +144,18 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       }
   
       const result = await res.json();
+
       showToast("라이센스 정보 수정이 완료되었습니다.", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
-      if (result.license_key) {
-        setLicenseKey(result.license_key);
-      }
+      setLicenseDate(result.updated[0].license_date);
+      setLicenseKey(result.updated[0].license_key);
+      setIp(result.updated[0].ip);
       onUpdated?.(); // 데이터 갱신
   
     } catch (error) {
       console.error("서버 요청 중 오류 발생:", error);
       showToast("서버 오류 발생", "error");
     }
-    // showToast("라이센스 수정 완료", "success");
   };
 
   return (
@@ -167,7 +177,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>라이센스 발급일 :</FormLabel> {license.license_date === null ? "" : <p>{new Date(license.license_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
+                  <FormLabel>라이센스 발급일 :</FormLabel> {licenseDate === null ? "" : <p>{new Date(licenseDate).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>발급이력 :</FormLabel> <p>{license.reissuance === 1 ? '재발급' : '초기발급'}</p>
@@ -218,7 +228,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
-                  <FormLabel>IP :</FormLabel> <p>{license.ip}</p>
+                  <FormLabel>IP :</FormLabel> <p>{ip}</p>
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(시작) :</FormLabel> 
