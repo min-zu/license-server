@@ -182,6 +182,25 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     return () => subscription.unsubscribe();
   }, [watch, trigger, clearErrors, dirtyFields]);
 
+  const isOptionDisabled = (softwareOpt: Record<string, number>, option: { value: string }) => {
+    console.log('softwareOpt', softwareOpt)
+    console.log('option', option)
+    if (softwareOpt['ot'] === 1) {
+      if (option.value !== 'ot' && option.value !== 'fw') {
+        softwareOpt[option.value] = 0;
+        return true;
+      } 
+    }
+
+    if (softwareOpt['vpn'] === 1 || softwareOpt['s2'] === 1 || softwareOpt['dpi'] === 1 || softwareOpt['av'] === 1 || softwareOpt['as'] === 1) {
+      if (option.value === 'ot') {
+        softwareOpt['ot'] = 0;
+        return true;
+      }
+    }
+    return false;
+  };
+
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
 
     const count = await checkHardwareSerial(data.hardwareSerial);
@@ -299,6 +318,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                               const newValue = e.target.checked ? { ...field.value, [item.value]: 1 } : { ...field.value, [item.value]: 0 };
                               field.onChange(newValue);
                             }}
+                            disabled={isOptionDisabled(field.value, item)}
                           />
                         }
                         label={item.value === 's2' ? '행안부' : item.value === 'ot' ? '산업용 프로토콜' : item.label}
