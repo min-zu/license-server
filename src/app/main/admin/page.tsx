@@ -62,7 +62,13 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin?mode=adminList'); // admin 목록 요청
       if (!res.ok) throw new Error('네트워크 오류');
-      const data = await res.json();
+      const data: Admin[] = await res.json();
+      // role === 3인 항목을 맨 앞으로 정렬
+      data.sort((a, b) => {
+      if (a.role === 3 && b.role !== 3) return -1;  // a가 슈퍼관리자면 앞으로
+      if (a.role !== 3 && b.role === 3) return 1;   // b가 슈퍼관리자면 뒤로
+      return 0; // 그 외는 기존 순서 유지
+      });
       setRowData(data);
     } catch (err) {
       console.error('데이터 불러오기 실패:', err);
@@ -143,14 +149,13 @@ export default function AdminPage() {
         params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
-    {// 편집 버튼 (슈퍼 관리자는 제외)
+    {// 편집 버튼
       colId: 'editBtn',
       headerName: '관리',
       headerClass: 'header-style',
       cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => {
         const data = params.data;
-        if (!data || data.role === 3) return null; // 슈퍼 관리자 수정 금지
         
         return (
           <IconButton
