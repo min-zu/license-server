@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
     const hex_expire = Math.floor(expireDate).toString(16);
 
     const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-    // const result = await execAsync(cmd);
-    // const _ituKey = result.stdout.replace(/\n/g, '');
+    const result = await execAsync(cmd);
+    const _ituKey = result.stdout.replace(/\n/g, '');
 
-    const _ituKey = "addtestITU123hardwardCode456";
+    // const _ituKey = "addtestITU123hardwardCode456";
     licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
     // Log
@@ -68,11 +68,11 @@ limit_time_end: ${limitTimeEnd}
 ${cmd}
 
 `;
-    // try {
-    //   await fs.appendFile(logPath, logContent)
-    // } catch (error) {
-    //   console.error("log 파일 생성 실패: ", error);
-    // }
+    try {
+      await fs.appendFile(logPath, logContent)
+    } catch (error) {
+      console.error("log 파일 생성 실패: ", error);
+    }
 
   } else if (!hardwareSerial.startsWith('ITU') && hardwareCode !== "" && hardwareCode !== undefined) {
     console.log("regInit: ", hardwareCode);

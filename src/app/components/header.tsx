@@ -86,10 +86,6 @@ export default function Header() {
           <p className="text-white">|</p>
           <div
             onClick={() => {
-              if (role === 3) {
-                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "info");
-                return;
-              }
               setOpenUpsert(true)}}
           >
             <Tooltip title="계정 수정">

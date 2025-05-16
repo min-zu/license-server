@@ -300,11 +300,21 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   onChange={handleAdminChange}
                 >
                   {mode === 'self'
-                    ? [<ToggleButton selected disabled value={role} size="small">{role === 2 ? '설정 관리자' : '모니터 관리자'}</ToggleButton>]
+                    ? [
+                        <ToggleButton selected disabled value={role} size="small">
+                          {role=== 3 ? '슈퍼 관리자' : role === 2 ? '설정 관리자' : '모니터 관리자'}
+                        </ToggleButton>
+                      ]
+                    : role === 3
+                    ? [
+                        <ToggleButton selected disabled value={3} size="small">
+                          슈퍼 관리자
+                        </ToggleButton>
+                      ]
                     : [
-                      <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
-                      <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
-                    ]
+                        <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
+                        <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                      ]
                   }
                 </ToggleButtonGroup>
 
@@ -485,7 +495,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
               </Box>
 
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                {mode === 'other' && (
+                {mode === 'other' && role !== 3 && (
                   <>
                     <FormLabel>
                       계정 활성화
