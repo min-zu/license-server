@@ -125,6 +125,25 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  const isOptionDisabled = (isEdit: boolean, field: any, label: string, value: string) => {
+    if(!isEdit) return true;
+
+    if (field.value['OT'] === 1) {
+      if (value !== 'ot' && value !== 'fw') {
+        field.value[label] = 0;
+        return true;
+      } 
+    }
+
+    if (field.value['VPN'] === 1 || field.value['S2'] === 1 || field.value['DPI'] === 1 || field.value['AV'] === 1 || field.value['AS'] === 1) {
+      if (value === 'ot') {
+        field.value['OT'] = 0;
+        return true;
+      }
+    }
+    return false;
+  }
+
   // 저장 버튼 클릭 시 실행되는 submit 함수
   const onSubmit = async (data: z.infer<typeof schema>) => {
     try {
@@ -297,7 +316,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                             control={
                               <Checkbox 
                                 checked={field.value[label] === 1}
-                                disabled={!isEdit}
+                                disabled={isOptionDisabled(isEdit, field, label, value)}
                                 onChange={(e) => {
                                   const newValue = e.target.checked ? { ...field.value, [label]: 1 } : { ...field.value, [label]: 0 };
                                   field.onChange(newValue);

@@ -183,8 +183,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   }, [watch, trigger, clearErrors, dirtyFields]);
 
   const isOptionDisabled = (softwareOpt: Record<string, number>, option: { value: string }) => {
-    console.log('softwareOpt', softwareOpt)
-    console.log('option', option)
     if (softwareOpt['ot'] === 1) {
       if (option.value !== 'ot' && option.value !== 'fw') {
         softwareOpt[option.value] = 0;

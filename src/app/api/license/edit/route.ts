@@ -36,6 +36,8 @@ export async function PUT(request: NextRequest) {
       hardwareCode,
     } = body;
 
+    console.log('softwareOpt', softwareOpt)
+
     // 필수값 검사: initCode가 없으면 error
     if (!hardwareSerial) {
       return NextResponse.json({ error: "serialCode is required" }, { status: 400 });
