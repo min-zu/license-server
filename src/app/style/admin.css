@@ -1,11 +1,6 @@
 /* admin 페이지 관련 css */
-.admin-grid .ag-cell {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  font-size: 12px !important;
-}
 
+/* upsertAdminModal 관련 css */
 .admin-form {
   display: flex;
   flex-direction: column;

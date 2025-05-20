@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 // AG Grid
-import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule } from 'ag-grid-community';
+import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule, CellStyleModule } from 'ag-grid-community';
 import { ClientSideRowModelModule, RowSelectionModule } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
@@ -31,7 +31,7 @@ export interface Admin {
 
 export default function AdminPage() {
   // ag-Grid에서 사용할 모듈 설정
-  const modules: Module[] = [ClientSideRowModelModule, RowSelectionModule, PaginationModule];
+  const modules: Module[] = [ClientSideRowModelModule, CellStyleModule, RowSelectionModule, PaginationModule];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
   // 전체 관리자 데이터
@@ -41,7 +41,7 @@ export default function AdminPage() {
   // 현재 페이지 번호
   const [currentPage, setCurrentPage] = useState(1);
   // 페이지당 보여줄 행(관리자) 수
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   // mode ('add' = 추가, 'other' = 수정)
   const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
   // 수정 대상 정보
@@ -62,7 +62,13 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin?mode=adminList'); // admin 목록 요청
       if (!res.ok) throw new Error('네트워크 오류');
-      const data = await res.json();
+      const data: Admin[] = await res.json();
+      // role === 3인 항목을 맨 앞으로 정렬
+      data.sort((a, b) => {
+      if (a.role === 3 && b.role !== 3) return -1;  // a가 슈퍼관리자면 앞으로
+      if (a.role !== 3 && b.role === 3) return 1;   // b가 슈퍼관리자면 뒤로
+      return 0; // 그 외는 기존 순서 유지
+      });
       setRowData(data);
     } catch (err) {
       console.error('데이터 불러오기 실패:', err);
@@ -119,7 +125,7 @@ export default function AdminPage() {
         params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
-    { field: 'phone', headerName: '연락처', headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'phone', headerName: '휴대폰 번호', headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'email', headerName: '이메일', headerClass: 'header-style', cellClass: 'cell-style' },
     {// 최근 로그인 날짜와 시간
       field: 'login_ts',
@@ -143,14 +149,13 @@ export default function AdminPage() {
         params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
-    {// 편집 버튼 (슈퍼 관리자는 제외)
+    {// 편집 버튼
       colId: 'editBtn',
       headerName: '관리',
       headerClass: 'header-style',
       cellClass: 'cell-style',
       cellRenderer: (params: ICellRendererParams<Admin>) => {
         const data = params.data;
-        if (!data || data.role === 3) return null; // 슈퍼 관리자 수정 금지
         
         return (
           <IconButton
@@ -180,7 +185,6 @@ export default function AdminPage() {
         <div className="flex justify-between items-end mb-4" >
           <FormControl size="small" sx={{ width: 90 }}>
             <Select value={pageSize.toString()} onChange={handlePageSizeChange}>
-              <MenuItem value={10}>10개</MenuItem>
               <MenuItem value={20}>20개</MenuItem>
               <MenuItem value={50}>50개</MenuItem>
               <MenuItem value={100}>100개</MenuItem>
@@ -234,23 +238,23 @@ export default function AdminPage() {
             setSelectedRows([]);
           }}
         />
-        <div className="ag-theme-alpine admin-grid" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
-        <AgGridReact
-          modules={modules}
-          rowData={rowData}
-          columnDefs={columnDefs}
-          rowSelection={rowSelection}
-          defaultColDef={defaultColDef}
-          theme="legacy"
-          rowHeight={30}
-          headerHeight={30}
-          onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
-          pagination={true}
-          suppressPaginationPanel={true}
-          paginationPageSize={pageSize}
-          onPaginationChanged={handlePaginationChanged}
-          ref={gridRef}
-        />
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+          <AgGridReact
+            modules={modules}
+            rowData={rowData}
+            columnDefs={columnDefs}
+            rowSelection={rowSelection}
+            defaultColDef={defaultColDef}
+            theme="legacy"
+            rowHeight={30}
+            headerHeight={30}
+            onSelectionChanged={(e) => setSelectedRows(e.api.getSelectedRows())}
+            pagination={true}
+            suppressPaginationPanel={true}
+            paginationPageSize={pageSize}
+            onPaginationChanged={handlePaginationChanged}
+            ref={gridRef}
+          />
         </div>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>

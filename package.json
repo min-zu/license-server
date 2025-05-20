@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "cross-env NEXT_DISABLE_ESLINT=true SKIP_BUILD_CACHE=true next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "upload": "scp -r .next public future@10.31.63.95:/home/future/license"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

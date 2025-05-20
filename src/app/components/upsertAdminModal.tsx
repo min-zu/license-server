@@ -57,7 +57,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
 
-  // 연락처
+  // 휴대폰 번호
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
@@ -94,7 +94,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
       !!passwdError || // 비밀번호 유효성 오류
       confirmPasswdValid === false || // 비밀번호 확인이 비밀번호와 불일치
       !!nameError || // 이름 유효성 오류
-      !!phoneError || // 연락처 유효성 오류
+      !!phoneError || // 휴대폰 번호 유효성 오류
       !!emailError // 이메일 유효성 오류
       )
     : ( // 관리자 수정
@@ -104,7 +104,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
       !!passwdError || // 비밀번호 유효성 오류
       confirmPasswdValid === false) || // 비밀번호 확인이 비밀번호와 불일치
       !!nameError || // 이름 유효성 오류
-      !!phoneError || // 연락처 유효성 오류
+      !!phoneError || // 휴대폰 번호 유효성 오류
       !!emailError || // 이메일 유효성 오류
       !!!isChanged // 수정된 관리자 정보 없음
     )
@@ -300,11 +300,21 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   onChange={handleAdminChange}
                 >
                   {mode === 'self'
-                    ? [<ToggleButton selected disabled value={role} size="small">{role === 2 ? '설정 관리자' : '모니터 관리자'}</ToggleButton>]
+                    ? [
+                        <ToggleButton selected disabled value={role} size="small">
+                          {role=== 3 ? '슈퍼 관리자' : role === 2 ? '설정 관리자' : '모니터 관리자'}
+                        </ToggleButton>
+                      ]
+                    : role === 3
+                    ? [
+                        <ToggleButton selected disabled value={3} size="small">
+                          슈퍼 관리자
+                        </ToggleButton>
+                      ]
                     : [
-                      <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
-                      <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
-                    ]
+                        <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
+                        <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                      ]
                   }
                 </ToggleButtonGroup>
 
@@ -410,15 +420,15 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
 
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  연락처
+                  휴대폰 번호
                 </FormLabel>
                 <TextField 
                   name="phone" 
                   size="small"
-                  placeholder="000-0000-0000" 
+                  placeholder="숫자만 11자 입력" 
                   value={phone}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const value = e.target.value.replace(/\D/g, '');
                     setPhone(value);
 
                     if (phoneError) {
@@ -426,12 +436,27 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                     }
                   }}
                   onBlur={() => {
-                    const result = ValidPhone(phone);
+                    const formatted = phone.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
+                    setPhone(formatted);
+
+                    const result = ValidPhone(formatted);
+
                     if (result !== true) {
                       setPhoneError(result);
                     } else {
                       setPhoneError(null);
                     }
+                  }}
+                  onFocus={() => {
+                    const numberOnly = phone.replace(/\D/g, '');
+                    setPhone(numberOnly);
+                  }}
+                  slotProps={{
+                    input: {
+                      inputProps: {
+                        maxLength: 11,
+                      },
+                    },
                   }}
                   error={!!phoneError}
                   helperText={phoneError ?? undefined}
@@ -470,7 +495,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
               </Box>
 
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                {mode === 'other' && (
+                {mode === 'other' && role !== 3 && (
                   <>
                     <FormLabel>
                       계정 활성화

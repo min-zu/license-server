@@ -1,8 +1,5 @@
 import React from 'react';
 
-// Auth.js (NextAuth.js v5)
-import { signOut } from 'next-auth/react';
-
 // MUI
 import { Box, Button, Dialog, DialogContent, Menu, MenuItem } from '@mui/material';
 
@@ -43,7 +40,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     if(state === 'license') {
       try {
         const res = await deleteLicenses(deleteIds);
-        console.log('res', res);
         if(res.success) {
           showToast(res.result.affectedRows + '개의 데이터가 삭제되었습니다.', 'success');
           onConfirm && onConfirm();
@@ -71,17 +67,17 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         showToast(deleteIds.length + '개의 계정이 삭제되었습니다.', 'success');
         onDeleted?.(deleteIds);
         close();
-        // 삭제 된 데이터 중 로그인된 관리자 계정이 포함된 경우
-        if (data.deletedSelf) {
-          sessionStorage.setItem('loginToast', 'loggedout');
-          await signOut({ callbackUrl:'/login' });
-        }
       } catch (err) {
         console.error(err);
         showToast('삭제 중 오류 발생', 'error');
       }
     }
   };
+
+  const handleEditConfirm = () => {
+    onConfirm && onConfirm();
+    close();
+  }
 
   return (
     <>
@@ -96,10 +92,17 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         <Box display="flex" justifyContent="center" gap={0.5} mt={2} mb={2}>
           {state === 'help' ? (
             <>
-            <Button className="default-btn" onClick={handleSampleClick}>
+            <Button 
+              className="default-btn" 
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/sample/ituImport.csv';
+                link.download = 'ituImport.csv';
+                link.click();
+              }}>
               샘플파일 다운로드
             </Button>
-            <Menu
+            {/* <Menu
               anchorEl={anchorEl}
               open={sampleOpen}
               onClose={handleSampleClose}
@@ -120,13 +123,13 @@ export default function AlertModal({ open, close, state, title, message, deleteI
                   link.download = 'defaultImport.csv';
                   link.click();
                 }}
-              >ITM/SMC/XTM 샘플파일</MenuItem>
-            </Menu>
+              >ITM 샘플파일</MenuItem>
+            </Menu> */}
             </>
           ) : (
             <Button
               className="default-btn"
-              onClick={() => { handleDeleteConfirm(); } }>
+              onClick={() => { state === 'edit' ? handleEditConfirm() : handleDeleteConfirm(); } }>
               확인
             </Button>
           )}

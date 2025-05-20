@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parse } from 'csv-parse/sync';
 import fs from 'fs/promises';
-import path from 'path';
 import { query } from '@/app/db/database'; // DB 쿼리 유틸 유틸
-import { writeFile } from 'fs/promises';
-import os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile('/tmp/upload_license.csv', buffer);
+    await fs.writeFile('/home/future/license/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     }    
 
     const results: string[] = [];
-    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
+    const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
     for(let i = 0; i < filteredRows.length; i++) {
       const row = filteredRows[i];
@@ -43,68 +44,68 @@ export async function POST(request: NextRequest) {
 
       // 기본 필드 (앞쪽 공통 필드 9개)
       const [
-        hardwareStatus,
-        hardwareCode,
+        // hardwareStatus,
+        hardwareSerial,
         limitTimeStart,
         limitTimeEnd,
-        issuer,
-        manager,
-        cpuName,
-        siteName,
-        cfid,
-        // initCode,
+        regUser,
+        regRequest,
+        customer,
+        projectName,
+        customerEmail,
+        // hardwareCode,
         ...options // 나머지 옵션 필드들은 배열로 받음
       ] = trimmedRow;
 
-      console.log("options: ", options);
+      let [fw, vpn, s2, dpi, av, as, ot] = ['0', '0', '0', '0', '0', '0', '0'];
 
-      let [fw, vpn, 행안부, ssl, dpi, ips, ddos, waf, av, as, tracker, ot] = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
+      [fw, vpn, s2, dpi, av, as, ot] = options;
 
-      if(hardwareStatus.toUpperCase() === 'ITU') {
-        [fw, vpn, 행안부, dpi, av, as, ot] = options;
-      } else {
-        [fw, vpn, ssl, ips, ddos, waf, av, as, tracker] = options;
+      const trimmedSerial = hardwareSerial.trim().replace(/\s/g, '');
+      const codes = trimmedSerial.split('-').length >= 3;
+
+      // if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM')) {
+      //   return NextResponse.json({ message: `${i + 1}행 장비선택 입력` }, { status: 400 });
+      // }
+
+      // if(codes && trimmed.length < 22) {
+      //   return NextResponse.json({ message: `${i + 1}행 시리얼 [${hardwareSerial}] 22자 이상 입력` }, { status: 400 });
+      // }
+
+      if(!codes && trimmedSerial.length !== 24) {
+        return NextResponse.json({ message: `${i + 1}행 시리얼 [${trimmedSerial}] 24자 입력` }, { status: 400 });
       }
 
-      const trimmed = hardwareCode.trim();
-      const codes = trimmed.split('-').length >= 3;
-
-      if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM') && !hardwareStatus.toUpperCase().includes('SMC') && !hardwareStatus.toUpperCase().includes('XTM')) {
-        return NextResponse.json({ message: `${i + 1}행 장비선택 입력` }, { status: 400 });
-      }
-
-      if(codes && trimmed.length < 22) {
-        return NextResponse.json({ message: `${i + 1}행 시리얼 [${hardwareCode}] 22자 이상 입력` }, { status: 400 });
-      } else if(!codes && trimmed.length !== 24) {
-        return NextResponse.json({ message: `${i + 1}행 시리얼 [${hardwareCode}] 24자 입력` }, { status: 400 });
-      }
-
-      const rowCheck = await query("SELECT COUNT(*) as cnt FROM license WHERE hardware_code = ?;", [hardwareCode]);
+      const rowCheck = await query("SELECT COUNT(*) as cnt FROM license WHERE hardware_serial = ?;", [trimmedSerial]);
       if(Number(rowCheck[0].cnt) > 0) {
-        return NextResponse.json({ message: `${i + 1}행 시리얼 [${hardwareCode}] 중복` }, { status: 400 });
+        return NextResponse.json({ message: `${i + 1}행 시리얼 [${trimmedSerial}] 중복` }, { status: 400 });
       }
 
       if (limitTimeStart.length !== 8 || limitTimeEnd.length !== 8) {
         return NextResponse.json({ message: `${i + 1}행 유효기간 오류, 8자(YYYYMMDD) 입력` }, { status: 400 });
       }
 
-      if(manager === '') {
+      if(Number(limitTimeStart) >= Number(limitTimeEnd)) {
+        return NextResponse.json({ message: `${i + 1}행 유효기간(만료)을 확인해주세요` }, { status: 400 });
+      }
+
+      if(regRequest === '') {
         return NextResponse.json({ message: `${i + 1}행 발급요청사 입력` }, { status: 400 });
       }
 
-      if(cpuName === '') {
-        return NextResponse.json({ message: `${i + 1}행 프로젝트/CPU명 입력` }, { status: 400 });
+      if(projectName === '') {
+        return NextResponse.json({ message: `${i + 1}행 프로젝트명 입력` }, { status: 400 });
       }
 
-      if(siteName === '') {
+      if(customer === '') {
         return NextResponse.json({ message: `${i + 1}행 고객사명 입력` }, { status: 400 });
       }
 
-      if(cfid === '') {
-        return NextResponse.json({ message: `${i + 1}행 고객사 E-mail/CFID 입력` }, { status: 400 });
+      if(customerEmail === '') {
+        return NextResponse.json({ message: `${i + 1}행 고객사 E-mail 입력` }, { status: 400 });
       }
 
-      // if(initCode === '') {
+      // if(hardwareCode === '') {
       //   return NextResponse.json({ message: `${i + 1}행 하드웨어 인증키 입력` }, { status: 400 });
       // }
 
@@ -115,69 +116,63 @@ export async function POST(request: NextRequest) {
       let sql = '';
       const params = [];
       
-      let license_key: string | null = null;
+      let licenseKey: string | null = null;
       const startDate = limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
 
-      if(hardwareStatus.toUpperCase() === 'ITU') {
-        // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, dpi, av, as, 행안부, ot}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
+      // if(hardwareStatus.toUpperCase() === 'ITU') {
         const functionMap = 
           (Number(fw) || 0) * 1 +
           (Number(vpn) || 0) * 2 +
           (Number(dpi) || 0) * 4 +
           (Number(av) || 0) * 8 +
           (Number(as) || 0) * 16 +
-          (Number(행안부) || 0) * 32 +
+          (Number(s2) || 0) * 32 +
           (Number(ot) || 0) * 64;
         
         const [y, m, d] = endDate.split("-").map(Number);
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
     
-        console.log("functionMap: ", functionMap);
-        console.log("hexExpire: ", hex_expire);
-    
-        const cmd = `/var/www/issue/license ${hardwareCode} ${functionMap} ${hex_expire}`;
-        // const _ituKey = await execAsync(cmd);
-        const _ituKey = "fileImportAddtestITU123hardwardCode456";
-        license_key = typeof _ituKey === 'string' ? _ituKey : null;
+        const cmd = `/home/future/license/license ${trimmedSerial} ${functionMap} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        const _ituKey = result.stdout.replace(/\n/g, '');
+
+        // const _ituKey = "fileImportAddtestITU123hardwardCode456";
+        licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
   
-        if(license_key) {        
+        if(licenseKey) {        
           sql = `INSERT INTO license (
-            number, reg_date, license_date,
-            \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process,
-            hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpu_name, cfid,
-            license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+            number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
+            hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
+            license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
             ) VALUES (
-              0, now(), now(),
-              0, 0, 0, 0, 0, 1,
+              0, now(), now(), 0, 1, 0,
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+              ?, ?, ?, ?, ?, ?, ?
             )`;
   
           params.push(
-            hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, 행안부, dpi, 0, 0, av, as, ot
+            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            fw, vpn, s2, dpi, av, as, ot
           );
         } else {
           sql = `INSERT INTO license (
-            number, reg_date, license_date,
-            \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process, auth_code,
-            hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
-            license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
-          ) VALUES (
-            0, now(), now(),
-            0, 0, 0, 0, 0, 1, 0,
+            number, reg_date, license_date, reissuance, demo_cnt, reg_auto, license_key,
+            hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
+            license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
+          ) VALUES ( 
+            0, now(), now(), 0, 1, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?
           )`
   
           params.push(
-            hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, issuer, manager, siteName, cpuName, cfid, 
-            0, fw, vpn, 행안부, dpi, 0, 0, av, as, ot
+            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            fw, vpn, s2, dpi, av, as, ot
           );
         }
-      }
+      // }
       /* itu 외 파일업로드 논의 (기존에없음음)
       else{
         // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, ssl, ips, waf, av, as}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
@@ -271,10 +266,19 @@ export async function POST(request: NextRequest) {
       }
 
       */
-      await fs.appendFile(
-        '/tmp/upload_log',
-        `[${new Date().toISOString()}] SQL: ${sql}\nPARAMS: ${JSON.stringify(params)}\n\n`
-      );
+      // Log
+      const logPath = '/home/future/license/log/upload_license.log';
+      const logContent =
+`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+SQL: ${sql}
+PARAMS: ${JSON.stringify(params)}
+
+`;
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
       await query(sql, params);
     }
     return NextResponse.json({ message: '업로드 성공' }, { status: 200 });

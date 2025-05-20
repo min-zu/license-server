@@ -7,9 +7,8 @@ import '@/app/style/license.css';
 
 import Link from 'next/link';
 import { useEffect, useState } from "react";
-import { Button, Modal, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { AccountCircle, Logout } from '@mui/icons-material';
-import LicenseAddModal from './licenseAddModal';
 import UpsertModal from './upsertAdminModal';
 import { signOut, useSession } from 'next-auth/react';
 import { usePathname } from "next/navigation";
@@ -28,22 +27,11 @@ export default function Header() {
   const role = session?.user?.role;
   const id = session?.user?.id;
 
-  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [openUpsert, setOpenUpsert] = useState(false);
-  // const handleClose = () => setIsModalOpen(false);
-  
-  // const handleChange = (
-  //   event: React.MouseEvent<HTMLElement>,
-  //   newClick: string,
-  // ) => {
-  //   setNavState(newClick);
-  // };
   
   // 로그아웃
   const handleLogout = async () => {
-    sessionStorage.setItem('loginToast', 'loggedout');
-    await signOut({ callbackUrl:'/login' });
-
+    await signOut({ redirectTo: '/login?toast=loggedout' });
   };
 
   useEffect(() => {
@@ -89,19 +77,6 @@ export default function Header() {
           >
             <p className={navState === 'admin' ? 'text-white font-bold' : 'text-gray-300'}>Admin</p>
           </Link>
-          
-          {/* {navState === 'license' && (
-            <Button
-              variant="contained"
-              color="primary" 
-              size="small"
-              onClick={() => {
-                setIsModalOpen(true);
-              }}
-            >
-              라이센스 등록
-            </Button>
-          )} */}
         </nav>
       </div>
 
@@ -111,10 +86,6 @@ export default function Header() {
           <p className="text-white">|</p>
           <div
             onClick={() => {
-              if (role === 3) {
-                showToast("슈퍼 관리자는 본인 정보를 수정할 수 없습니다.", "info");
-                return;
-              }
               setOpenUpsert(true)}}
           >
             <Tooltip title="계정 수정">

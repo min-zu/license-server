@@ -6,9 +6,10 @@ export interface ToastAlertProps {
   setOpen: (open: boolean) => void;
   message: string;
   severity: 'success' | 'error' | 'warning' | 'info';
+  top: number;
 }
 
-export default function ToastAlert({ open, setOpen, message, severity }: ToastAlertProps) {
+export default function ToastAlert({ open, setOpen, message, severity, top }: ToastAlertProps) {
   const [isOpen, setIsOpen] = useState<boolean>(open);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function ToastAlert({ open, setOpen, message, severity }: ToastAl
             onClose={handleClose}
             severity={severity}
             variant="filled"
-            sx={{ width: '100%' }}
+            sx={{ width: '100%', marginTop: top+'px' }}
           >
             {message}
           </Alert>
@@ -41,4 +42,4 @@ export default function ToastAlert({ open, setOpen, message, severity }: ToastAl
       )}
     </div>
   );
-};
+}; 

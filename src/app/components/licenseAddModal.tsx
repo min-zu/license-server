@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLa
 
 // 데이터
 import { defaultOps, ituOps } from "@/app/data/config";
-import { checkHardwareCode } from "@/app/api/validation";
+import { checkHardwareSerial } from "@/app/api/validation";
 
 // form
 import { useForm, Controller } from "react-hook-form";
@@ -42,8 +42,8 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   };
 
   const addSchema = z.object({
-    hardwareStatus: z.enum(["ITU", "ITM", "XTM", "SMC"]),
-    hardwareCode: z.string()
+    hardwareStatus: z.enum(["ITU", "ITM"]),
+    hardwareSerial: z.string()
       .min(1, { message: '제품 시리얼 번호를 입력해주세요.' })
       .regex(/^(?=.*[a-zA-Z])(?=.*\d).+$/, { message: '제품 시리얼 번호는 영문과 숫자를 각각 1개 이상 포함해야 합니다.' })
       .superRefine((value, ctx) => {
@@ -74,29 +74,40 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       // }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
-    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
-    issuer: z.string().optional(),
-    manager: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    cpuName: z.string(),
-    siteName: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    cfid: z.string(),
-    regInit: z.string().optional(),
+    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
+      .superRefine((value, ctx) => {
+        const startDate = getValues('limitTimeStart');
+        const endDate = new Date(value);
+        
+        if (value <= startDate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '만료일을 확인해주세요.',
+          });
+        }
+      }),
+    regUser: z.string().optional(),
+    regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
+    customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
+    projectName: z.string(),
+    customerEmail: z.string(),
+    hardwareCode: z.string().optional(),
   }).superRefine((data, ctx) => {
-    const { hardwareStatus, cfid, cpuName } = data;
+    const { hardwareStatus, customerEmail, projectName } = data;
     const isITU = hardwareStatus === 'ITU';
     const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 
-    if (!cpuName || cpuName.trim() === '') {
+    if (!projectName || projectName.trim() === '') {
       ctx.addIssue({
-        path: ["cpuName"],
+        path: ["projectName"],
         code: z.ZodIssueCode.custom,
         message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
       });
     }
     
-    if (!cfid || cfid.trim() === '') {
+    if (!customerEmail || customerEmail.trim() === '') {
       ctx.addIssue({
-        path: ["cfid"],
+        path: ["customerEmail"],
         code: z.ZodIssueCode.custom,
         message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
       });
@@ -104,9 +115,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     }
 
     if (isITU) {
-      if (!emailRegex.test(cfid)) {
+      if (!emailRegex.test(customerEmail)) {
         ctx.addIssue({
-          path: ["cfid"],
+          path: ["customerEmail"],
           code: z.ZodIssueCode.custom,
           message: '이메일 형식이 올바르지 않습니다.',
         })
@@ -125,38 +136,36 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     clearErrors,
     watch,
     trigger,
+    getValues,
     formState: { dirtyFields }
   } = useForm<z.infer<typeof addSchema>>({
     resolver: zodResolver(addSchema),
     mode: 'onChange',
     defaultValues: {
       hardwareStatus: "ITU",
-      hardwareCode: "",
+      hardwareSerial: "",
       softwareOpt: {  
         // FW: 0,
         // VPN: 0,
-        // SSL: 0,
-        // 행안부 :0,
-        // IPS: 0,
+        // S2: 0,
         // DPI: 0,
-        // WAF: 0,
         // AV: 0,
         // AS: 0,
-        // Tracker: 0,
+        // OT: 0,
       },
       limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: "2036-12-31",
-      issuer: "",
-      manager: "",
-      cpuName: "",
-      siteName: "",
-      cfid: "",
-      regInit: "",
+      regUser: "",
+      regRequest: "",
+      customer: "",
+      projectName: "",
+      customerEmail: "",
+      hardwareCode: "",
     },
   });
 
-  // "ITU", "ITM", "XTM", "SMC" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
-  const fieldsToCheck = ["hardwareCode", "manager", "cpuName", "siteName", "cfid"] as const;
+  // "ITU", "ITM" 토글 변경 시 입력 값이 없으면 오류 초기화, 입력 값이 있으면 유효성 검사 다시 실행
+  const fieldsToCheck = ["hardwareSerial", "regRequest", "customer", "projectName", "customerEmail"] as const;
 
   useEffect(() => {
   const subscription = watch((_value, { name }) => {
@@ -173,12 +182,29 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     return () => subscription.unsubscribe();
   }, [watch, trigger, clearErrors, dirtyFields]);
 
+  const isOptionDisabled = (softwareOpt: Record<string, number>, option: { value: string }) => {
+    if (softwareOpt['ot'] === 1) {
+      if (option.value !== 'ot' && option.value !== 'fw') {
+        softwareOpt[option.value] = 0;
+        return true;
+      } 
+    }
+
+    if (softwareOpt['vpn'] === 1 || softwareOpt['s2'] === 1 || softwareOpt['dpi'] === 1 || softwareOpt['av'] === 1 || softwareOpt['as'] === 1) {
+      if (option.value === 'ot') {
+        softwareOpt['ot'] = 0;
+        return true;
+      }
+    }
+    return false;
+  };
+
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
 
-    const count = await checkHardwareCode(data.hardwareCode);
+    const count = await checkHardwareSerial(data.hardwareSerial);
     if (Number(count) !== 0) {
       // 사용자에게 중복 메시지 보여주기
-      setError("hardwareCode", {
+      setError("hardwareSerial", {
         type: "manual",
         message: "이미 사용 중인 제품 시리얼 번호입니다.",
       });
@@ -244,7 +270,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                   }
                 }}
               >
-                {["ITU", "ITM", "XTM", "SMC"].map((type) => (
+                {["ITU", "ITM"].map((type) => (
                   <ToggleButton key={type} value={type}>{type}</ToggleButton>
                 ))}
               </ToggleButtonGroup>
@@ -256,29 +282,30 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                inputProps={{ maxLength: 24 }}
-                error={errors.hardwareCode !== undefined}
-                helperText={errors.hardwareCode?.message}
-                {...register('hardwareCode', {
+                // inputProps={{ maxLength: 24 }}
+                error={errors.hardwareSerial !== undefined}
+                helperText={errors.hardwareSerial?.message}
+                {...register('hardwareSerial', {
                   onChange: (e) => {
-                    const value = e.target.value.trim();
-                    setValue('hardwareCode', value);
+                    const value = e.target.value;
+                    setValue('hardwareSerial', value.replace(/\s/g, ''));
                   }
                 })}
               />
               {textFieldTooltip(`ITU : ITU201AXXXXXXXXXXXXXXXXX (24 codes)\nITM : 3XXXXX-XXXXXX-XXXXXXXX[-N]\n(대소문자구분 22 codes | 번호추가[-N] 시 24 codes)`)}
             </Box>
-
-            <Box display="flex" alignItems="center">
-              <FormLabel>
-                <span>&nbsp;&nbsp;</span>소프트웨어 옵션
+            
+            {selectedHardware === 'ITU' && (
+              <Box display="flex" alignItems="center">
+                <FormLabel>
+                  <span>&nbsp;&nbsp;</span>소프트웨어 옵션
               </FormLabel>
               <Controller
                 control={control}
                 name="softwareOpt"
                 render={({ field }) => (
                   <FormGroup className="flex flex-wrap justify-between" style={{ flexDirection: 'row' }}>
-                    {(selectedHardware === 'ITU' ? ituOps : defaultOps).map((item) => (
+                    {ituOps.map((item) => (
                       <FormControlLabel
                         key={item.value}
                         control={
@@ -289,22 +316,24 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                               const newValue = e.target.checked ? { ...field.value, [item.value]: 1 } : { ...field.value, [item.value]: 0 };
                               field.onChange(newValue);
                             }}
+                            disabled={isOptionDisabled(field.value, item)}
                           />
                         }
-                        label={item.label}
+                        label={item.value === 's2' ? '행안부' : item.value === 'ot' ? '산업용 프로토콜' : item.label}
                       />
                     ))}
                   </FormGroup>
                 )}
               />
-            </Box>
+              </Box>
+            )}
 
             <Box display="flex" alignItems="center" >
               <FormLabel>
                 <span className="text-red-500">*</span> 유효기간(시작)
               </FormLabel>
               <TextField
-                className="add-license-half-width" 
+                className="add-license-half-width add-date-input" 
                 size="small"
                 type="date"
                 error={errors.limitTimeStart !== undefined}
@@ -316,7 +345,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 <span className="text-red-500">*</span> 유효기간(만료)
               </FormLabel>
               <TextField
-                className="add-license-half-width"
+                className="add-license-half-width add-date-input"
                 size="small"
                 type="date"
                 error={errors.limitTimeEnd !== undefined}
@@ -332,7 +361,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('issuer')} 
+                {...register('regUser', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('regUser', value.trim());
+                  }
+                })} 
               />
             </Box>
 
@@ -342,9 +376,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.manager !== undefined}
-                helperText={errors.manager?.message}
-                {...register('manager')}
+                error={errors.regRequest !== undefined}
+                helperText={errors.regRequest?.message}
+                {...register('regRequest', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('regRequest', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -354,9 +393,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>  
               <TextField 
                 size="small" 
-                error={errors.cpuName !== undefined}
-                helperText={errors.cpuName?.message}
-                {...register('cpuName')}
+                error={errors.projectName !== undefined}
+                helperText={errors.projectName?.message}
+                {...register('projectName', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('projectName', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -366,9 +410,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.siteName !== undefined}
-                helperText={errors.siteName?.message}
-                {...register('siteName')}
+                error={errors.customer !== undefined}
+                helperText={errors.customer?.message}
+                {...register('customer', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('customer', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -378,9 +427,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                error={errors.cfid !== undefined}
-                helperText={errors.cfid?.message}
-                {...register('cfid')} 
+                error={errors.customerEmail !== undefined}
+                helperText={errors.customerEmail?.message}
+                {...register('customerEmail', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('customerEmail', value.trim());
+                  }
+                })}
               />
             </Box>
 
@@ -390,7 +444,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
-                {...register('regInit')}
+                {...register('hardwareCode', {
+                  onChange: (e) => {
+                    const value = e.target.value;
+                    setValue('hardwareCode', value.replace(/\s/g, ''));
+                  }
+                })}
               />
               {textFieldTooltip('수동 발급시에만 입력하세요!')}
             </Box>

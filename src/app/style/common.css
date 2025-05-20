@@ -20,10 +20,14 @@
   font-size: 11px !important;
 }
 
-.cell_left {
-  /* display: flex !important; */
-  justify-content: flex-start !important;
+.cell-style {
   text-align: center !important;
+  font-size: 11px !important;
+}
+
+.cell-left {
+  /* display: flex !important; */
+  text-align: left !important;
   font-size: 11px !important;
   /* padding-left: 10px !important; */
 }

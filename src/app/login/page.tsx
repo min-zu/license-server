@@ -11,9 +11,6 @@ import { getSession, signIn, signOut } from "next-auth/react";
 // MUI
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 
-// 유효성 검사
-import { ValidID, ValidPW } from "../api/validation";
-
 // ToastAlert
 import { useToastState } from "../components/useToast";
 
@@ -24,29 +21,46 @@ export default function SignIn() {
 
   // toastAleat
   const { showToast, ToastComponent } = useToastState();
+
+  useEffect(() => {
+    (async () => {
+      const session = await getSession();
+      if (session) {
+        await signOut({ redirect: false });
+      }
+    })();
+  }, []);
   
   useEffect(() => {
+    if (typeof window === 'undefined') return; // SSR 방지
+
     // 로그아웃 시 unload발생 -> 오탐 방지로 제거
     if (sessionStorage.getItem('wasExternal') === 'true') {
       sessionStorage.removeItem('wasExternal');
     }
 
     // 토스트 플래그 확인
-    const toastFlag = sessionStorage.getItem('loginToast');
-    // 로그아웃
-    if (toastFlag === 'loggedout') {
-      showToast('로그아웃 되었습니다.', 'success');
-      sessionStorage.removeItem('loginToast');
-    }
-    // 세션 만료
-    if (toastFlag === 'timedout') {
-      showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
-      sessionStorage.removeItem('loginToast');
-    }
-    // 비정상 접근
-    if (toastFlag === 'forced') {
-      showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
-      sessionStorage.removeItem('loginToast');
+    if (window.location.search) {
+      // 파라미터 값이 있는 경우, URL을 '/login'으로 변경하되 파라미터 값은 toastFlag에 저장
+      const urlParams = new URLSearchParams(window.location.search);
+      let toastFlag = urlParams.get('toast');
+      window.history.replaceState(null, '', '/login'); // 경로는 '/login'으로, 해시 값 제거
+
+      // 로그아웃
+      if (toastFlag === 'loggedout') {
+        showToast('로그아웃 되었습니다.', 'success');
+        toastFlag = "";
+      }
+      // 세션 만료
+      if (toastFlag === 'timedout') {
+        showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'warning');
+        toastFlag = "";
+      }
+      // 비정상 접근
+      if (toastFlag === 'forced') {
+        showToast('비정상적인 접근입니다. 다시 로그인해주세요.', 'error');
+        toastFlag = "";
+      }
     }
   }, []);
 
@@ -60,16 +74,8 @@ export default function SignIn() {
     const ID = formData.get("id")?.toString() ?? "";
     const PW = formData.get("password")?.toString() ?? "";
 
-    if (!ID) {return showToast("아이디를 입력해 주세요.","info")}
-    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "info")}
-
-    // 입력값 유효성 검사
-    const idCheck = ValidID(ID);
-    const pwCheck = ValidPW(PW);
-
-    // 유효성 검사 실패 시 에러 메시지
-    if (idCheck !== true) {return showToast(idCheck, "error")};
-    if (pwCheck !== true) {return showToast(pwCheck, "error")};
+    if (!ID) {return showToast("아이디를 입력해 주세요.","warning")}
+    if (!PW) {return showToast("비밀번호를 입력해 주세요.", "warning")}
 
      // Auth.js(NextAuth v5)을 통한 로그인
     const result = await signIn("credentials", {
