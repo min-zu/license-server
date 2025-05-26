@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
       [fw, vpn, s2, dpi, av, as, ot] = options;
 
-      const trimmedSerial = hardwareSerial.trim().replace(/\s/g, '');
+      const trimmedSerial = hardwareSerial.trim().replace(/\s/g, '').toUpperCase();
       const codes = trimmedSerial.split('-').length >= 3;
 
       // if(!hardwareStatus.toUpperCase().includes('ITU') && !hardwareStatus.toUpperCase().includes('ITM')) {
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       
       let sql = '';
       const params = [];
-      
+
       let licenseKey: string | null = null;
       const startDate = limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
@@ -129,18 +129,18 @@ export async function POST(request: NextRequest) {
           (Number(as) || 0) * 16 +
           (Number(s2) || 0) * 32 +
           (Number(ot) || 0) * 64;
-        
+
         const [y, m, d] = endDate.split("-").map(Number);
         const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
-    
+
         const cmd = `/home/future/license/license ${trimmedSerial} ${functionMap} ${hex_expire}`;
         const result = await execAsync(cmd);
         const _ituKey = result.stdout.replace(/\n/g, '');
 
         // const _ituKey = "fileImportAddtestITU123hardwardCode456";
         licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
-  
+
         if(licenseKey) {        
           sql = `INSERT INTO license (
             number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
@@ -151,9 +151,9 @@ export async function POST(request: NextRequest) {
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
               ?, ?, ?, ?, ?, ?, ?
             )`;
-  
+
           params.push(
-            trimmedSerial.toUpperCase(), 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
             fw, vpn, s2, dpi, av, as, ot
           );
         } else {
@@ -166,14 +166,14 @@ export async function POST(request: NextRequest) {
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?
           )`
-  
+
           params.push(
-            trimmedSerial.toUpperCase(), 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
             fw, vpn, s2, dpi, av, as, ot
           );
         }
       // }
-      /* itu 외 파일업로드 논의 (기존에없음음)
+      /* itu 외 파일업로드 논의 (기존에없음)
       else{
         // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, ssl, ips, waf, av, as}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
         let license_module = "-F";
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
           const xtm_key = "fileImportAddtestXTM123hardwardCode456";
           license_key = typeof xtm_key === 'string' ? xtm_key : null;
         }
-  
+
         console.log("license_key: ", license_key);
         console.log('fw : ', fw);
         console.log('vpn : ', vpn);
@@ -239,13 +239,13 @@ export async function POST(request: NextRequest) {
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )`;
-  
+
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
             0, fw, vpn, ssl, ips, 0, waf, av, as, tracker
           );
         } else {
-          
+
           sql = `INSERT INTO license (
             number, reg_date, license_date,
             \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code, process,
@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
               ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )`;
-  
+
           params.push(
             hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, issuer, manager, siteName, 
             0, fw, vpn, ssl, ips, 0, waf, av, as, tracker

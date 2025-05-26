@@ -179,6 +179,13 @@ export default function LicensePage() {
   }, []);
 
   const onRowClicked = (event: any) => {
+    if (event.column.getColId() === 'number') {
+      // No 컬럼 클릭 시 모달 안 열기
+      return;
+    }
+    event.api.deselectAll();
+    event.node.setSelected(true);
+    
     setSelectedLicense(event.data); // 클릭한 행의 데이터 저장
     setDetailModalOpen(true); // 모달 열기
   };
@@ -475,8 +482,9 @@ export default function LicensePage() {
             paginationPageSize={pageSize}
             onPaginationChanged={handlePaginationChanged}
             ref={gridRef}
-            onRowClicked={onRowClicked}
+            onCellClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
+            suppressRowClickSelection={true}
           />
         </div>
 

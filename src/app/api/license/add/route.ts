@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
   const data = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(":").pop() || null;
-  const { hardwareStatus, hardwareSerial, softwareOpt, limitTimeStart, limitTimeEnd, regUser, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
+  const { hardwareStatus, hardwareSerial: rawSerial, softwareOpt, limitTimeStart, limitTimeEnd, regUser, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
+  const hardwareSerial = rawSerial?.slice(0, 3).toUpperCase() === "ITU" ? rawSerial.toUpperCase() : rawSerial;
   // const license_key = await generateLicenseKey(data);
   
   const option1 = Number(softwareOpt.fw) || 0;
@@ -126,7 +127,7 @@ ${cmd}
   let sql = '';
   const params = [];
   if(hardwareSerial !== "") {
-    if(hardwareStatus.toUpperCase() === "ITU") {
+    if(hardwareStatus === "ITU") {
       if(licenseKey) {        
         sql = `INSERT INTO license (
           number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
@@ -139,7 +140,7 @@ ${cmd}
           )`;
 
         params.push(
-          hardwareSerial.toUpperCase(), hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer, projectName, customerEmail, 
+          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer, projectName, customerEmail, 
           option1, option2, option3, option4, option7, option8, option9
         );
       } else {
@@ -154,7 +155,7 @@ ${cmd}
         )`
 
         params.push(
-          hardwareSerial.toUpperCase(), hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer, projectName, customerEmail, 
+          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer, projectName, customerEmail, 
           option1, option2, option3, option4, option7, option8, option9
         );
       }

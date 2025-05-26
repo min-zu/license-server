@@ -32,11 +32,12 @@ export async function PUT(request: NextRequest) {
       projectName,
       customer,
       customerEmail,
-      hardwareSerial,
+      hardwareSerial: rawSerial,
       hardwareCode,
     } = body;
 
-    console.log('softwareOpt', softwareOpt)
+    const hardwareSerial = rawSerial?.slice(0, 3).toUpperCase() === "ITU" ? rawSerial.toUpperCase() : rawSerial;
+    // console.log('softwareOpt', softwareOpt)
 
     // 필수값 검사: initCode가 없으면 error
     if (!hardwareSerial) {
@@ -180,7 +181,8 @@ ${cmd}
             reg_request = ?,
             customer = ?,
             project_name = ?,
-            customer_email = ?
+            customer_email = ?,
+            reg_auto = 0
           WHERE hardware_serial = ?
         `;
   
@@ -201,7 +203,7 @@ ${cmd}
           customer,
           projectName,
           customerEmail,
-          hardwareSerial.toUpperCase(),
+          hardwareSerial,
         ];
       }
       //ITU 제외 다른 장비일 경우: cpu_name, cfid는 제외
@@ -223,7 +225,8 @@ ${cmd}
             ip = ?,
             reg_user = ?,
             reg_request = ?,
-            customer = ?
+            customer = ?,
+            reg_auto = 0
           WHERE hardware_serial = ?
         `;
   
@@ -286,7 +289,7 @@ ${cmd}
           customer,
           projectName,
           customerEmail,
-          hardwareSerial.toUpperCase(),
+          hardwareSerial,
         ];
       }
 

@@ -34,17 +34,11 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const [ip, setIp] = useState<string>(license.ip || "");
 
   useEffect(() => {
-    setLicenseKey(license.license_date || "");
-  }, [license.license_date]);
-
-  useEffect(() => {
+    setLicenseDate(license.license_date || "");
     setLicenseKey(license.license_key || "");
-  }, [license.license_key]);
-
-  useEffect(() => {
     setIp(license.ip || "");
-  }, [license.ip]);
-  
+  }, [license.license_date, license.license_key, license.ip]);
+
   // ITU 유효성 검사
   const ITUSchema = z.object({
     softwareOpt: z.record(z.number()),
