@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             )`;
   
           params.push(
-            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            trimmedSerial.toUpperCase(), 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
             fw, vpn, s2, dpi, av, as, ot
           );
         } else {
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
           )`
   
           params.push(
-            trimmedSerial, 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
+            trimmedSerial.toUpperCase(), 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
             fw, vpn, s2, dpi, av, as, ot
           );
         }

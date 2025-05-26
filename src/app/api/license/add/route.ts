@@ -139,7 +139,7 @@ ${cmd}
           )`;
 
         params.push(
-          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer, projectName, customerEmail, 
+          hardwareSerial.toUpperCase(), hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer, projectName, customerEmail, 
           option1, option2, option3, option4, option7, option8, option9
         );
       } else {
@@ -154,7 +154,7 @@ ${cmd}
         )`
 
         params.push(
-          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer, projectName, customerEmail, 
+          hardwareSerial.toUpperCase(), hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer, projectName, customerEmail, 
           option1, option2, option3, option4, option7, option8, option9
         );
       }

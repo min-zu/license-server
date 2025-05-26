@@ -201,7 +201,7 @@ ${cmd}
           customer,
           projectName,
           customerEmail,
-          hardwareSerial,
+          hardwareSerial.toUpperCase(),
         ];
       }
       //ITU 제외 다른 장비일 경우: cpu_name, cfid는 제외
@@ -286,7 +286,7 @@ ${cmd}
           customer,
           projectName,
           customerEmail,
-          hardwareSerial,
+          hardwareSerial.toUpperCase(),
         ];
       }
 
