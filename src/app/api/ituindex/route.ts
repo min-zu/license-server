@@ -10,7 +10,7 @@ const execAsync = promisify(exec);
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const hardwareSerial = searchParams.get('serial') || '';
+  const hardwareSerial = searchParams.get('serial')?.toUpperCase() || '';
   const uuid = searchParams.get('uuid') || '';
   const hardwareCode = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;

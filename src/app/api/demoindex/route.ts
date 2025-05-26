@@ -10,7 +10,7 @@ const execAsync = promisify(exec);
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const hardwareSerial = searchParams.get('serial') || '';
+  const hardwareSerial = searchParams.get('serial')?.toUpperCase() || '';
   const uuid = searchParams.get('uuid') || '';
   const hardwareCode = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
@@ -85,7 +85,7 @@ ${cmd}
     if (row.hardware_serial === hardwareSerial)
       if(row.license_key === '0') {
       await query(`UPDATE license SET hardware_code = ? WHERE hardware_serial = ?`, [hardwareCode, hardwareSerial]);
-      await query(`UPDATE license SET limit_time_st = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
+      await query(`UPDATE license SET limit_time_start = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
       await query(`UPDATE license SET limit_time_end = ? WHERE hardware_serial = ?`, [endDate.toISOString().split("T")[0], hardwareSerial]);
       await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
       await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
