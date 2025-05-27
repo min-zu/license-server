@@ -10,7 +10,12 @@ const execAsync = promisify(exec);
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  const hardwareSerial = searchParams.get('serial')?.toUpperCase() || '';
+  let hardwareSerial = '';
+  if(searchParams.get('serial')?.includes('ITU')) {
+    hardwareSerial = searchParams.get('serial')?.toUpperCase() || '';
+  } else {
+    hardwareSerial = searchParams.get('serial') || '';
+  }
   const uuid = searchParams.get('uuid') || '';
   const hardwareCode = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest) {
   const rows = await query("SELECT hardware_serial, hardware_code FROM license");
 
   for (const row of rows as any[]) {
-    if (row.hardware_serial == hardwareSerial) {
+    if (row.hardware_serial === hardwareSerial) {
       await query(`UPDATE license SET hardware_code = ? WHERE hardware_serial = ?`, [hardwareCode, hardwareSerial]);
       await query(`UPDATE license SET license_date = NOW() WHERE hardware_serial = ?`, [hardwareSerial]);
       await query(`UPDATE license SET ip = ? WHERE hardware_serial = ?`, [ip, hardwareSerial]);
