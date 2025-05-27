@@ -1,7 +1,7 @@
 import React from 'react';
 
 // MUI
-import { Box, Button, Dialog, DialogContent, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Dialog, DialogContent } from '@mui/material';
 
 // 라이선스 삭제
 import { deleteLicenses } from '@/app/api/license/license';
@@ -19,18 +19,10 @@ interface AlertModalProps {
   deleteIds?: string[];
   onConfirm?: (() => void) | undefined;
   onDeleted?: (ids: string[]) => void;
+  failedCsvBase64?: string;
 }
 
-export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm }: AlertModalProps) {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const sampleOpen = Boolean(anchorEl);
-  const handleSampleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleSampleClose = () => {
-    setAnchorEl(null);
-  };
-
+export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm, failedCsvBase64 }: AlertModalProps) {
   const { showToast, ToastComponent } = useToastState();
 
   const handleDeleteConfirm = async () => {
@@ -59,8 +51,6 @@ export default function AlertModal({ open, close, state, title, message, deleteI
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: deleteIds }),
         });
-        // 응답 데이터 파싱
-        const data = await res.json();
         // 요청 실패 시
         if (!res.ok) showToast('삭제 실패!', 'error'); // toastArlet
         // 성공시
@@ -79,6 +69,38 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     close();
   }
 
+  const handleDownload = () => {
+    let fileData: string | Blob;
+    let fileName: string;
+
+    if (state === 'help') {
+      fileData = '/sample/ituImport.csv';
+      fileName = 'ituImport.csv';
+
+      const link = document.createElement('a');
+      link.href = fileData;
+      link.download = fileName;
+      link.click();
+
+    } else if (state === 'fail' && failedCsvBase64) {
+      const binaryString = atob(failedCsvBase64);
+      const byteArray = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        byteArray[i] = binaryString.charCodeAt(i);
+      }
+
+      const blob = new Blob([byteArray], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'failed_rows.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  };
+
   return (
     <>
       {ToastComponent}
@@ -90,41 +112,14 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         <DialogContent className="alert-modal-content">{message}</DialogContent>
 
         <Box display="flex" justifyContent="center" gap={0.5} mt={2} mb={2}>
-          {state === 'help' ? (
+          {(state === 'help' || state === 'fail') ? (
             <>
-            <Button 
-              className="default-btn" 
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = '/sample/ituImport.csv';
-                link.download = 'ituImport.csv';
-                link.click();
-              }}>
-              샘플파일 다운로드
-            </Button>
-            {/* <Menu
-              anchorEl={anchorEl}
-              open={sampleOpen}
-              onClose={handleSampleClose}
-            >
-              <MenuItem 
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = '/sample/ituImport.csv';
-                  link.download = 'ituImport.csv';
-                  link.click();
-              }}>
-                ITU 샘플파일
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = '/sample/defaultImport.csv';
-                  link.download = 'defaultImport.csv';
-                  link.click();
-                }}
-              >ITM 샘플파일</MenuItem>
-            </Menu> */}
+              <Button 
+                className="default-btn" 
+                onClick={handleDownload}
+              >
+                {state === 'help' ? '샘플파일 다운로드' : '등록 실패한 ITU 파일 다운로드'}
+              </Button>
             </>
           ) : (
             <Button

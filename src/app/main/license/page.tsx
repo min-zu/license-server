@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 // ag-grid
@@ -8,7 +8,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi, PaginationModule } from 'ag-grid-community';
 
 // mui
-import { Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from '@mui/material';
+import { Button, FormControl, MenuItem, Modal, Select, TextField } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 
 // 컴포넌트
@@ -53,7 +53,6 @@ export default function LicensePage() {
   ];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
-  const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
   // role
   const { data: session } = useSession();
@@ -79,6 +78,7 @@ export default function LicensePage() {
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false); // 삭제 모달 열기 상태 추가
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false); // 도움말 모달 열기 상태 추가
+  const [isFailModalOpen, setIsFailModalOpen] = useState<boolean>(false); // 파일 업로드 실패 모달 열기 상태 추가
   
   // 페이지 상태
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -90,6 +90,8 @@ export default function LicensePage() {
   
   // 파일 업로드 상태
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [failedCsvBase64, setFailedCsvBase64] = useState<string | undefined>(undefined);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   // 모달 닫기 함수
   const addModalClose = () => setIsAddModalOpen(false);
@@ -198,11 +200,6 @@ export default function LicensePage() {
     setTotalPages(total);
   };
 
-  // 페이지 변경
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   useEffect(() => {
     if (licenses.length > 0) {
       setTotalPages(Math.ceil(licenses.length / pageSize));
@@ -295,12 +292,18 @@ export default function LicensePage() {
 
       const result = await response.json();
 
-      if(response.ok) {
-        showToast('파일 업로드 성공', 'success');
+      if (response.ok && result.failedCsvBase64) {
+        setFailedCsvBase64(result.failedCsvBase64);
+        setUploadMessage(result.message)
+        setIsFailModalOpen(true);
+        showToast(result.message, 'success')
+        setSelectedFile(null);
+        handleReset();
+      } else if (response.ok && !result.failedCsvBase64){
+        showToast(result.message, 'success')
         setSelectedFile(null);
         handleReset();
       } else {
-        console.log('response', response);
         showToast('파일 업로드 실패 : ' + result.message, 'error');
       }
     } catch (error) {
@@ -315,13 +318,6 @@ export default function LicensePage() {
     setSearchText('');
     setSearchField('hardware_serial');
   }
-
-  // 페이지 데이터 조회
-  const getCurrentPageData = () => {
-    const startIndex = (currentPage - 1) * pageSize; 
-    const endIndex = startIndex + pageSize;
-    return licenses.slice(startIndex, endIndex);
-  };
 
   return (
     <div className="p-4">
@@ -355,7 +351,6 @@ export default function LicensePage() {
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
-                // setCurrentPage(1);
                 gridRef.current?.api?.paginationGoToPage?.(0);
               }}
             >
@@ -464,7 +459,6 @@ export default function LicensePage() {
         <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
           <AgGridReact
             getRowId={(params) => String(params.data.number)}
-            // rowData={getCurrentPageData()}
             rowData={licenses}
             rowHeight={30}
             headerHeight={30}
@@ -492,9 +486,6 @@ export default function LicensePage() {
           <div className="flex justify-center flex-grow">
             <Pagenation 
               props={{
-                // totalPages,
-                // currentPage,
-                // onChange: handlePageChange
                 totalPages: totalPages,
                 currentPage: currentPage,
                 gridRef: gridRef,
@@ -568,6 +559,34 @@ export default function LicensePage() {
               * 유효기간(YYYYMMDD 형식), * 라이센스 옵션(1: 사용함, 0: 사용안함)
             </div>
             } 
+          />
+          <AlertModal
+            open={isFailModalOpen}
+            close={() => setIsFailModalOpen(false)}
+            state="fail"
+            title={uploadMessage ?? "ITU 라이센스 일부 등록 실패"}
+            failedCsvBase64={failedCsvBase64}
+            message={
+            <div style={{lineHeight: '2'}}>
+              일부 항목에 필수 정보가 누락되었거나 형식이 올바르지 않아 <strong>ITU 라이선스</strong> 등록에 실패했습니다.
+              <br />
+              <br />
+              아래 항목은 필수로 입력되어야 하며, 누락되거나 형식이 올바르지 않으면 등록이 실패할 수 있습니다.
+              <br />
+              [제품 시리얼 번호, 유효기간(시작), 유효기간(만료), 발급 요청사(총판사), 고객사명, 프로젝트명,
+              <br />
+              고객사 E-mail, 소프트웨어 옵션]
+              <div className="split-line my-4 border-t border-gray-300" />
+              {/* * 장비선택(ITU, ITM)
+              <br /> */}
+              * 유효기간은 <strong>YYYYMMDD</strong> 형식이어야 하며,
+              <br />
+              * 소프트웨어 옵션은 각 기능별로 <strong>1(사용), 0(미사용)</strong> 값을 입력해야 합니다.
+              <br />
+              <br />
+              아래 버튼을 클릭하면 등록 실패 항목과 그 사유가 포함된 파일을 다운로드할 수 있습니다.
+            </div>
+            }
           />
 
           {ToastComponent}

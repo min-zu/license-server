@@ -20,6 +20,7 @@
     "axios": "^1.8.2",
     "bcryptjs": "^3.0.2",
     "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.13.0",
     "net": "^1.0.2",
