@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile('/home/future/license/upload_license.csv', buffer);
+    // await fs.writeFile('/home/future/license/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
@@ -92,8 +92,11 @@ export async function POST(request: NextRequest) {
         errorMessages.push(`고객사명 입력`);
       }
 
+      const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
       if(customerEmail === '') {
         errorMessages.push(`고객사 E-mail 입력`);
+      } else if (!emailRegex.test(customerEmail)) {
+        errorMessages.push(`고객사 E-mail 형식 오류`);
       }
 
       if (
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (errorMessages.length > 0) {
-        failedRows.push([...trimmedRow, errorMessages.join('; ')]);
+        failedRows.push([...trimmedRow, errorMessages.join(', ')]);
         continue;
       }
 
