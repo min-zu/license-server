@@ -164,12 +164,18 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       setLicenseKey(result.updated[0].license_key);
       setIp(result.updated[0].ip);
       onUpdated?.(); // 데이터 갱신
-  
+      
     } catch (error) {
       console.error("서버 요청 중 오류 발생:", error);
       showToast("서버 오류 발생", "error");
     }
   };
+
+  useEffect(() => {
+    if(licenseKey !== license.license_key) {
+      showToast(`라이센스 인증키가 변경되었습니다.\nITU 장비에서 라이센스 자동발급을 다시 해주세요.`, "warning");
+    }
+  }, [licenseKey])
 
   return (
     <form className="w-full h-full flex justify-center items-center text-13">

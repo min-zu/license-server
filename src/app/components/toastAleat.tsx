@@ -30,15 +30,15 @@ export default function ToastAlert({ open, setOpen, message, severity, top }: To
         <Slide direction="left" in={isOpen} mountOnEnter unmountOnExit>
           <Snackbar open={isOpen} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={3000} onClose={handleClose}>
             <Alert
-            onClose={handleClose}
-            severity={severity}
-            variant="filled"
-            sx={{ width: '100%', marginTop: top+'px' }}
-          >
-            {message}
-          </Alert>
-        </Snackbar>
-      </Slide>
+              onClose={handleClose}
+              severity={severity}
+              variant="filled"
+              sx={{ width: '100%', marginTop: top+'px', whiteSpace: 'pre-wrap' }}
+            >
+              {message}
+            </Alert>
+          </Snackbar>
+        </Slide>
       )}
     </div>
   );
