@@ -11,11 +11,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   let hardwareSerial = '';
-  if(searchParams.get('serial')?.includes('ITU')) {
+  if(searchParams.get('serial')?.toUpperCase().includes('ITU')) {
     hardwareSerial = searchParams.get('serial')?.toUpperCase() || '';
   } else {
     hardwareSerial = searchParams.get('serial') || '';
   }
+
   const uuid = searchParams.get('uuid') || '';
   const hardwareCode = searchParams.get('hardware') || 'testcode';
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
