@@ -40,30 +40,49 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     setIp(license.ip || "");
   }, [license.license_date, license.license_key, license.ip]);
 
-  // ITU 유효성 검사
-  const ITUSchema = z.object({
+  const baseSchema = z.object({
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
     regUser: z.string().optional(),
     regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    projectName: z.string().min(1, { message: '프로젝트명을 입력해주세요.' }),
-    customerEmail: z.string().min(1, { message: '고객사 E-mail을 입력해주세요.' }).email({ message: '이메일 형식이 올바르지 않습니다.' }),
     hardwareSerial: z.string().optional(),
     hardwareCode: z.string().optional(),
-  })
+    projectName: z.string().optional(),
+    customerEmail: z.string().email({ message: '이메일 형식이 올바르지 않습니다.' }).optional(),
+  }).superRefine((data, ctx) => {
+    if (isITU) {
+      if (!data.projectName || data.projectName.trim() === "") {
+        ctx.addIssue({
+          path: ['projectName'],
+          code: z.ZodIssueCode.custom,
+          message: '프로젝트명을 입력해주세요.',
+        });
+      }
+    }
+    if (!data.customerEmail || data.customerEmail.trim() === "") {
+      ctx.addIssue({
+        path: ['customerEmail'],
+        code: z.ZodIssueCode.custom,
+        message: '고객사 E-mail을 입력해주세요.',
+      });
+    }
+    const start = new Date(data.limitTimeStart);
+    const end = new Date(data.limitTimeEnd);
 
-  // ITU 제외 유효성 검사
-  const nonITUSchema = z.object({
-    softwareOpt: z.record(z.number()),
-    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
-    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
-    regUser: z.string().optional(),
-    regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
-    customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
-    hardwareSerial: z.string().optional(),
-    hardwareCode: z.string().optional(),
+    if (start > end) {
+      ctx.addIssue({
+        path: ['limitTimeStart'],
+        code: z.ZodIssueCode.custom,
+        message: '유효기간(시작)이 만료일보다 늦을 수 없습니다.',
+      });
+      ctx.addIssue({
+        path: ['limitTimeEnd'],
+        code: z.ZodIssueCode.custom,
+        message: '유효기간(만료)은 시작일 이전일 수 없습니다.',
+      });
+    }
   })
 
   // 초기 렌더링 값 설정
@@ -86,20 +105,11 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       customer: license.customer,
       hardwareSerial: license.hardware_serial,
       hardwareCode: license.hardware_code,
+      projectName: license.project_name,
+      customerEmail: license.customer_email,
     };
-    // ITU 장비: ITUSchema로 유효성 검사 및 렌더링 - 공통 + cpuName,cfid
-    if (isITU) {
-      return {
-        schema: ITUSchema,
-        defaultValues: {
-          ...base,
-          projectName: license.project_name,
-          customerEmail: license.customer_email,
-        },
-      };
-    }
-    // ITU 장비 제외 다른 장비: nonITUSchema로 유효성 검사 및 렌더링 - 공통
-    return { schema: nonITUSchema, defaultValues: base };
+
+    return { schema: baseSchema, defaultValues: base };
   }, [license]);
 
   const {
@@ -241,23 +251,31 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("projectName", {
-                        onChange: (e) => {
-                          const value = e.target.value;
-                          setValue('projectName', value.trim());
-                        }
-                      })} /> : 
+                      <TextField
+                        size="small"
+                        {...register("projectName", {
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setValue('projectName', value.trim());
+                          }
+                        })}
+                        error={!!errors.projectName}
+                      /> : 
                       <p>{watch("projectName")}</p>} 
                   </Box>
                   <Box className="detail-line-box-item">
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
-                      <TextField size="small" {...register("customerEmail", {
-                        onChange: (e) => {
-                          const value = e.target.value;
-                          setValue('customerEmail', value.trim());
-                        }
-                      })} /> : 
+                      <TextField
+                        size="small"
+                        {...register("customerEmail", {
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setValue('customerEmail', value.trim());
+                          }
+                        })}
+                        error={!!errors.customerEmail}
+                      /> : 
                       <p>{watch("customerEmail")}</p>}
                   </Box>
                 </Box>
@@ -282,13 +300,23 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(시작) :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("limitTimeStart")} type="date"/> : 
+                    <TextField
+                      size="small"
+                      {...register("limitTimeStart")}
+                      type="date"
+                      error={!!errors.limitTimeStart}
+                    /> : 
                     <p>{watch("limitTimeStart")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(만료) :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("limitTimeEnd")} type="date"/> : 
+                    <TextField
+                      size="small"
+                      {...register("limitTimeEnd")}
+                      type="date"
+                      error={!!errors.limitTimeEnd}
+                    /> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box>
               </Box>
@@ -297,34 +325,46 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("regUser", {
-                      onChange: (e) => {
-                        const value = e.target.value;
-                        setValue('regUser', value.trim());
-                      }
-                    })} /> : 
+                    <TextField
+                      size="small"
+                      {...register("regUser", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('regUser', value.trim());
+                        }
+                      })}
+                      error={!!errors.regUser}
+                    /> : 
                     <p>{watch("regUser")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>발급요청사(총판사) :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("regRequest", {
-                      onChange: (e) => {
-                        const value = e.target.value;
-                        setValue('regRequest', value.trim());
-                      }
-                    })} /> : 
+                    <TextField
+                      size="small"
+                      {...register("regRequest", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('regRequest', value.trim());
+                        }
+                      })}
+                      error={!!errors.regRequest}
+                    /> : 
                     <p>{watch("regRequest")}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>고객사명 :</FormLabel> 
                   {isEdit ? 
-                    <TextField size="small" {...register("customer", {
-                      onChange: (e) => {
-                        const value = e.target.value;
-                        setValue('customer', value.trim());
-                      }
-                    })} /> : 
+                    <TextField
+                      size="small"
+                      {...register("customer", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('customer', value.trim());
+                        }
+                      })}
+                      error={!!errors.customer}
+                    /> : 
                     <p>{watch("customer")}</p>}
                 </Box>
               </Box>
