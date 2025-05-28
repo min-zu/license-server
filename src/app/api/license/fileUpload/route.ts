@@ -174,6 +174,99 @@ export async function POST(request: NextRequest) {
           fw, vpn, s2, dpi, av, as, ot
         );
       }
+      /* itu 외 파일업로드 논의 (기존에없음음)
+      else{
+        // const license_key = await generateLicenseKey({hardwareStatus, hardwareCode, softwareOpt: {fw, vpn, ssl, ips, waf, av, as}, limitTimeStart, limitTimeEnd, issuer, manager, cpuName, siteName, cfid});
+        let license_module = "-F";
+        if(Number(vpn) === 1) license_module += "V"; // option 2
+        if(Number(ssl) === 1) license_module += "S"; // option 3
+        if(Number(ips) === 1) license_module += "I"; // option 4
+        if(Number(ddos) === 1) license_module += "D"; // option 5
+        if(Number(waf) === 1) license_module += "W"; // option 6
+        if(Number(av) === 1) license_module += "A"; // option 7
+        if(Number(as) === 1) license_module += "P"; // option 8
+
+        // SMC / ITM
+        else if(hardwareCode.split('-').length >= 3){
+          let serial = hardwareCode;
+          const codes = hardwareCode.split('-');
+
+          if (codes.length > 3) { // cut dummy number
+            serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
+          }
+
+          console.log("regInit: ", initCode);
+          console.log("serial: ", serial);
+          console.log("limitTimeStart: ", limitTimeStart);
+          console.log("limitTimeEnd: ", limitTimeEnd);
+          const cmd = `../issue/fslicense -n -k ${initCode} -s ${serial} -b ${startDate} -e ${endDate}`;
+          // const _itmKey = await execAsync(cmd);
+          const _itmKey = "fileImportAddtestSMCITM123hardwardCode456";
+          license_key = typeof _itmKey === 'string' ? _itmKey : null;
+
+        } else {
+          // XTM
+          console.log("regInit: ", initCode);
+          console.log("limitTimeStart: ", limitTimeStart);
+          console.log("limitTimeEnd: ", limitTimeEnd);
+          console.log("hardwareCode: ", hardwareCode);
+          console.log("license_module: ", license_module);
+          const cmd = `../issue/issue_china -c ${initCode} -s ${startDate} -e ${endDate} -r ${hardwareCode} ${license_module}`;
+          // const xtm_key = await execAsync(cmd);
+          const xtm_key = "fileImportAddtestXTM123hardwardCode456";
+          license_key = typeof xtm_key === 'string' ? xtm_key : null;
+        }
+  
+        console.log("license_key: ", license_key);
+        console.log('fw : ', fw);
+        console.log('vpn : ', vpn);
+        console.log('ssl : ', ssl);
+        console.log('ips : ', ips);
+        console.log('ddos : ', ddos);
+        console.log('waf : ', waf);
+        console.log('av : ', av);
+        console.log('as : ', as);
+        console.log('tracker : ', tracker);
+
+        if(license_key) {
+          sql = `INSERT INTO license (
+            number, reg_date, license_date,
+            \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, process,
+            hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, auth_code, issuer, manager, site_nm, cpu_name, cfid,
+            license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+            ) VALUES (
+              0, now(), now(),
+              0, 0, 0, 0, 0, 0,
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )`;
+  
+          params.push(
+            hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, license_key, issuer, manager, siteName, cpuName, cfid, 
+            0, fw, vpn, ssl, ips, 0, waf, av, as, tracker
+          );
+        } else {
+          
+          sql = `INSERT INTO license (
+            number, reg_date, license_date,
+            \`SSL\`, \`NAC\`, \`WAF\`, \`ASAV\`, reissuance, auth_code, process,
+            hardware_code, hardware_status, init_code, limit_time_st, limit_time_end, ip, issuer, manager, site_nm, cpu_name, cfid,
+            license_basic, license_fw, license_vpn, license_ssl, license_ips, license_ddos, license_waf, license_av, license_as, license_tracker
+            ) VALUES (
+              0, now(), now(),
+              0, 0, 0, 0, 0, 0, 0,
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )`;
+  
+          params.push(
+            hardwareCode, hardwareStatus, '', startDate, endDate, clientIp, issuer, manager, siteName, 
+            0, fw, vpn, ssl, ips, 0, waf, av, as, tracker
+          );
+        }
+      }
+
+      */
       
       // Log
       const logPath = '/home/future/license/log/upload_license.log';
