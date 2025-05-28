@@ -94,7 +94,6 @@ ${cmd}
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
       const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -e ${endDateStr}`;
-
       const result = await execAsync(cmd);
       const _itmKey = result.stdout.replace(/\n/g, '');
       // const _itmKey = "ituindexSMCITMtest123hardwardCode456";
@@ -114,8 +113,34 @@ ${cmd}
         }
       }
     }
+    await fetch(`${process.env.NEXTAUTH_URL}/api/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        state: "addLog",
+        log: [{
+          hardware_serial: hardwareSerial,
+          user: null,
+          action: "auto",
+          desc: null,
+        }]
+      })
+    });
     return NextResponse.json(licenseKey);
   } else {
+    await fetch(`${process.env.NEXTAUTH_URL}/api/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        state: "addLog",
+        log: [{
+          hardware_serial: hardwareSerial,
+          user: null,
+          action: "fail",
+          desc: null,
+        }]
+      })
+    });
     return NextResponse.json('');
   }
 }

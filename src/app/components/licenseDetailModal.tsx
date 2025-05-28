@@ -160,7 +160,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       
       if (result.status === "reissued") {
-        await fetch('/api/license/log', {
+        await fetch('/api/log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -183,6 +183,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       onUpdated?.(); // 데이터 갱신
       
     } catch (error) {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: "addLog",
+          log: [{
+            hardware_serial: data.hardwareSerial,
+            user: id,
+            action: "fail",
+            desc: null,
+          }]
+        })
+      });
       console.error("서버 요청 중 오류 발생:", error);
       showToast("서버 오류 발생", "error");
     }

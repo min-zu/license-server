@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    // await fs.writeFile('/home/future/license/upload_license.csv', buffer);
+    await fs.writeFile('/home/future/license/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
