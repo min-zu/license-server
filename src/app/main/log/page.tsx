@@ -13,10 +13,12 @@ import { useToastState } from '@/app/components/useToast';
 
 interface Log {
   number: number;
-  hardware_code: string;
-  date: string;
-  manager: string;
-  site_nm: string;  
+  action_date: string;
+  hardware_serial: string;
+  user: string | null;
+  ip: string;
+  action: string;
+  desc: string | null;
 }
 
 export default function LogPage() {
@@ -48,10 +50,9 @@ export default function LogPage() {
 
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
-    { field: 'hardware_code', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
     { 
-      field: 'date', 
-      headerName: '라이센스 발급일', 
+      field: 'action_date', 
+      headerName: '로그기록 시간', 
       flex: 1,
       headerClass: 'header-style',
       cellClass: 'cell-style',
@@ -60,11 +61,29 @@ export default function LogPage() {
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        return date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
-    { field: 'manager', headerName: '발급요청사(총판사)', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
-    { field: 'site_nm', headerName: '고객사명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' }
+    { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'user', headerName: '사용자 ID', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'ip', headerName: '사용자 IP', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    {
+      field: 'action',
+      headerName: '로그 유형',
+      flex: 1,
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
+      valueFormatter: (params) => {
+        const map: { [key: string]: string } = {
+          auto: '자동발급',
+          del: '삭제',
+          edit: '수정',
+          fail: '실패'
+        };
+        return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
+      }
+    },
+    { field: 'desc', headerName: '설명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style', valueFormatter: (params) => params.value ?? '완료' }
   ]);
 
   const loadLogs = async () => {
@@ -104,21 +123,10 @@ export default function LogPage() {
     setCurrentPage(current);
     setTotalPages(total);
   };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
   
   useEffect(() => {
     setTotalPages(Math.ceil(logs.length / pageSize));
   }, [logs, pageSize]);
-
-  // 현재 페이지에 해당하는 데이터만 필터링
-  const getCurrentPageData = () => {
-    const startIndex = (currentPage - 1) * pageSize; 
-    const endIndex = startIndex + pageSize;
-    return logs.slice(startIndex, endIndex);
-  };
 
   return (
     <div className="p-4">

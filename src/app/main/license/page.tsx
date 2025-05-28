@@ -54,9 +54,10 @@ export default function LicensePage() {
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
 
-  // role
+  // session
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const id = session?.user?.id;
 
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -533,8 +534,14 @@ export default function LicensePage() {
             title="삭제"
             message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`}
             deleteIds={deleteIds}
-            onConfirm={() => {
-              addLog(selectedRows);
+            onConfirm={(action?: string | null, desc?: string | null) => {
+              const logs = selectedRows.map(row => ({
+                hardware_serial: row.hardware_serial,
+                user: id,
+                action: action,
+                desc: desc
+              }));
+              addLog(logs);
               loadLicenses();
             }}
           />

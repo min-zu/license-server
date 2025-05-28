@@ -24,6 +24,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   // role
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const id = session?.user?.id;
 
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
   const isITU = license?.hardware_serial?.startsWith("ITU");
@@ -157,7 +158,23 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       }
   
       const result = await res.json();
-
+      
+      if (result.status === "reissued") {
+        await fetch('/api/license/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: result.updated[0].hardware_serial,
+              user: id,
+              action: "edit",
+              desc: null,
+            }]
+          })
+        });
+      }
+      
       showToast("라이센스 정보 수정이 완료되었습니다.", "success");
       setIsEdit(false); // 저장 후 수정 모드 종료
       setLicenseDate(result.updated[0].license_date);

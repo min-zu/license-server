@@ -17,7 +17,7 @@ interface AlertModalProps {
   title: string;
   message: string | React.ReactNode;
   deleteIds?: string[];
-  onConfirm?: (() => void) | undefined;
+  onConfirm?: ((action?: string | null, desc?: string | null) => void) | undefined;
   onDeleted?: (ids: string[]) => void;
   failedCsvBase64?: string;
 }
@@ -34,12 +34,13 @@ export default function AlertModal({ open, close, state, title, message, deleteI
         const res = await deleteLicenses(deleteIds);
         if(res.success) {
           showToast(res.result.affectedRows + '개의 데이터가 삭제되었습니다.', 'success');
-          onConfirm && onConfirm();
+          onConfirm && onConfirm('del', null);
           close();
         }
       } catch (err) {
         console.error(err);
         showToast('삭제 중 오류 발생', 'error');
+        onConfirm && onConfirm('fail', null);
       }
 
       // 관리자 삭제

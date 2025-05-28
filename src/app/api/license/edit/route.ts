@@ -344,8 +344,12 @@ ${cmd}
 
     const response: any = {
       message: "라이선스 업데이트 완료",
-      updated: updatedRows
+      updated: updatedRows,
     };
+
+    if (isNewLicenseKey) {
+      response.status = "reissued";
+    }
 
     return NextResponse.json(response);
   } catch (error) {
