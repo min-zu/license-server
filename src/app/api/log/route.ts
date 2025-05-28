@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
       
       if (log.length > 1) {
         const results = await Promise.all(log.map((item: any) => {
-          const params = [item.hardware_serial, item.user, clientIp, item.action, item.desc];
+          const params = [item.hardware_serial, item.user ? item.user : '', item.ip ? item.ip : clientIp, item.action, item.desc];
           return query(sql, params);
         }));
         return NextResponse.json(results);
       } else {
-        const params = [log[0].hardware_serial, log[0].user, clientIp, log[0].action, log[0].desc];
+        const params = [log[0].hardware_serial, log[0].user ? log[0].user : '', log[0].ip ? log[0].ip : clientIp, log[0].action, log[0].desc];
         console.log("params =", params)
         const result = await query(sql, params);
         return NextResponse.json(result);

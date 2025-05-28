@@ -120,7 +120,7 @@ ${cmd}
         state: "addLog",
         log: [{
           hardware_serial: hardwareSerial,
-          user: null,
+          ip: ip,
           action: "auto",
           desc: null,
         }]
@@ -135,7 +135,7 @@ ${cmd}
         state: "addLog",
         log: [{
           hardware_serial: hardwareSerial,
-          user: null,
+          ip: ip,
           action: "fail",
           desc: null,
         }]

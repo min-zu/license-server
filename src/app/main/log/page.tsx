@@ -37,7 +37,7 @@ export default function LogPage() {
 
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');
-  const [searchField, setSearchField] = useState<string>('hardware_code');
+  const [searchField, setSearchField] = useState<string>('hardware_serial');
 
   // 페이지 상태
   const [pageSize, setPageSize] = useState<number>(20);
@@ -50,26 +50,12 @@ export default function LogPage() {
 
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
-    { 
-      field: 'action_date', 
-      headerName: '로그기록 시간', 
-      flex: 1,
-      headerClass: 'header-style',
-      cellClass: 'cell-style',
-      valueFormatter: (params: any) => {
-        const value = params.value;
-        if(!value) return '';
-        const date = new Date(value);
-        if (isNaN(date.getTime())) return '';
-        return date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
-      }
-    },
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'user', headerName: '사용자 ID', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'ip', headerName: '사용자 IP', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     {
       field: 'action',
-      headerName: '로그 유형',
+      headerName: '내용',
       flex: 1,
       headerClass: 'header-style',
       cellClass: 'cell-style',
@@ -83,7 +69,21 @@ export default function LogPage() {
         return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
       }
     },
-    { field: 'desc', headerName: '설명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style', valueFormatter: (params) => params.value ?? '완료' }
+    { field: 'desc', headerName: '설명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style', valueFormatter: (params) => params.value ?? '완료' },
+    { 
+      field: 'action_date', 
+      headerName: '날짜', 
+      flex: 1,
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
+      valueFormatter: (params: any) => {
+        const value = params.value;
+        if(!value) return '';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
+      }
+    }
   ]);
 
   const loadLogs = async () => {
@@ -153,7 +153,7 @@ export default function LogPage() {
             onChange={(e) => setSearchField(e.target.value)}
           >
             {columnDefs
-              .filter(item => item.field !== 'number')
+              .filter(item => item.field !== 'number' && item.field !== 'action_date')
               .map((item) => (
                 <MenuItem key={item.field} value={item.field}>
                   {item.headerName}
@@ -191,7 +191,7 @@ export default function LogPage() {
           onClick={() => {
             loadLogs();
             setSearchText('');
-            setSearchField('hardware_code');
+            setSearchField('hardware_serial');
           }}
         >
           ↻
