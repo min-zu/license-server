@@ -122,8 +122,6 @@ ${cmd}
     licenseKey = null;
   }
 
-  console.log("license_key: ", licenseKey);
-
   let sql = '';
   const params = [];
   if(hardwareSerial !== "") {

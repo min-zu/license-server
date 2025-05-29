@@ -69,7 +69,11 @@ export default function LogPage() {
         return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
       }
     },
-    { field: 'desc', headerName: '설명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style', valueFormatter: (params) => params.value ?? '완료' },
+    { field: 'desc', headerName: '설명', flex: 2, headerClass: 'header-style', cellClass: 'cell-style', 
+      valueFormatter: (params) => {
+        return params.value || '완료';
+      }
+    },
     { 
       field: 'action_date', 
       headerName: '날짜', 

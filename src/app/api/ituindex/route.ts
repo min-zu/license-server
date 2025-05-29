@@ -137,7 +137,7 @@ ${cmd}
           hardware_serial: hardwareSerial,
           ip: ip,
           action: "fail",
-          desc: null,
+          desc: '라이센스 자동발급 실패',
         }]
       })
     });

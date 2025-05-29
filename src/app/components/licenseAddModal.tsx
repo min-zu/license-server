@@ -12,6 +12,7 @@ import { z } from "zod";
 
 // toast
 import { useToastState } from "@/app/components/useToast";
+import { useSession } from "next-auth/react";
 
 export default function LicenseAddModal({ close, onUpdated }: { close: () => void, onUpdated: () => void }) {
   // 입력값
@@ -23,6 +24,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   // const ituOps = ['FW', 'VPN', '행안부', 'DPI', 'AV', 'AS'];
 
   const [isContinue, setIsContinue] = useState(false);
+
+  const { data: session } = useSession();
+  const id = session?.user?.id;
 
   const textFieldTooltip = (text: string) => {
     return (
@@ -223,23 +227,40 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     // 업데이트된 소프트웨어 옵션을 데이터에 다시 설정
     data.softwareOpt = updatedSoftwareOpt;
 
-    const res = await fetch('/api/license/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch('/api/license/add', {
+          method: 'POST',
+          headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (result.success) {
-      onUpdated();
-      reset();
+      if (result.success) {
+        onUpdated();
+        reset();
 
-      if(!isContinue) close();
+        if(!isContinue) close();
+      } 
+      showToast("라이센스 등록이 완료되었습니다.", "success");
+    } catch (error) {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: "addLog",
+          log: [{
+            hardware_serial: data.hardwareSerial,
+            user: id,
+            action: "fail",
+            desc: '라이센스 등록 실패',
+          }]
+        })
+      });
+      showToast("라이센스 등록이 실패되었습니다.", "error");
     }
-    // showToast("라이센스 등록 완료", "success");
 
   };
 

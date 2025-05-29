@@ -160,38 +160,40 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         body: JSON.stringify(data),
       });
   
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error("업데이트 실패:", errorData);
-        showToast("업데이트 실패: " + (errorData?.error || "알 수 없는 오류"), "error");
-        return;
-      }
+      // if (!res.ok) {
+      //   const errorData = await res.json();
+      //   console.error("업데이트 실패:", errorData);
+      //   showToast("업데이트 실패: " + (errorData?.error || "알 수 없는 오류"), "error");
+      //   return;
+      // }
   
       const result = await res.json();
       
-      if (result.status === "reissued") {
-        await fetch('/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            state: "addLog",
-            log: [{
-              hardware_serial: result.updated[0].hardware_serial,
-              user: id,
-              action: "edit",
-              desc: null,
-            }]
-          })
-        });
+      if (result.success) {
+        if (result.status === "reissued") {
+          await fetch('/api/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              state: "addLog",
+              log: [{
+                hardware_serial: result.updated[0].hardware_serial,
+                user: id,
+                action: "edit",
+                desc: '소프트웨어 옵션 수정으로 인한 라이센스 키 재발급',
+              }]
+            })
+          });
+        }
+        
+        showToast("라이센스 정보 수정이 완료되었습니다.", "success");
+        setIsEdit(false); // 저장 후 수정 모드 종료
+        setLicenseDate(result.updated[0].license_date);
+        setLicenseKey(result.updated[0].license_key);
+        setIp(result.updated[0].ip);
+        onUpdated?.(); // 데이터 갱신
       }
-      
-      showToast("라이센스 정보 수정이 완료되었습니다.", "success");
-      setIsEdit(false); // 저장 후 수정 모드 종료
-      setLicenseDate(result.updated[0].license_date);
-      setLicenseKey(result.updated[0].license_key);
-      setIp(result.updated[0].ip);
-      onUpdated?.(); // 데이터 갱신
-      
+        
     } catch (error) {
       await fetch('/api/log', {
         method: 'POST',
@@ -202,12 +204,11 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
             hardware_serial: data.hardwareSerial,
             user: id,
             action: "fail",
-            desc: null,
+            desc: '라이센스 정보 수정 실패',
           }]
         })
       });
-      console.error("서버 요청 중 오류 발생:", error);
-      showToast("서버 오류 발생", "error");
+      showToast("라이센스 정보 수정이 실패되었습니다.", "error");
     }
   };
 
