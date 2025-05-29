@@ -132,6 +132,13 @@ export default function LogPage() {
     setTotalPages(Math.ceil(logs.length / pageSize));
   }, [logs, pageSize]);
 
+  useEffect(() => {
+    setSearchText('');
+    if(searchField === 'action') {
+      setSearchText('auto'); 
+    } 
+  }, [searchField]);
+
   return (
     <div className="p-4">
       <div className="flex items-center gap-1 mb-4">
@@ -166,13 +173,27 @@ export default function LogPage() {
             }
           </Select>
         </FormControl>
-
-        <TextField
-          size="small"
-          placeholder="검색어를 입력하세요"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+        
+        {searchField === 'action' ? (
+          <Select
+            size="small"
+            defaultValue="auto"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          >
+            <MenuItem value="auto">자동발급</MenuItem>
+            <MenuItem value="del">삭제</MenuItem>
+            <MenuItem value="edit">수정</MenuItem>
+            <MenuItem value="fail">실패</MenuItem>
+          </Select>
+        ) : (
+          <TextField
+            size="small"
+            placeholder="검색어를 입력하세요"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        )}
 
         <Button
           variant="contained"
