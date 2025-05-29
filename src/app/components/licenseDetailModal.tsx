@@ -169,7 +169,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   
       const result = await res.json();
       
-      if (result.success) {
+      if (res.ok) {
         if (result.status === "reissued") {
           await fetch('/api/log', {
             method: 'POST',
