@@ -3,7 +3,15 @@ import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from "fs/promises";
+import https from 'https';
+import axios from 'axios';
 
+
+const caCert = await fs.readFile(`${process.env.SSL_CERT_PATH}`);
+const httpsAgent = new https.Agent({
+  ca: caCert,
+  checkServerIdentity: () => undefined,
+});
 
 const execAsync = promisify(exec);
 
@@ -113,19 +121,22 @@ ${cmd}
         }
       }
     }
-    await fetch(`${process.env.NEXTAUTH_URL}/api/log`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await axios.post(
+      `${process.env.NEXTAUTH_URL}/api/log`,
+      {
         state: "addLog",
         log: [{
           hardware_serial: hardwareSerial,
           ip: ip,
           action: "auto",
           desc: null,
-        }]
-      })
-    });
+        }],
+      },
+      {
+        httpsAgent,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
     return NextResponse.json(licenseKey);
   } else {
     await fetch(`${process.env.NEXTAUTH_URL}/api/log`, {
