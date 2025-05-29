@@ -51,11 +51,9 @@ export default function LogPage() {
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
-    { field: 'user', headerName: '사용자 ID', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
-    { field: 'ip', headerName: '사용자 IP', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     {
       field: 'action',
-      headerName: '내용',
+      headerName: '상태',
       flex: 1,
       headerClass: 'header-style',
       cellClass: 'cell-style',
@@ -74,6 +72,8 @@ export default function LogPage() {
         return params.value || '완료';
       }
     },
+    { field: 'user', headerName: '사용자 ID', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'ip', headerName: '사용자 IP', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { 
       field: 'action_date', 
       headerName: '날짜', 
