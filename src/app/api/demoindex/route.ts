@@ -90,6 +90,8 @@ ${cmd}
       await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
       await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
 
+      await query("INSERT INTO license_log (action_date, hardware_serial, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?)", [hardwareSerial, ip, "auto", "데모 라이센스 발급"]);
+
       return NextResponse.json(license_key);
       } else {
         let comment = '';
