@@ -247,7 +247,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>라이센스 발급일 :</FormLabel> {licenseDate === null ? "" : <p>{new Date(licenseDate).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
+                  <FormLabel>라이센스 발급일 :</FormLabel> {(!licenseDate || licenseDate === "0000-00-00") ? "" : <p>{new Date(licenseDate).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>발급이력 :</FormLabel> <p>{license.reissuance === 1 ? '재발급' : '초기발급'}</p>
