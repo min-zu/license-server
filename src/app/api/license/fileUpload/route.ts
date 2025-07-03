@@ -11,11 +11,12 @@ const execAsync = promisify(exec);
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+    const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
     const file = formData.get('uploadFile') as File;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile('/home/future/license/upload_license.csv', buffer);
+    if(clientIp !== "1") await fs.writeFile('/home/future/license/upload_license.csv', buffer);
 
     const content = buffer.toString('utf-8');
 
@@ -35,8 +36,6 @@ export async function POST(request: NextRequest) {
     if(filteredRows.length === 0) {
       return NextResponse.json({ message: '파일이 비어있습니다.' }, { status: 400 });
     }
-
-    const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
     const failedRows: string[][] = [];
 
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
         ...options // 나머지 옵션 필드들은 배열로 받음
       ] = trimmedRow;
 
-      const [fw, vpn, s2, dpi, av, as, ot] = options.map(opt => opt || '0');
+      const [fw, vpn, s2, dpi, av, as, ot, zt] = options.map(opt => opt || '0');
 
       const trimmedSerial = hardwareSerial.trim().replace(/\s/g, '').toUpperCase();
       const codes = trimmedSerial.split('-').length >= 3;
@@ -105,7 +104,8 @@ export async function POST(request: NextRequest) {
           Number(s2) === 1 ||
           Number(dpi) === 1 ||
           Number(av) === 1 ||
-          Number(as) === 1
+          Number(as) === 1 ||
+          Number(zt) === 1
         )
       ) {
         errorMessages.push(`소프트웨어 옵션 사용값 재입력 필요`);
@@ -120,6 +120,7 @@ export async function POST(request: NextRequest) {
       const params = [];
 
       let licenseKey: string | null = null;
+      let _ituKey = null;
       const startDate = limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
 
@@ -130,48 +131,52 @@ export async function POST(request: NextRequest) {
         (Number(av) || 0) * 8 +
         (Number(as) || 0) * 16 +
         (Number(s2) || 0) * 32 +
-        (Number(ot) || 0) * 64;
+        (Number(ot) || 0) * 64 +
+        (Number(zt) || 0) * 128;
 
       const [y, m, d] = endDate.split("-").map(Number);
       const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
       const hex_expire = Math.floor(expireDate).toString(16);
 
-      const cmd = `/home/future/license/license ${trimmedSerial} ${functionMap} ${hex_expire}`;
-      const result = await execAsync(cmd);
-      const _ituKey = result.stdout.replace(/\n/g, '');
+      if(clientIp === "1") {
+        _ituKey = "fileImportAddtestByITU";
+      } else {        
+        const cmd = `/home/future/license/license ${trimmedSerial} ${functionMap} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        _ituKey = result.stdout.replace(/\n/g, '');
+      }
 
-      // const _ituKey = "fileImportAddtestITU123hardwardCode456";
       licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
 
       if(licenseKey) {        
         sql = `INSERT INTO license (
           number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
-          license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
+          license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
             0, now(), now(), 0, 1, 0,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?
           )`;
 
         params.push(
           trimmedSerial, 'ITU', '', startDate, endDate, clientIp, licenseKey, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
-          fw, vpn, s2, dpi, av, as, ot
+          fw, vpn, s2, dpi, av, as, ot, zt
         );
       } else {
         sql = `INSERT INTO license (
           number, reg_date, license_date, reissuance, demo_cnt, reg_auto, license_key,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
-          license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot
+          license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
         ) VALUES ( 
           0, now(), now(), 0, 1, 0, 0,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?, ?, ?
         )`
 
         params.push(
           trimmedSerial, 'ITU', '', startDate, endDate, clientIp, regUser.trim(), regRequest.trim(), customer.trim(), projectName.trim(), customerEmail.trim(), 
-          fw, vpn, s2, dpi, av, as, ot
+          fw, vpn, s2, dpi, av, as, ot, zt
         );
       }
       /* itu 외 파일업로드 논의 (기존에없음음)
@@ -267,19 +272,20 @@ export async function POST(request: NextRequest) {
       }
 
       */
-      
-      // Log
-      const logPath = '/home/future/license/log/upload_license.log';
-      const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-SQL: ${sql}
-PARAMS: ${JSON.stringify(params)}
-
-`;
-      try {
-        await fs.appendFile(logPath, logContent)
-      } catch (error) {
-        console.error("log 파일 생성 실패: ", error);
+    
+      if(clientIp !== "1") {
+        // Log
+        const logPath = '/home/future/license/log/upload_license.log';
+        const logContent =
+          `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+          SQL: ${sql}
+          PARAMS: ${JSON.stringify(params)}
+          `;
+        try {
+          await fs.appendFile(logPath, logContent)
+        } catch (error) {
+          console.error("log 파일 생성 실패: ", error);
+        }
       }
       await query(sql, params);
     }

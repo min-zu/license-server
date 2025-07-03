@@ -165,7 +165,7 @@ export default function AdminPage() {
               setOpenUpsert(true);
             }}
             >
-            <EditIcon fontSize="small" />
+            <EditIcon fontSize="small" style={{ marginTop: '-4px' }}/>
           </IconButton>
         );
       },
@@ -179,6 +179,16 @@ export default function AdminPage() {
     suppressMovable: true, // 컬럼 드래그로 위치 이동 X
     flex: 1
   }), []);
+
+  const deleteSelectedRows = () => {
+    if(selectedRows.length === 0) {
+      showToast('삭제할 관리자를 선택해주세요.', 'warning');
+      return;
+    }
+    const ids = selectedRows.map((row) => row.id);
+    setDeleteIds(ids);
+    setOpenDelete(true)
+  }
   
   return (
     <div className="flex flex-col justify-center w-[calc(100vw)] p-4">
@@ -193,16 +203,7 @@ export default function AdminPage() {
           </FormControl>
           <div className="flex items-center gap-1">
             <Button className="default-btn" size="small" variant="contained" onClick={() => {setUpsertMode('add'); setOpenUpsert(true)}}>추가</Button>
-            <Button
-              size="small"
-              variant="contained"
-              color="error"
-              onClick={() => {
-                const ids = selectedRows.map((row) => row.id);
-                setDeleteIds(ids);
-                setOpenDelete(true)
-              }}
-              disabled={selectedRows.length === 0}>삭제</Button>
+            <Button className="delete-btn" size="small" variant="contained" onClick={() => deleteSelectedRows()}>삭제</Button>
           </div>
         </div>
         {openUpsert && (

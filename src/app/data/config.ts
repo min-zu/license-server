@@ -23,4 +23,5 @@ export const ituOps = [
   { label: 'AV', value: 'av' },
   { label: 'AS', value: 'as' },
   { label: 'OT', value: 'ot' },
+  { label: 'ZT', value: 'zt' },
 ] 

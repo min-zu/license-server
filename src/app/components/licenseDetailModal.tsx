@@ -49,8 +49,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
     hardwareSerial: z.string().optional(),
     hardwareCode: z.string().optional(),
-    projectName: z.string().optional(),
-    customerEmail: z.string().email({ message: '이메일 형식이 올바르지 않습니다.' }).optional(),
+    projectName: z.string().optional().nullable(),
+    customerEmail: z.string().optional().nullable(),
   }).superRefine((data, ctx) => {
     if (isITU) {
       if (!data.projectName || data.projectName.trim() === "") {
@@ -60,13 +60,22 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           message: '프로젝트명을 입력해주세요.',
         });
       }
-    }
-    if (!data.customerEmail || data.customerEmail.trim() === "") {
-      ctx.addIssue({
-        path: ['customerEmail'],
-        code: z.ZodIssueCode.custom,
-        message: '고객사 E-mail을 입력해주세요.',
-      });
+      if (!data.customerEmail || data.customerEmail.trim() === "") {
+        ctx.addIssue({
+          path: ['customerEmail'],
+          code: z.ZodIssueCode.custom,
+          message: '고객사 E-mail을 입력해주세요.',
+        });
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.customerEmail)) {
+          ctx.addIssue({
+            path: ['customerEmail'],
+            code: z.ZodIssueCode.custom,
+            message: '이메일 형식이 올바르지 않습니다.',
+          });
+        }
+      }
     }
     const start = new Date(data.limitTimeStart);
     const end = new Date(data.limitTimeEnd);
@@ -97,6 +106,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         AV: license.license_av === "1" ? 1 : 0,
         AS: license.license_as === "1" ? 1 : 0,
         OT: license.license_ot === "1" ? 1 : 0,
+        ZT: license.license_zt === "1" ? 1 : 0,
       },
       limitTimeStart: new Date(license.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: new Date(license.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
@@ -105,8 +115,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       customer: license.customer,
       hardwareSerial: license.hardware_serial,
       hardwareCode: license.hardware_code,
-      projectName: license.project_name,
-      customerEmail: license.customer_email,
+      projectName: license.project_name || "",
+      customerEmail: license.customer_email || "",
     };
 
     return { schema: baseSchema, defaultValues: base };
@@ -140,7 +150,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       } 
     }
 
-    if (field.value['VPN'] === 1 || field.value['S2'] === 1 || field.value['DPI'] === 1 || field.value['AV'] === 1 || field.value['AS'] === 1) {
+    if (field.value['VPN'] === 1 || field.value['S2'] === 1 || field.value['DPI'] === 1 || field.value['AV'] === 1 || field.value['AS'] === 1 || field.value['ZT'] === 1) {
       if (value === 'ot') {
         field.value['OT'] = 0;
         return true;
@@ -214,7 +224,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   useEffect(() => {
     if(licenseKey !== license.license_key) {
-      showToast(`라이센스 인증키가 변경되었습니다.\nITU 장비에서 라이센스 자동발급을 다시 해주세요.`, "warning");
+      showToast(`라이센스 인증키가 변경되었습니다.\nITU 장비에서 라이센스 자동발급을 다시 해주세요.`, "info");
     }
   }, [licenseKey])
 
@@ -223,7 +233,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       <div className="w-full h-full flex justify-center items-center license-detail-modal-wrap">
         <div className="w-1/2 bg-white rounded-md">
           <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
-            <h2 className="text-xl font-semibold text-white">상세보기</h2>
+            <h2 className="text-xl font-semibold text-white">{license.hardware_status.toUpperCase()} 라이센스 상세보기</h2>
             <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
           </div>
           <div className="flex flex-col gap-4 p-10 text-13" style={{ fontSize: '13px' }}>
@@ -394,7 +404,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                                 }}
                               />
                             }
-                            label={value === 's2' ? '행안부' : value === 'ot' ? '산업용 프로토콜' : label}
+                            label={value === 's2' ? '행안부' : value === 'ot' ? '산업용 프로토콜' : value === 'zt' ? 'ITUz' : label}
                           />
                         ))}
                       </Box>
@@ -447,7 +457,14 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         title="라이센스 수정"
         message={`수정사항을 적용 하시겠습니까?`}
         onConfirm={() => {
-          handleSubmit(onSubmit)();
+          handleSubmit(
+            onSubmit,
+            (errors) => {
+              if (Object.keys(errors).length > 0) {
+                showToast(String(Object.values(errors)[0]?.message ?? "라이센스 수정 정보를 확인해주세요."), "warning");
+              }
+            }
+          )();
         }}
       />
     {ToastComponent}

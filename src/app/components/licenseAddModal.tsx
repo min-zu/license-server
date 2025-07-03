@@ -19,12 +19,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const [selectedHardware, setSelectedHardware] = useState("ITU");
   // 토스트 상태
   const { showToast, ToastComponent } = useToastState();
-
-  // const defaultOps = ['FW', 'VPN', 'SSL', 'IPS', 'WAF', 'AV', 'AS', 'Tracker'];
-  // const ituOps = ['FW', 'VPN', '행안부', 'DPI', 'AV', 'AS'];
-
   const [isContinue, setIsContinue] = useState(false);
-
   const { data: session } = useSession();
   const id = session?.user?.id;
 
@@ -66,16 +61,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           });
         }
       }),
-      // .refine(async (value) => {
-      //   const trimmed = value.trim();
-      //   const codes = trimmed.split('-').length >= 3;
-      //   const isValidLength = (codes && trimmed.length >= 22) || (!codes && trimmed.length === 24);
-
-      //   if (!isValidLength) return true; // 조건 안 맞으면 중복 체크는 안 함
-
-      //   const count = await checkHardwareCode(value);
-      //   return Number(count) === 0;
-      // }, { message: '이미 사용 중인 제품 시리얼 번호입니다.' }),
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
@@ -97,9 +82,17 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     customerEmail: z.string(),
     hardwareCode: z.string().optional(),
   }).superRefine((data, ctx) => {
-    const { hardwareStatus, customerEmail, projectName } = data;
+    const { hardwareStatus, customerEmail, projectName, hardwareSerial } = data;
     const isITU = hardwareStatus === 'ITU';
     const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+
+    if (isITU !== hardwareSerial?.startsWith("ITU")) {
+      ctx.addIssue({
+        path: ["hardwareSerial"],
+        code: z.ZodIssueCode.custom,
+        message: "장비선택 값을 확인해주세요.",
+      });
+    }
 
     if (!projectName || projectName.trim() === '') {
       ctx.addIssue({
@@ -156,6 +149,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         // AV: 0,
         // AS: 0,
         // OT: 0,
+        // ZT: 0,
       },
       limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
       limitTimeEnd: "2036-12-31",
@@ -194,7 +188,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       } 
     }
 
-    if (softwareOpt['vpn'] === 1 || softwareOpt['s2'] === 1 || softwareOpt['dpi'] === 1 || softwareOpt['av'] === 1 || softwareOpt['as'] === 1) {
+    if (softwareOpt['vpn'] === 1 || softwareOpt['s2'] === 1 || softwareOpt['dpi'] === 1 || softwareOpt['av'] === 1 || softwareOpt['as'] === 1 || softwareOpt['zt'] === 1) {
       if (option.value === 'ot') {
         softwareOpt['ot'] = 0;
         return true;
@@ -204,7 +198,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   };
 
   const onSubmit = async (data: z.infer<typeof addSchema>) => {
-
     const count = await checkHardwareSerial(data.hardwareSerial);
     if (Number(count) !== 0) {
       // 사용자에게 중복 메시지 보여주기
@@ -340,7 +333,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                             disabled={isOptionDisabled(field.value, item)}
                           />
                         }
-                        label={item.value === 's2' ? '행안부' : item.value === 'ot' ? '산업용 프로토콜' : item.label}
+                        label={item.value === 's2' ? '행안부' : item.value === 'ot' ? '산업용 프로토콜' : item.value === 'zt' ? 'ITUz' : item.label}
                       />
                     ))}
                   </FormGroup>

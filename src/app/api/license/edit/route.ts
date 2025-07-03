@@ -7,9 +7,7 @@ import { query } from "@/app/db/database";
 // exec(shell 명령 실행)을 async/await 방식으로 사용하기 위한 모듈 임포트
 import { exec } from 'child_process';
 import { promisify } from "util";
-
 import fs from "fs/promises";
-
 
 // exec 함수를 Promise 기반으로 변환하여 async/await 사용 가능하게 함
 const execAsync = promisify(exec);
@@ -36,7 +34,6 @@ export async function PUT(request: NextRequest) {
   } = body;
 
   const hardwareSerial = rawSerial?.slice(0, 3).toUpperCase() === "ITU" ? rawSerial.toUpperCase() : rawSerial;
-  // console.log('softwareOpt', softwareOpt)
 
   // 필수값 검사: initCode가 없으면 error
   if (!hardwareSerial) {
@@ -44,7 +41,7 @@ export async function PUT(request: NextRequest) {
   }
 
   // 기존 데이터 조회
-  const rows = await query("SELECT hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot FROM license WHERE hardware_serial = ?", [hardwareSerial]);
+  const rows = await query("SELECT hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?", [hardwareSerial]);
   const currentData = rows[0];
 
   // DB에서 불러온 date타입 한국시간 YYYY-MM-DD 형식으로 변환
@@ -62,56 +59,59 @@ export async function PUT(request: NextRequest) {
     Number(currentData.license_dpi) !== softwareOpt.DPI ||
     Number(currentData.license_av) !== softwareOpt.AV ||
     Number(currentData.license_as) !== softwareOpt.AS ||
-    Number(currentData.license_ot) !== softwareOpt.OT;
+    Number(currentData.license_ot) !== softwareOpt.OT ||
+    Number(currentData.license_zt) !== softwareOpt.ZT;
 
   const isLimitTimeStartChanged = kstStartDate !== limitTimeStart;
-
   const isLimitTimeEndChanged = kstEndDate !== limitTimeEnd;
-
   const needReissue = isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
 
   // 3. 다르면(needReissue값이 true면) 라이선스 키 새로 발급
   let newLicenseKey = null;
+  let _ituKey = null;
+  let _itmKey = null;
+
   if (needReissue) {
     if (isITU) {
       const functionMap = 
-        (Number(softwareOpt.FW) || 0) * 1 + // option 1
-        (Number(softwareOpt.VPN) || 0) * 2 + // option 2
-        (Number(softwareOpt.DPI) || 0) * 4 + // option 4
-        (Number(softwareOpt.AV) || 0) * 8 + // option 7
-        (Number(softwareOpt.AS) || 0) * 16 + // option 8
-        (Number(softwareOpt.S2) || 0) * 32 + // option 3
-        (Number(softwareOpt.OT) || 0) * 64; // option 9
+        (Number(softwareOpt.FW) || 0) * 1 +
+        (Number(softwareOpt.VPN) || 0) * 2 +
+        (Number(softwareOpt.DPI) || 0) * 4 +
+        (Number(softwareOpt.AV) || 0) * 8 +
+        (Number(softwareOpt.AS) || 0) * 16 +
+        (Number(softwareOpt.S2) || 0) * 32 +
+        (Number(softwareOpt.OT) || 0) * 64 +
+        (Number(softwareOpt.ZT) || 0) * 128;
       
       const [y, m, d] = limitTimeEnd.split("-").map(Number);
       const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
       const hex_expire = Math.floor(expireDate).toString(16);
 
-      const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-      const result = await execAsync(cmd);
-      const _ituKey = result.stdout.replace(/\n/g, '');
+      if(clientIp === "1") { // 로컬테스트 환경
+        _ituKey = "editTestLicenseKeyByITU";
+      } else {
+        const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        _ituKey = result.stdout.replace(/\n/g, '');
 
-      // const _ituKey = "addtestITU123hardwardCode456";
+        // Log
+        const logPath = "/home/future/license/log/edit_itulicense.log";
+        const logContent =
+          `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+          serial_num: ${hardwareSerial}
+          function_map: ${functionMap}
+          limit_time_end: ${limitTimeEnd}
+          ${cmd}
+          `;
 
-      newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
-
-      // Log
-      const logPath = "/home/future/license/log/edit_itulicense.log";
-      const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareSerial}
-function_map: ${functionMap}
-limit_time_end: ${limitTimeEnd}
-${cmd}
-
-`;
-      try {
-        await fs.appendFile(logPath, logContent)
-      } catch (error) {
-        console.error("log 파일 생성 실패: ", error);
+        try {
+          await fs.appendFile(logPath, logContent)
+        } catch (error) {
+          console.error("log 파일 생성 실패: ", error);
+        }
       }
+      newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
     }
-
     else if(hardwareSerial.split('-').length >= 3){
       let serial = hardwareSerial;
       const codes = hardwareSerial.split('-');
@@ -126,31 +126,34 @@ ${cmd}
       const startDateStr = `${startDate[0]}${startDate[1]}${startDate[2]}`;
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
-      const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
-      const result = await execAsync(cmd);
-      const _itmKey = result.stdout.replace(/\n/g, '');
-
-      // const _itmKey = "addtestITM123hardwardCode456";
-      newLicenseKey = typeof _itmKey === 'string' ? _itmKey : null;
+      if(clientIp === "1") { // 로컬테스트 환경
+        _itmKey = "editTestLicenseKeyByITM";
+      } else {
+        const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
+        const result = await execAsync(cmd);
+        _itmKey = result.stdout.replace(/\n/g, '');
 
       // Log
-      const logPath = "/home/future/license/log/edit_itmlicense.log";
-      const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareSerial}
-hardware_key: ${hardwareCode}
-limit_time_st: ${limitTimeStart}
-limit_time_end: ${limitTimeEnd}
-${cmd}
-
-`;
-      try {
-        await fs.appendFile(logPath, logContent)
-      } catch (error) {
-        console.error("log 파일 생성 실패: ", error);
+        const logPath = "/home/future/license/log/edit_itmlicense.log";
+        const logContent =
+          `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+          serial_num: ${hardwareSerial}
+          hardware_key: ${hardwareCode}
+          limit_time_st: ${limitTimeStart}
+          limit_time_end: ${limitTimeEnd}
+          ${cmd}
+          `;
+        try {
+          await fs.appendFile(logPath, logContent)
+        } catch (error) {
+          console.error("log 파일 생성 실패: ", error);
+        }
       }
+      newLicenseKey = typeof _itmKey === 'string' ? _itmKey : null;
     }
-  } 
+  }
+
+  console.log('newLicenseKey :::::::::::::::::::::: ',newLicenseKey);
 
   // 초기화
   let updateQuery = "";
@@ -172,6 +175,7 @@ ${cmd}
           license_av = ?,
           license_as = ?,
           license_ot = ?,
+          license_zt = ?,
           license_date = now(),
           license_key = ?,
           ip = ?,
@@ -194,6 +198,7 @@ ${cmd}
         softwareOpt.AV,
         softwareOpt.AS,
         softwareOpt.OT,
+        softwareOpt.ZT,
         newLicenseKey,
         clientIp,
         regUser,
@@ -218,6 +223,7 @@ ${cmd}
           license_av = ?,
           license_as = ?,
           license_ot = ?,
+          license_zt = ?,
           license_date = now(),
           license_key = ?,
           ip = ?,
@@ -238,6 +244,7 @@ ${cmd}
         softwareOpt.AV,
         softwareOpt.AS,
         softwareOpt.OT,
+        softwareOpt.ZT,
         newLicenseKey,
         clientIp,
         regUser,
@@ -262,6 +269,7 @@ ${cmd}
           license_av = ?,
           license_as = ?,
           license_ot = ?,
+          license_zt = ?,
           ip = ?,
           reg_user = ?,
           reg_request = ?,
@@ -281,6 +289,7 @@ ${cmd}
         softwareOpt.AV,
         softwareOpt.AS,
         softwareOpt.OT,
+        softwareOpt.ZT,
         clientIp,
         regUser,
         regRequest,
@@ -305,6 +314,7 @@ ${cmd}
           license_av = ?,
           license_as = ?,
           license_ot = ?,
+          license_zt = ?,
           ip = ?,
           reg_user = ?,
           reg_request = ?,
@@ -322,6 +332,7 @@ ${cmd}
         softwareOpt.AV,
         softwareOpt.AS,
         softwareOpt.OT,
+        softwareOpt.ZT,
         clientIp,
         regUser,
         regRequest,
@@ -350,5 +361,4 @@ ${cmd}
   }
 
   return NextResponse.json(response);
-} 
-
+}

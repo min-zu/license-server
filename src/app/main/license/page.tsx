@@ -98,7 +98,7 @@ export default function LicensePage() {
   const addModalClose = () => setIsAddModalOpen(false);
   const detailModalClose = () => setDetailModalOpen(false);
 
-  const softwareOptions = ['license_fw', 'license_vpn', 'license_s2', 'license_dpi', 'license_av', 'license_as', 'license_ot'];
+  const softwareOptions = ['license_fw', 'license_vpn', 'license_s2', 'license_dpi', 'license_av', 'license_as', 'license_ot', 'license_zt'];
   const searchOptions = ['hardware_serial', 'customer_email', 'reg_date', 'license_date', 'limit_time_start', 'limit_time_end', 'reg_user', 'reg_request', 'customer'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
@@ -115,11 +115,17 @@ export default function LicensePage() {
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
-      headerName: item === 'license_s2' ? '행안부' : item === 'license_ot' ? '산업용 프로토콜' : item.split('_')[1].toUpperCase(),
+      headerName: item === 'license_s2' ? '행안부' : item === 'license_ot' ? '산업용 프로토콜' : item === 'license_zt' ? 'ITUz' : item.split('_')[1].toUpperCase(),
       headerStyle: { textAlign: 'center', fontSize: '10px', padding: '0px' },
       cellClass: 'cell-style',
       flex: 1,
-      cellRenderer: (params: any) => params.data?.[item] === '1' ? <CheckBox fontSize="small" style={{ color: 'gray'}} /> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
+      cellRenderer: (params: any) => {
+        if(params.data?.hardware_status === 'ITU') {
+          return params.data?.[item] === '1' ? <CheckBox fontSize="small" style={{ color: 'gray'}} /> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
+        } else {
+          return ''
+        }
+      }
     })),
     { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
@@ -155,7 +161,7 @@ export default function LicensePage() {
     { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 80,
       valueFormatter: (params: any) => {
         const value = params.value;
-        return value === 1 ? '자동' : value === 0 ? '수동' : '';
+        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : '';
       }
     },
   ]);
@@ -325,26 +331,10 @@ export default function LicensePage() {
         <div className="flex justify-between items-center w-full mb-4">
           <div className="flex items-center gap-1">
             {role !== 1 && (
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                onClick={() => deleteSelectedRows()} // 선택된 체크박스 데이터 가져오기
-              >
-                삭제
-              </Button>
-            )}
-
-            {role !== 1 && (
-              <Button
-                className="default-btn"
-                size="small"
-                onClick={() => {
-                  setIsAddModalOpen(true);
-                }}
-              >
-                라이센스 등록
-              </Button>
+              <>
+                <Button className="delete-btn" size="small" onClick={() => deleteSelectedRows()}>삭제</Button>
+                <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>라이센스 등록</Button>
+              </>
             )}
 
             <FormControl size="small" sx={{ width: 80}}>
@@ -595,7 +585,6 @@ export default function LicensePage() {
             </div>
             }
           />
-
           {ToastComponent}
     </div>
   );

@@ -37,12 +37,16 @@ export async function GET(request: NextRequest) {
   }
 
   if(check == 1) {
-    const data = await query("SELECT hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot FROM license WHERE hardware_serial = ?;", [hardwareSerial]);
-    const { hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot } = (data as any[])[0];
+    const data = await query("SELECT hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?;", [hardwareSerial]);
+    const { hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt } = (data as any[])[0];
 
     let licenseKey: string | null = null;
-    if (hardware_status.toUpperCase() === 'ITU') {
-          
+    let _ituKey = null;
+    let _itmKey = null;
+    let cmd = '';
+    const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    if (hardware_status.toUpperCase() === 'ITU') {          
       const function_map = 
         (Number(license_fw) || 0) * 1 +
         (Number(license_vpn) || 0) * 2 +
@@ -50,35 +54,21 @@ export async function GET(request: NextRequest) {
         (Number(license_av) || 0) * 8 +
         (Number(license_as) || 0) * 16 +
         (Number(license_s2) || 0) * 32 +
-        (Number(license_ot) || 0) * 64;
+        (Number(license_ot) || 0) * 64 +
+        (Number(license_zt) || 0) * 128;
 
-      const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
       const [y, m, d] = date.split("-").map(Number);
       const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
       const hex_expire = Math.floor(expireDate).toString(16);
 
-      const cmd = `/home/future/license/license ${hardwareSerial} ${function_map} ${hex_expire}`;
-      const result = await execAsync(cmd);
-      const _ituKey = result.stdout.replace(/\n/g, '');
-      // const _ituKey = "ituindexITUtest123hardwardCode456";
+      if(ip === "1") {
+        _ituKey = "AutoAddTestByITU";
+      } else {
+        cmd = `/home/future/license/license ${hardwareSerial} ${function_map} ${hex_expire}`;
+        const result = await execAsync(cmd);
+        _ituKey = result.stdout.replace(/\n/g, '');
+      }      
       licenseKey = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
-
-      // Log
-      const logPath = "/home/future/license/log/ituindex_license.log";
-      const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareSerial}
-uuid: ${uuid}
-hardware_key: ${hardwareCode}
-enddate: ${date}
-${cmd}
-
-`;
-      try {
-        await fs.appendFile(logPath, logContent)
-      } catch (error) {
-        console.error("log 파일 생성 실패: ", error);
-      }
 
     } else if (hardware_status.toUpperCase() === 'ITM') {
       
@@ -89,15 +79,35 @@ ${cmd}
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
       const endDate = date.split('-').map(Number);
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
-      const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -e ${endDateStr}`;
-      const result = await execAsync(cmd);
-      const _itmKey = result.stdout.replace(/\n/g, '');
-      // const _itmKey = "ituindexSMCITMtest123hardwardCode456";
+      if(ip === "1") {
+        _itmKey = "AutoAddTestByITM";
+      } else {
+        cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -e ${endDateStr}`;
+        const result = await execAsync(cmd);
+        _itmKey = result.stdout.replace(/\n/g, '');        
+      }
       licenseKey = typeof _itmKey === 'string' ? _itmKey : null; // exec의 결과가 문자열인지 확인
+    }
+    
+    if(ip !== "1") {
+      // Log
+      const logPath = "/home/future/license/log/ituindex_license.log";
+      const logContent =
+        `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+          serial_num: ${hardwareSerial}
+          uuid: ${uuid}
+          hardware_key: ${hardwareCode}
+          enddate: ${date}
+          ${cmd}
+        `;
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
     }
 
     const rows2 = await query("SELECT hardware_serial, hardware_code, license_key, process, cpu_name, cfid FROM license");
@@ -114,11 +124,11 @@ ${cmd}
       }
     }
 
-    await query("INSERT INTO license_log (action_date, hardware_serial, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?)", [hardwareSerial, ip, "auto", null]);
+    await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "auto", null]);
     
     return NextResponse.json(licenseKey);
   } else {
-    await query("INSERT INTO license_log (action_date, hardware_serial, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?)", [hardwareSerial, ip, "fail", "라이센스 자동발급 실패"]);
+    await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "fail", "라이센스 자동발급 실패"]);
     
     return NextResponse.json('');
   }

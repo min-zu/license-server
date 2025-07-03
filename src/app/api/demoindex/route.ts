@@ -22,18 +22,18 @@ export async function GET(request: NextRequest) {
       if(row.demo_cnt === 0) {
         // return NextResponse.json({ success: false, message: "Inactive license" });
       } else {
-        await query(`UPDATE license SET hardware_code = ?, license_date = NOW(), ip = ?, demo_cnt = 0, license_key = '0' WHERE hardware_serial = ?`, [hardwareCode, ip, hardwareSerial]);
+        await query(`UPDATE license SET hardware_code = ?, license_date = NOW(), ip = ?, demo_cnt = 0, reg_auto = 2, license_key = '0' WHERE hardware_serial = ?`, [hardwareCode, ip, hardwareSerial]);
         // return NextResponse.json({ success: true, message: "License updated successfully"});
       }
     } 
   }
 
-  const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot FROM license WHERE hardware_serial = ?", [hardwareSerial]);
+  const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?", [hardwareSerial]);
 
   if(rows2.length === 0) {
     return NextResponse.json('');
   }
-  const { hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot } = (rows2 as any[])[0];
+  const { hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt } = (rows2 as any[])[0];
 
   const functionMap =  
     (Number(license_fw) || 0) * 1 +
@@ -42,7 +42,8 @@ export async function GET(request: NextRequest) {
     (Number(license_av) || 0) * 8 +
     (Number(license_as) || 0) * 16 +
     (Number(license_s2) || 0) * 32 +
-    (Number(license_ot) || 0) * 64;
+    (Number(license_ot) || 0) * 64 +
+    (Number(license_zt) || 0) * 128;
 
   const today = new Date(); // 현재 날짜 객체
   const endDate = new Date(); 
@@ -53,30 +54,35 @@ export async function GET(request: NextRequest) {
   const hex_expire = Math.floor(expireDate).toString(16);
 
   let license_key: string | null = null;
+  let _ituKey = null;
   if (hardware_status.toUpperCase() === 'ITU') {
-    const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-    const result = await execAsync(cmd);
-    const _ituKey = result.stdout.replace(/\n/g, '');
+    if(ip === "1") {
+      _ituKey = "DemoAddTestByITU";
+    } else {
+      const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
+      const result = await execAsync(cmd);
+      _ituKey = result.stdout.replace(/\n/g, '');
 
-    // const _ituKey = "DemoITUtest123hardwardCode456";
-    license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
+      // Log
+      const logPath = "/home/future/license/log/demoindex_license.log";
+      const logContent =
+        `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+        serial_num: ${hardwareSerial}
+        uuid: ${uuid}
+        hardware_key: ${hardwareCode}
+        enddate: ${endDate}
+        ${cmd}
 
-    // Log
-    const logPath = "/home/future/license/log/demoindex_license.log";
-    const logContent =
-`[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-serial_num: ${hardwareSerial}
-uuid: ${uuid}
-hardware_key: ${hardwareCode}
-enddate: ${endDate}
-${cmd}
+        `;
 
-`;
-    try {
-      await fs.appendFile(logPath, logContent)
-    } catch (error) {
-      console.error("log 파일 생성 실패: ", error);
+      try {
+        await fs.appendFile(logPath, logContent)
+      } catch (error) {
+        console.error("log 파일 생성 실패: ", error);
+      }
     }
+
+    license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
   }
 
   const rows3 = await query("SELECT hardware_serial, hardware_code, license_key, demo_cnt, project_name, customer_email FROM license");
@@ -90,7 +96,7 @@ ${cmd}
       await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
       await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
 
-      await query("INSERT INTO license_log (action_date, hardware_serial, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?)", [hardwareSerial, ip, "auto", "데모 라이센스 발급"]);
+      await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "auto", "데모 라이센스 발급"]);
 
       return NextResponse.json(license_key);
       } else {
