@@ -20,11 +20,6 @@
   font-size: 11px !important;
 }
 
-.cell-style {
-  text-align: center !important;
-  font-size: 11px !important;
-}
-
 .cell-left {
   /* display: flex !important; */
   text-align: left !important;
@@ -51,7 +46,7 @@
   font-size: 13px !important;
 }
 
-/* 셀렉트 공통 css */
+/* 셀렉트 공통 css */  
 .MuiSelect-select {
   min-height: 0px !important;
   height: 13px !important;
@@ -80,6 +75,11 @@
 /* toggle 공통 css */
 .MuiToggleButtonGroup-root {
   height: 30px !important;
+}
+
+.MuiToggleButton-root.Mui-selected {
+  color: rgb(255, 255, 255) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* formlabel */

@@ -5,6 +5,7 @@ import { query } from '@/app/db/database'; // DB 쿼리 유틸 유틸
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { stringify } from 'csv-stringify/sync';
+import { auth } from '@/auth';
 
 const execAsync = promisify(exec);
 
@@ -13,6 +14,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
     const file = formData.get('uploadFile') as File;
+
+    const session = await auth();
+    const role = session?.user?.role;
+    const demoCnt = role === 4 ? 0 : 1;
+    const regAuto = role === 4 ? 2 : 1;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -77,6 +83,17 @@ export async function POST(request: NextRequest) {
 
       if(Number(limitTimeStart) >= Number(limitTimeEnd)) {
         errorMessages.push(`유효기간 타임라인 오류`);
+      }
+      
+      if(role === 4) {
+        const demoStartDate = new Date(limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+        const demoEndDate = new Date(limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+        const oneMonthLater = new Date(demoStartDate);
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        
+        if(demoEndDate > oneMonthLater) {
+          errorMessages.push(`유효기간은 최대 1개월까지 설정 가능합니다`);
+        }
       }
 
       if(regRequest === '') {
@@ -154,7 +171,7 @@ export async function POST(request: NextRequest) {
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 1, 0,
+            0, now(), now(), 0, ${demoCnt}, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -169,7 +186,7 @@ export async function POST(request: NextRequest) {
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
         ) VALUES ( 
-          0, now(), now(), 0, 1, 0, 0,
+          0, now(), now(), 0, ${demoCnt}, ${regAuto}, 0,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?
         )`

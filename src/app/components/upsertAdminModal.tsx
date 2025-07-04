@@ -302,7 +302,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   {mode === 'self'
                     ? [
                         <ToggleButton selected disabled value={role} size="small">
-                          {role=== 3 ? '슈퍼 관리자' : role === 2 ? '설정 관리자' : '모니터 관리자'}
+                          {role=== 3 ? '슈퍼 관리자' : role === 2 ? '설정 관리자' : role === 1 ? '모니터 관리자' : '데모 관리자'}
                         </ToggleButton>
                       ]
                     : role === 3
@@ -313,7 +313,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                       ]
                     : [
                         <ToggleButton value={2} size="small">설정 관리자</ToggleButton>,
-                        <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>
+                        <ToggleButton value={1} size="small">모니터 관리자</ToggleButton>,
+                        <ToggleButton value={4} size="small">데모 관리자</ToggleButton>
                       ]
                   }
                 </ToggleButtonGroup>

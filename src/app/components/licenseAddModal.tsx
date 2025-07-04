@@ -22,6 +22,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const [isContinue, setIsContinue] = useState(false);
   const { data: session } = useSession();
   const id = session?.user?.id;
+  const role = session?.user?.role;
 
   const textFieldTooltip = (text: string) => {
     return (
@@ -166,6 +167,23 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const fieldsToCheck = ["hardwareSerial", "regRequest", "customer", "projectName", "customerEmail"] as const;
 
   useEffect(() => {
+    if (role === 4) {
+      setValue(
+        "limitTimeEnd",
+        new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+      );
+    } else {
+      setValue("limitTimeEnd", "2036-12-31");
+    }
+  }, [role, setValue]);
+
+  function addOneMonth(dateString: string) {
+    const date = new Date(dateString);
+    date.setMonth(date.getMonth() + 1);
+    return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); // yyyy-mm-dd 형식
+  }
+
+  useEffect(() => {
   const subscription = watch((_value, { name }) => {
     if (name === "hardwareStatus") {
       fieldsToCheck.forEach(field => {
@@ -176,9 +194,15 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         }
       });
     }
+
+    if (role === 4) {
+      if (name === "limitTimeStart" && _value.limitTimeStart) {
+        setValue("limitTimeEnd", addOneMonth(_value.limitTimeStart));
+      }
+    }
   });
     return () => subscription.unsubscribe();
-  }, [watch, trigger, clearErrors, dirtyFields]);
+  }, [watch, trigger, clearErrors, dirtyFields, setValue]);
 
   const isOptionDisabled = (softwareOpt: Record<string, number>, option: { value: string }) => {
     if (softwareOpt['ot'] === 1) {
@@ -364,9 +388,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 type="date"
                 error={errors.limitTimeEnd !== undefined}
                 helperText={errors.limitTimeEnd?.message}
+                disabled={role === 4}
                 {...register('limitTimeEnd')}
               />
-              {textFieldTooltip('만료일은 최대 2036년 12월 31일까지 가능합니다.')}
+              {textFieldTooltip(role === 4 ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2036년 12월 31일까지 가능합니다.')}
             </Box>
 
             <Box display="flex" alignItems="center">

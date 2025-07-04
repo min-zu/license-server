@@ -125,6 +125,12 @@ export default function AdminPage() {
         params.value === 1 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}} />
       ),
     },
+    {
+      field: 'role', headerName: '데모 관리자', headerClass: 'header-style', cellClass: 'cell-style',
+      cellRenderer: (params: ICellRendererParams<Admin>) => (
+        params.value === 4 ? <CheckBox fontSize="small" style={{ color: 'gray'}}/> : <CheckBoxOutlineBlank fontSize="small" style={{ color: 'gray'}}/>
+      ),
+    },
     { field: 'phone', headerName: '휴대폰 번호', headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'email', headerName: '이메일', headerClass: 'header-style', cellClass: 'cell-style' },
     {// 최근 로그인 날짜와 시간

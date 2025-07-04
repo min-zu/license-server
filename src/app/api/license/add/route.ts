@@ -3,6 +3,7 @@ import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from "util";
 import fs from "fs/promises";
+import { auth } from "@/auth";
 
 
 const execAsync = promisify(exec);
@@ -20,6 +21,10 @@ export async function GET(params: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  const role = session?.user?.role;
+  const demoCnt = role === 4 ? 0 : 1;
+  const regAuto = role === 4 ? 2 : 1;
   const data = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(":").pop() || null;
@@ -141,7 +146,7 @@ export async function POST(request: NextRequest) {
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 1, 0,
+            0, now(), now(), 0, ${demoCnt}, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -156,7 +161,7 @@ export async function POST(request: NextRequest) {
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
         ) VALUES (
-          0, now(), now(), 0, 1, 0,
+          0, now(), now(), 0, ${demoCnt}, ${regAuto},
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?
         )`
@@ -174,7 +179,7 @@ export async function POST(request: NextRequest) {
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 0, 0,
+            0, now(), now(), 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -185,11 +190,11 @@ export async function POST(request: NextRequest) {
         );
       } else {
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, license_key, process,
+          number, reg_date, license_date, reissuance, license_key, process, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 0, 0,
+            0, now(), now(), 0, 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;

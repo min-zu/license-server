@@ -316,6 +316,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeStart")}
                       type="date"
                       error={!!errors.limitTimeStart}
+                      disabled={role === 4}
                     /> : 
                     <p>{watch("limitTimeStart")}</p>}
                 </Box>
@@ -327,6 +328,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeEnd")}
                       type="date"
                       error={!!errors.limitTimeEnd}
+                      disabled={role === 4}
                     /> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box>
