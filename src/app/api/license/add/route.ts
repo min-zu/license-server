@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   const role = session?.user?.role;
   const demoCnt = role === 4 ? 0 : 1;
-  const regAuto = role === 4 ? 2 : 1;
+  // 0:수동 1:자동 2:데모
+  const regAuto = role === 4 ? 2 : 0;
   const data = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(":").pop() || null;
