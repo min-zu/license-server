@@ -18,3 +18,9 @@
 .admin-form .MuiTextField-root {
   width: 70% !important;
 } 
+
+.admin-form .MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  right: 20px;
+  font-size: 11px !important;
+}

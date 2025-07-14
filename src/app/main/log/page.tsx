@@ -258,7 +258,7 @@ export default function LogPage() {
             }}
           />
         </div>
-        <span className='text-13'>총 {logs.length}개</span>
+        <span className='text-13 text-black'>총 {logs.length}개</span>
       </footer>
       
       {ToastComponent}

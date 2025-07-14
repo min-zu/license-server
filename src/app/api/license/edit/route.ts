@@ -357,7 +357,9 @@ export async function PUT(request: NextRequest) {
   };
 
   if (isNewLicenseKey) {
-    response.status = "reissued";
+    if(isSoftwareOptChanged && (isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_all";
+    else if(isSoftwareOptChanged) response.status = "reissued_opt";
+    else if(isLimitTimeStartChanged || isLimitTimeEndChanged) response.status = "reissued_limit";
   }
 
   return NextResponse.json(response);

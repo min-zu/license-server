@@ -483,7 +483,7 @@ export default function LicensePage() {
               }}
             />
           </div>
-          <span className='text-13'>총 {licenses.length}개</span>
+          <span className='text-13 text-black'>총 {licenses.length}개</span>
         </footer>
 
         {/* modal */}

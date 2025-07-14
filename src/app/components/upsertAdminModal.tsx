@@ -7,7 +7,9 @@ import { useState, useEffect } from 'react';
 import { Admin } from "../main/admin/page";
 
 // MUI
-import { Box, Button, Dialog, FormLabel, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Button, Dialog, FormLabel, InputAdornment, Switch, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 // 유효성 검사
 import { checkIdDuplicate, ValidEmail, ValidID, ValidName, ValidPhone, ValidPW } from "@/app/api/validation";
@@ -47,11 +49,13 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
   // 비밀번호
   const [passwd, setPasswd] = useState("");
   const [passwdError, setPasswdError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // 비밀번호 확인
   const [confirmPasswd, setConfirmPasswd] = useState("");
   const [confirmPasswdMessage, setConfirmPasswdMessage] = useState<string | null>(null);
   const [confirmPasswdValid, setConfirmPasswdValid] = useState<boolean | null>(null);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 이름
   const [name, setName] = useState("");
@@ -167,6 +171,18 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
     }
   }, [open, mode, session, target]);
 
+  useEffect(() => {
+    if(passwd.trim() !== "" && confirmPasswd.trim() !== "") {
+      if(passwd === confirmPasswd) {
+        setConfirmPasswdValid(true);
+        setConfirmPasswdMessage("");
+      } else {
+        setConfirmPasswdValid(false);
+        setConfirmPasswdMessage("비밀번호가 일치하지 않습니다.");
+      }
+    }
+  }, [passwd, confirmPasswd]);
+
   return (
     <React.Fragment>
       {/* ToastAlert */}
@@ -205,10 +221,6 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                 if (!result.success) {
                   showToast(`${mode === "add" ? "등록" : "수정"} 실패: ${result.error}`, "error");
                   return;
-                }
-                
-                if (mode === "self") {
-                  onAdded?.();
                 }
 
                 onAdded?.();
@@ -329,7 +341,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호</>) : ("비밀번호")}
                 </FormLabel>
                 <TextField 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'}
                   name="passwd" 
                   size="small"
                   placeholder="영문 대/소문자, 숫자, 특수문자 포함, 8~32자"
@@ -350,6 +362,18 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   }}
                   error={!!passwdError}
                   helperText={passwdError}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <VisibilityIcon sx={{ cursor: 'pointer', width: '16px', height: '16px' }} /> : <VisibilityOffIcon sx={{ cursor: 'pointer', width: '16px', height: '16px' }} />}
+                        </button>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Box>
 
@@ -358,7 +382,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 비밀번호 확인</>) : ("비밀번호 확인")}
                 </FormLabel>
                 <TextField
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmpasswd"
                   size="small"
                   value={confirmPasswd}
@@ -371,17 +395,21 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                       setConfirmPasswdMessage(null);
                       return;
                     }
-
-                    if (value === passwd) {
-                      setConfirmPasswdValid(true);
-                      setConfirmPasswdMessage("");
-                    } else {
-                      setConfirmPasswdValid(false);
-                      setConfirmPasswdMessage("비밀번호가 일치하지 않습니다.");
-                    }
                   }}
                   error={confirmPasswdValid === false}
                   helperText={confirmPasswdMessage}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <VisibilityIcon sx={{ cursor: 'pointer', width: '16px', height: '16px' }} /> : <VisibilityOffIcon sx={{ cursor: 'pointer', width: '16px', height: '16px' }} />}
+                        </button>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Box>
             </Box>

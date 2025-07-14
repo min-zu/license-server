@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Next.js
 import { useRouter } from "next/navigation";
@@ -10,7 +10,9 @@ import { getSession, signIn, signOut } from "next-auth/react";
 
 // MUI
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
-
+import InputAdornment from '@mui/material/InputAdornment';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 // ToastAlert
 import { useToastState } from "../components/useToast";
 
@@ -21,6 +23,7 @@ export default function SignIn() {
 
   // toastAleat
   const { showToast, ToastComponent } = useToastState();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -103,6 +106,7 @@ export default function SignIn() {
     document.cookie = "loginInit=true; max-age=10; path=/; SameSite=Lax";
     router.replace("/main");
   };
+
   return (
     // 전체 레이아웃
     <Box
@@ -156,9 +160,26 @@ export default function SignIn() {
           fullWidth
           variant="outlined"
           label="PASSWORD"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           name="password"
           autoComplete="new-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <VisibilityIcon sx={{ color: '#fff', cursor: 'pointer' }} /> : <VisibilityOffIcon sx={{ color: '#fff', cursor: 'pointer' }} />}
+                </button>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiInputBase-root': {
+              backgroundColor: '#464646', // 원하는 배경색
+            }
+          }}
         />
 
         <Button

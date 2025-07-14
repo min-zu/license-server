@@ -180,7 +180,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       
       if (res.ok) {
-        if (result.status === "reissued") {
+        if (result.status === "reissued_opt" || result.status === "reissued_limit" || result.status === "reissued_all") {
           await fetch('/api/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -190,7 +190,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 hardware_serial: result.updated[0].hardware_serial,
                 user: id,
                 action: "edit",
-                desc: '소프트웨어 옵션 수정으로 인한 라이센스 키 재발급',
+                desc: result.status === "reissued_opt" ? '라이센스 키 재발급(소프트웨어 옵션 변경)' : result.status === "reissued_limit" ? '라이센스 키 재발급(유효기간 변경)' : '라이센스 키 재발급(소프트웨어 옵션, 유효기간 변경)',
               }]
             })
           });

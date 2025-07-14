@@ -131,6 +131,21 @@
   font-size: 11px !important;
 }
 
+.license-detail-modal-wrap p {
+  color: black !important; 
+}
 
+.MuiFormControlLabel-label {
+  font-size: 13px !important;
+  color: black !important;
+  &.Mui-disabled {
+    color: rgba(0, 0, 0, 0.26) !important;
+  }
+}
 
-
+.MuiButtonBase-root.MuiCheckbox-root.Mui-checked {
+  color: #000 !important;
+  &.Mui-disabled {
+    color: rgba(0, 0, 0, 0.26) !important;
+  }
+}
