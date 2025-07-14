@@ -217,6 +217,7 @@ export default function LogPage() {
             loadLogs();
             setSearchText('');
             setSearchField('hardware_serial');
+            gridRef.current?.api?.paginationGoToPage?.(0);
           }}
         >
           ↻

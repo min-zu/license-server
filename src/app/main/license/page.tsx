@@ -260,8 +260,6 @@ export default function LicensePage() {
   const onSelectionChanged = (e: any) => {
     const selected = e.api.getSelectedRows();
     selectedRowsRef.current = selected;
-
-    // timezone 처리 해야함 4/13
     setSelectedRows([...selected]);
   };
 
@@ -320,10 +318,17 @@ export default function LicensePage() {
 
   // 데이터 초기화
   const handleReset = () => {
+    // 모든 체크박스(선택된 행) 해제
+    selectedRowsRef.current = [];
+    setSelectedRows([]);
+    if (gridRef.current && gridRef.current.api) {
+      gridRef.current.api.deselectAll();
+    }
     loadLicenses();
     setHardwareStatus('all');
     setSearchText('');
     setSearchField('hardware_serial');
+    gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
   return (
