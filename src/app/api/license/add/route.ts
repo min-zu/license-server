@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   const role = session?.user?.role;
   const demoCnt = role === 4 ? 0 : 1;
-  // 0:수동 1:자동 2:데모
-  const regAuto = role === 4 ? 2 : 0;
+  // 0:수동 1:자동 2:데모 3:발급전 4:만료
+  let regAuto = 0;
   const data = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(":").pop() || null;
@@ -46,8 +46,12 @@ export async function POST(request: NextRequest) {
   let _ituKey = null;
   let _itmKey = null;
 
+  // 발급구분
+  if (hardwareCode === "" || hardwareCode === undefined) regAuto = 3;
+  else if (role === 4) regAuto = 2;
+
   // 라이센스 키
-  if (hardwareStatus === 'ITU') {
+  if (hardwareStatus === 'ITU' && hardwareCode !== "" && hardwareCode !== undefined) {
     const functionMap = 
       fw * 1 +
       vpn * 2 +
@@ -158,17 +162,17 @@ export async function POST(request: NextRequest) {
         );
       } else {
         sql = `INSERT INTO license (
-          number, reg_date, reissuance, demo_cnt, license_key, reg_auto,
-          hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
+          number, reg_date, reissuance, demo_cnt, reg_auto,
+          hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
         ) VALUES (
           0, now(), 0, ${demoCnt}, ${regAuto},
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?
         )`
 
         params.push(
-          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer, projectName, customerEmail, 
+          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, null, regUser, regRequest, customer, projectName, customerEmail, 
           fw, vpn, s2, dpi, av, as, ot, zt
         );
       }
@@ -208,7 +212,10 @@ export async function POST(request: NextRequest) {
     }
     const result = await query(sql, params);
     if(result.affectedRows > 0) {
-      await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, regUser, clientIp, "add", "라이센스 등록 완료"]);
+      if(hardwareCode !== "" && hardwareCode !== undefined) {
+        await query(`UPDATE license SET license_date = now() WHERE hardware_code = ?`, [hardwareCode]);
+      }
+      await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, regUser, clientIp, "success", "라이센스 등록 완료"]);
     }
     return NextResponse.json({ result: result, success: true });
   }

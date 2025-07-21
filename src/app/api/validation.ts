@@ -104,6 +104,19 @@ export const checkHardwareSerial = async (hardwareSerial: string): Promise<strin
   }
 };
 
+export const checkHardwareCode = async (hardwareCode: string): Promise<string> => {
+  try {
+    const res = await fetch(`/api/license/edit?hardwareCode=${encodeURIComponent(hardwareCode)}`);
+    if (!res.ok) throw new Error("서버 응답 실패");
+
+    const isDuplicate = await res.json();
+    return isDuplicate[0].cnt;
+  } catch (error) {
+    console.error("DB 검사 실패:", error);
+    return "하드웨어 인증키 중복 확인 중 오류가 발생했습니다.";
+  }
+};
+
 export const ValidLimitTimeStart = (limitTimeStart: unknown): string | true => {
   if (limitTimeStart === undefined || limitTimeStart === null || (typeof limitTimeStart === "string" && limitTimeStart.trim() === "")) return "유효기간(시작)을 입력해 주세요.";
   return true;

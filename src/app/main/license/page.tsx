@@ -161,7 +161,7 @@ export default function LicensePage() {
     { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 80,
       valueFormatter: (params: any) => {
         const value = params.value;
-        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : '';
+        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : value === 3 ? '발급 전' : value === 4 ? '만료' : ''; 
       }
     },
   ]);

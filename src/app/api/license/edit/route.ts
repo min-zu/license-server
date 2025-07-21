@@ -12,6 +12,18 @@ import fs from "fs/promises";
 // exec 함수를 Promise 기반으로 변환하여 async/await 사용 가능하게 함
 const execAsync = promisify(exec);
 
+export async function GET(params: NextRequest) {
+  const url = new URL(params.url); 
+  const hardwareCode = url.searchParams.get('hardwareCode'); 
+  try {
+    const rows = await query("SELECT COUNT(*) as cnt FROM license WHERE hardware_code = ?;", [hardwareCode]);
+    return NextResponse.json(rows);
+  } catch (e) {
+    console.log('error', e);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 }); // 에러 발생 시 응답 추가
+  }
+}
+
 // License 정보 업데이트 처리
 export async function PUT(request: NextRequest) {
   // 요청 본문(JSON) 파싱
@@ -41,7 +53,7 @@ export async function PUT(request: NextRequest) {
   }
 
   // 기존 데이터 조회
-  const rows = await query("SELECT hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?", [hardwareSerial]);
+  const rows = await query("SELECT hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt, reg_auto FROM license WHERE hardware_serial = ?", [hardwareSerial]);
   const currentData = rows[0];
 
   // DB에서 불러온 date타입 한국시간 YYYY-MM-DD 형식으로 변환
@@ -50,6 +62,17 @@ export async function PUT(request: NextRequest) {
   
   // ITU 장비 여부 판단: 기존데이터의 hardware_status값이 ITU 거나 시리얼번호가 ITU로 시작할떄
   const isITU = (currentData.hardware_status == 'ITU') || (hardwareSerial.startsWith('ITU'));
+  
+  // 하드웨어 인증키 확인
+  let isHardwareCode = false;
+  if(hardwareCode !== "" && hardwareCode !== undefined) {
+    isHardwareCode = true;
+  }
+
+  let newLicenseKey = null;
+  let _ituKey = null;
+  let _itmKey = null;
+
 
   // 라이선스 키 재발급 해야하는지 확인
   const isSoftwareOptChanged = 
@@ -64,92 +87,90 @@ export async function PUT(request: NextRequest) {
 
   const isLimitTimeStartChanged = kstStartDate !== limitTimeStart;
   const isLimitTimeEndChanged = kstEndDate !== limitTimeEnd;
-  const needReissue = isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
+  const isHardwareCodeChanged = currentData.hardware_code !== hardwareCode;
+  const needReissue = isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
 
-  // 3. 다르면(needReissue값이 true면) 라이선스 키 새로 발급
-  let newLicenseKey = null;
-  let _ituKey = null;
-  let _itmKey = null;
+  if(isHardwareCode) {
+    if (needReissue) {
+      if (isITU) {
+        const functionMap = 
+          (Number(softwareOpt.FW) || 0) * 1 +
+          (Number(softwareOpt.VPN) || 0) * 2 +
+          (Number(softwareOpt.DPI) || 0) * 4 +
+          (Number(softwareOpt.AV) || 0) * 8 +
+          (Number(softwareOpt.AS) || 0) * 16 +
+          (Number(softwareOpt.S2) || 0) * 32 +
+          (Number(softwareOpt.OT) || 0) * 64 +
+          (Number(softwareOpt.ZT) || 0) * 128;
+        
+        const [y, m, d] = limitTimeEnd.split("-").map(Number);
+        const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+        const hex_expire = Math.floor(expireDate).toString(16);
 
-  if (needReissue) {
-    if (isITU) {
-      const functionMap = 
-        (Number(softwareOpt.FW) || 0) * 1 +
-        (Number(softwareOpt.VPN) || 0) * 2 +
-        (Number(softwareOpt.DPI) || 0) * 4 +
-        (Number(softwareOpt.AV) || 0) * 8 +
-        (Number(softwareOpt.AS) || 0) * 16 +
-        (Number(softwareOpt.S2) || 0) * 32 +
-        (Number(softwareOpt.OT) || 0) * 64 +
-        (Number(softwareOpt.ZT) || 0) * 128;
-      
-      const [y, m, d] = limitTimeEnd.split("-").map(Number);
-      const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
-      const hex_expire = Math.floor(expireDate).toString(16);
+        if(clientIp === "1") { // 로컬테스트 환경
+          _ituKey = "editTestLicenseKeyByITU";
+        } else {
+          const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
+          const result = await execAsync(cmd);
+          _ituKey = result.stdout.replace(/\n/g, '');
 
-      if(clientIp === "1") { // 로컬테스트 환경
-        _ituKey = "editTestLicenseKeyByITU";
-      } else {
-        const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
-        const result = await execAsync(cmd);
-        _ituKey = result.stdout.replace(/\n/g, '');
+          // Log
+          const logPath = "/home/future/license/log/edit_itulicense.log";
+          const logContent =
+            `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+            serial_num: ${hardwareSerial}
+            function_map: ${functionMap}
+            limit_time_end: ${limitTimeEnd}
+            ${cmd}
+            `;
+
+          try {
+            await fs.appendFile(logPath, logContent)
+          } catch (error) {
+            console.error("log 파일 생성 실패: ", error);
+          }
+        }
+        newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
+      }
+      else if(hardwareSerial.split('-').length >= 3){
+        let serial = hardwareSerial;
+        const codes = hardwareSerial.split('-');
+
+        if (codes.length > 3) { // cut dummy number
+          serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
+        }
+
+        const startDate = limitTimeStart.split('-').map(Number);
+        const endDate = limitTimeEnd.split('-').map(Number);
+
+        const startDateStr = `${startDate[0]}${startDate[1]}${startDate[2]}`;
+        const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
+
+        if(clientIp === "1") { // 로컬테스트 환경
+          _itmKey = "editTestLicenseKeyByITM";
+        } else {
+          const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
+          const result = await execAsync(cmd);
+          _itmKey = result.stdout.replace(/\n/g, '');
 
         // Log
-        const logPath = "/home/future/license/log/edit_itulicense.log";
-        const logContent =
-          `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-          serial_num: ${hardwareSerial}
-          function_map: ${functionMap}
-          limit_time_end: ${limitTimeEnd}
-          ${cmd}
-          `;
-
-        try {
-          await fs.appendFile(logPath, logContent)
-        } catch (error) {
-          console.error("log 파일 생성 실패: ", error);
+          const logPath = "/home/future/license/log/edit_itmlicense.log";
+          const logContent =
+            `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
+            serial_num: ${hardwareSerial}
+            hardware_key: ${hardwareCode}
+            limit_time_st: ${limitTimeStart}
+            limit_time_end: ${limitTimeEnd}
+            ${cmd}
+            `;
+          try {
+            await fs.appendFile(logPath, logContent)
+          } catch (error) {
+            console.error("log 파일 생성 실패: ", error);
+          }
         }
+        newLicenseKey = typeof _itmKey === 'string' ? _itmKey : null;
       }
-      newLicenseKey = typeof _ituKey === 'string' ? _ituKey : null;
-    }
-    else if(hardwareSerial.split('-').length >= 3){
-      let serial = hardwareSerial;
-      const codes = hardwareSerial.split('-');
-
-      if (codes.length > 3) { // cut dummy number
-        serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
-      }
-
-      const startDate = limitTimeStart.split('-').map(Number);
-      const endDate = limitTimeEnd.split('-').map(Number);
-
-      const startDateStr = `${startDate[0]}${startDate[1]}${startDate[2]}`;
-      const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
-
-      if(clientIp === "1") { // 로컬테스트 환경
-        _itmKey = "editTestLicenseKeyByITM";
-      } else {
-        const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
-        const result = await execAsync(cmd);
-        _itmKey = result.stdout.replace(/\n/g, '');
-
-      // Log
-        const logPath = "/home/future/license/log/edit_itmlicense.log";
-        const logContent =
-          `[${new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}]
-          serial_num: ${hardwareSerial}
-          hardware_key: ${hardwareCode}
-          limit_time_st: ${limitTimeStart}
-          limit_time_end: ${limitTimeEnd}
-          ${cmd}
-          `;
-        try {
-          await fs.appendFile(logPath, logContent)
-        } catch (error) {
-          console.error("log 파일 생성 실패: ", error);
-        }
-      }
-      newLicenseKey = typeof _itmKey === 'string' ? _itmKey : null;
     }
   }
 
@@ -184,7 +205,8 @@ export async function PUT(request: NextRequest) {
           customer = ?,
           project_name = ?,
           customer_email = ?,
-          reg_auto = 0
+          reg_auto = 0,
+          hardware_code = ?
         WHERE hardware_serial = ?
       `;
 
@@ -206,6 +228,7 @@ export async function PUT(request: NextRequest) {
         customer,
         projectName,
         customerEmail,
+        hardwareCode,
         hardwareSerial,
       ];
     }
@@ -230,7 +253,8 @@ export async function PUT(request: NextRequest) {
           reg_user = ?,
           reg_request = ?,
           customer = ?,
-          reg_auto = 0
+          reg_auto = 0,
+          hardware_code = ?
         WHERE hardware_serial = ?
       `;
 
@@ -250,6 +274,7 @@ export async function PUT(request: NextRequest) {
         regUser,
         regRequest,
         customer,
+        hardwareCode,
         hardwareSerial,
       ];
     }
@@ -275,7 +300,8 @@ export async function PUT(request: NextRequest) {
           reg_request = ?,
           customer = ?,
           project_name = ?,
-          customer_email = ?
+          customer_email = ?,
+          hardware_code = ?
         WHERE hardware_serial = ?
       `;
 
@@ -296,6 +322,7 @@ export async function PUT(request: NextRequest) {
         customer,
         projectName,
         customerEmail,
+        hardwareCode,
         hardwareSerial,
       ];
     }
@@ -318,7 +345,8 @@ export async function PUT(request: NextRequest) {
           ip = ?,
           reg_user = ?,
           reg_request = ?,
-          customer = ?
+          customer = ?,
+          hardware_code = ?
         WHERE hardware_serial = ?
       `;
 
@@ -337,13 +365,14 @@ export async function PUT(request: NextRequest) {
         regUser,
         regRequest,
         customer,
+        hardwareCode,
         hardwareSerial,
       ];
     }
   }
 
   // DB에 업데이트 실행
-  await query(updateQuery, queryParams);
+  const result = await query(updateQuery, queryParams);
 
   // 업데이트 후, 최신 데이터 조회
   const updatedRows = await query(
@@ -357,10 +386,12 @@ export async function PUT(request: NextRequest) {
   };
 
   if (isNewLicenseKey) {
-    if(isSoftwareOptChanged && (isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_all";
-    else if(isSoftwareOptChanged) response.status = "reissued_opt";
-    else if(isLimitTimeStartChanged || isLimitTimeEndChanged) response.status = "reissued_limit";
+    if(isHardwareCodeChanged && currentData.reg_auto === 3) response.status = "reissued_reg";
+    else if(isHardwareCodeChanged) response.status = "reissued_hardware_code";
   }
+  if(isSoftwareOptChanged && (isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_all";
+  else if(isSoftwareOptChanged) response.status = "reissued_opt";
+  else if(isLimitTimeStartChanged || isLimitTimeEndChanged) response.status = "reissued_limit";
 
   return NextResponse.json(response);
 }

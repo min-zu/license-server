@@ -32,7 +32,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     if(state === 'license') {
       try {
         const res = await deleteLicenses(deleteIds);
-        if(res.success) {
+        if(res.success && res.result.affectedRows > 0) {
           showToast(res.result.affectedRows + '개의 데이터가 삭제되었습니다.', 'success');
           onConfirm && onConfirm('del', null);
           close();

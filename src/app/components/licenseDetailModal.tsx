@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { useToastState } from "./useToast";
 import AlertModal from "./alertModal";
+import { checkHardwareCode } from "@/app/api/validation";
 
 interface LicenseDetailModalProps {
   close: () => void; // close prop 추가
@@ -45,10 +46,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
-        if(value > "2036-12-31") {
+        if(value > "2099-12-31") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '2036년 12월 31일까지',
+            message: '2099년 12월 31일까지',
           });
         }
       }),
@@ -61,29 +62,29 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     customerEmail: z.string().optional().nullable(),
   }).superRefine((data, ctx) => {
     if (isITU) {
-      if (!data.projectName || data.projectName.trim() === "") {
-        ctx.addIssue({
-          path: ['projectName'],
-          code: z.ZodIssueCode.custom,
-          message: '프로젝트명을 입력해주세요.',
-        });
-      }
-      if (!data.customerEmail || data.customerEmail.trim() === "") {
-        ctx.addIssue({
-          path: ['customerEmail'],
-          code: z.ZodIssueCode.custom,
-          message: '고객사 E-mail을 입력해주세요.',
-        });
-      } else {
+      // if (!data.projectName || data.projectName.trim() === "") {
+      //   ctx.addIssue({
+      //     path: ['projectName'],
+      //     code: z.ZodIssueCode.custom,
+      //     message: '프로젝트명을 입력해주세요.',
+      //   });
+      // }
+      // if (!data.customerEmail || data.customerEmail.trim() === "") {
+      //   ctx.addIssue({
+      //     path: ['customerEmail'],
+      //     code: z.ZodIssueCode.custom,
+      //     message: '고객사 E-mail을 입력해주세요.',
+      //   });
+      // } else {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(data.customerEmail)) {
+        if (data.customerEmail && !emailRegex.test(data.customerEmail)) {
           ctx.addIssue({
             path: ['customerEmail'],
             code: z.ZodIssueCode.custom,
             message: '이메일 형식이 올바르지 않습니다.',
           });
         }
-      }
+      // }
     }
     const start = new Date(data.limitTimeStart);
     const end = new Date(data.limitTimeEnd);
@@ -136,6 +137,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     register,
     handleSubmit, 
     formState: { errors },
+    setError,
     reset,
     watch,
     setValue,
@@ -170,6 +172,20 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   // 저장 버튼 클릭 시 실행되는 submit 함수
   const onSubmit = async (data: z.infer<typeof schema>) => {
+    if (data.hardwareCode) {
+      if(data.hardwareCode !== license.hardware_code) {
+        const codeCount = await checkHardwareCode(data.hardwareCode);
+        if (Number(codeCount) !== 0) {
+          setError("hardwareCode", {
+            type: "manual",
+            message: "이미 사용 중인 하드웨어 인증키입니다.",
+          });
+          showToast("이미 사용 중인 하드웨어 인증키입니다.", "warning");
+          return;
+        }
+      }
+    }
+
     try {
       const res = await fetch('/api/license/edit', {
         method: 'PUT',
@@ -189,7 +205,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       
       if (res.ok) {
-        if (result.status === "reissued_opt" || result.status === "reissued_limit" || result.status === "reissued_all") {
+        if (result.status && result.status.includes("reissued")) {
           await fetch('/api/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -199,7 +215,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 hardware_serial: result.updated[0].hardware_serial,
                 user: id,
                 action: "success",
-                desc: result.status === "reissued_opt" ? '라이센스 키 재발급(소프트웨어 옵션 변경)' : result.status === "reissued_limit" ? '라이센스 키 재발급(유효기간 변경)' : '라이센스 키 재발급(소프트웨어 옵션, 유효기간 변경)',
+                desc: result.status === "reissued_reg" ? '수등 발급' : result.status === "reissued_hardware_code" ? '하드웨어 인증키 변경' : result.status === "reissued_opt" ? '소프트웨어 옵션 변경' : result.status === "reissued_limit" ? '유효기간 변경' : '소프트웨어 옵션, 유효기간 변경',
               }]
             })
           });
@@ -232,10 +248,16 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   };
 
   useEffect(() => {
-    if(licenseKey !== license.license_key) {
+    if(licenseKey !== "" && licenseKey !== null && licenseKey !== undefined && licenseKey !== license.license_key) {
       showToast(`라이센스 인증키가 변경되었습니다.\nITU 장비에서 라이센스 자동발급을 다시 해주세요.`, "info");
     }
   }, [licenseKey])
+
+  function addOneMonth(dateString: string) {
+    const date = new Date(dateString); 
+    date.setMonth(date.getMonth() + 1);
+    return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); // yyyy-mm-dd 형식
+  }
 
   return (
     <form className="w-full h-full flex justify-center items-center text-13">
@@ -325,7 +347,14 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeStart")}
                       type="date"
                       error={!!errors.limitTimeStart}
-                      disabled={role === 4}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (role === 4) {
+                          if (value) {
+                            setValue("limitTimeEnd", addOneMonth(value));
+                          }
+                        }
+                      }}
                     /> : 
                     <p>{watch("limitTimeStart")}</p>}
                 </Box>
@@ -434,7 +463,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </Box>
               <Box display="flex" alignItems="center">
                 <FormLabel>하드웨어 인증키 :</FormLabel>
-                {isEdit && license.hardware_code === '' ? 
+                {isEdit ? 
                   <TextField
                     size="small"
                     sx={{ width: 600 }}
@@ -444,10 +473,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                         setValue('hardwareCode', value.trim());
                       }
                     })}
-                    error={!!errors.regRequest}
+                    error={!!errors.hardwareCode}
                   /> : 
                   <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word', maxWidth: '100%' }}>
-                    {license.hardware_code.length > 60 ? `${license.hardware_code.slice(0, 60)}\n${license.hardware_code.slice(60)}` : license.hardware_code}
+                    {(() => {
+                      const code = watch("hardwareCode");
+                      return code && code.length > 60 ? `${code.slice(0, 60)}\n${code.slice(60)}` : code;
+                    })()}
                   </p>
                 }
               </Box>

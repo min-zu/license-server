@@ -3,7 +3,7 @@ import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLa
 
 // 데이터
 import { defaultOps, ituOps } from "@/app/data/config";
-import { checkHardwareSerial } from "@/app/api/validation";
+import { checkHardwareSerial, checkHardwareCode } from "@/app/api/validation";
 
 // form
 import { useForm, Controller } from "react-hook-form";
@@ -76,10 +76,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           });
         }
 
-        if(value > "2036-12-31") {
+        if(value > "2099-12-31") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '2036년 12월 31일까지',
+            message: '2099년 12월 31일까지',
           });
         }
       }),
@@ -102,25 +102,25 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       });
     }
 
-    if (!projectName || projectName.trim() === '') {
-      ctx.addIssue({
-        path: ["projectName"],
-        code: z.ZodIssueCode.custom,
-        message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
-      });
-    }
+    // if (!projectName || projectName.trim() === '') {
+    //   ctx.addIssue({
+    //     path: ["projectName"],
+    //     code: z.ZodIssueCode.custom,
+    //     message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
+    //   });
+    // }
     
-    if (!customerEmail || customerEmail.trim() === '') {
-      ctx.addIssue({
-        path: ["customerEmail"],
-        code: z.ZodIssueCode.custom,
-        message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
-      });
-      return;
-    }
+    // if (!customerEmail || customerEmail.trim() === '') {
+    //   ctx.addIssue({
+    //     path: ["customerEmail"],
+    //     code: z.ZodIssueCode.custom,
+    //     message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
+    //   });
+    //   return;
+    // }
 
     if (isITU) {
-      if (!emailRegex.test(customerEmail)) {
+      if (customerEmail && !emailRegex.test(customerEmail)) {
         ctx.addIssue({
           path: ["customerEmail"],
           code: z.ZodIssueCode.custom,
@@ -150,17 +150,17 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       hardwareStatus: "ITU",
       hardwareSerial: "",
       softwareOpt: {  
-        // FW: 0,
-        // VPN: 0,
-        // S2: 0,
-        // DPI: 0,
-        // AV: 0,
-        // AS: 0,
-        // OT: 0,
-        // ZT: 0,
+        fw: 1,
+        vpn: 1,
+        s2: 0,
+        dpi: 1,
+        av: 1,
+        as: 1,
+        ot: 0,
+        zt: 0,
       },
       limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      limitTimeEnd: "2036-12-31",
+      limitTimeEnd: "2099-12-31",
       regUser: "",
       regRequest: "",
       customer: "",
@@ -180,12 +180,12 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
       );
     } else {
-      setValue("limitTimeEnd", "2036-12-31");
+      setValue("limitTimeEnd", "2099-12-31");
     }
   }, [role, setValue]);
 
   function addOneMonth(dateString: string) {
-    const date = new Date(dateString);
+    const date = new Date(dateString); 
     date.setMonth(date.getMonth() + 1);
     return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); // yyyy-mm-dd 형식
   }
@@ -238,6 +238,17 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       });
       return;
     }
+
+    if (data.hardwareCode) {
+      const codeCount = await checkHardwareCode(data.hardwareCode);
+      if (Number(codeCount) !== 0) {
+        setError("hardwareCode", {
+          type: "manual",
+          message: "이미 사용 중인 하드웨어 인증키입니다.",
+        });
+        return;
+      }
+    }
     
     const updatedSoftwareOpt = { ...data.softwareOpt };
     if(data.hardwareStatus === "ITU") {
@@ -250,6 +261,14 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     }
     // 업데이트된 소프트웨어 옵션을 데이터에 다시 설정
     data.softwareOpt = updatedSoftwareOpt;
+
+    if(data.projectName === "") {
+      data.projectName = data.customer;
+    }
+
+    if(data.regUser === "") {
+      data.regUser = session?.user?.name + "(" + session?.user?.id + ")";
+    }
 
     try {
       const res = await fetch('/api/license/add', {
@@ -398,7 +417,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 disabled={role === 4}
                 {...register('limitTimeEnd')}
               />
-              {textFieldTooltip(role === 4 ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2036년 12월 31일까지 가능합니다.')}
+              {textFieldTooltip(role === 4 ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2099년 12월 31일까지 가능합니다.')}
             </Box>
 
             <Box display="flex" alignItems="center">
@@ -435,7 +454,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> {selectedHardware === "ITU" ? "프로젝트명" : "CPU명"}
+                <span>&nbsp;&nbsp;</span>{selectedHardware === "ITU" ? "프로젝트명" : "CPU명"}
               </FormLabel>  
               <TextField 
                 size="small" 
@@ -469,7 +488,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
 
             <Box display="flex" alignItems="center">
               <FormLabel>
-                <span className="text-red-500">*</span> {selectedHardware === "ITU" ? "고객사 E-mail" : "CF ID"}
+                <span>&nbsp;&nbsp;</span>{selectedHardware === "ITU" ? "고객사 E-mail" : "CF ID"}
               </FormLabel>
               <TextField 
                 size="small" 
@@ -490,6 +509,8 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
               </FormLabel>
               <TextField 
                 size="small" 
+                error={errors.hardwareCode !== undefined}
+                helperText={errors.hardwareCode?.message}
                 {...register('hardwareCode', {
                   onChange: (e) => {
                     const value = e.target.value;
