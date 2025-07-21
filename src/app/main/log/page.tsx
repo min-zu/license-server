@@ -142,7 +142,7 @@ export default function LogPage() {
   useEffect(() => {
     setSearchText('');
     if(searchField === 'action') {
-      setSearchText('auto'); 
+      setSearchText('success'); 
     } 
   }, [searchField]);
 
@@ -184,15 +184,17 @@ export default function LogPage() {
         {searchField === 'action' ? (
           <Select
             size="small"
-            defaultValue="auto"
+            defaultValue="success"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           >
-            <MenuItem value="auto">자동발급</MenuItem>
+            {/* <MenuItem value="auto">자동발급</MenuItem>
             <MenuItem value="del">삭제</MenuItem>
             <MenuItem value="edit">수정</MenuItem>
             <MenuItem value="fail">실패</MenuItem>
-            <MenuItem value="add">등록</MenuItem>
+            <MenuItem value="add">등록</MenuItem> */}
+            <MenuItem value="success">성공</MenuItem>
+            <MenuItem value="fail">실패</MenuItem>
           </Select>
         ) : (
           <TextField
