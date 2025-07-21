@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
               params.push(searchText);
             }
           } else {
-            sql += ` ${searchField} LIKE ? `;
+            // desc 필드는 백틱으로 감싸기
+            const fieldName = searchField === 'desc' ? '`desc`' : searchField;
+            sql += ` ${fieldName} LIKE ? `;
             params.push(`%${searchText}%`);
           }
         }

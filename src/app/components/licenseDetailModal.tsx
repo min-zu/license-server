@@ -43,7 +43,15 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const baseSchema = z.object({
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
-    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' }),
+    limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
+      .superRefine((value, ctx) => {
+        if(value > "2036-12-31") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '2036년 12월 31일까지',
+          });
+        }
+      }),
     regUser: z.string().optional(),
     regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
@@ -117,6 +125,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       hardwareCode: license.hardware_code,
       projectName: license.project_name || "",
       customerEmail: license.customer_email || "",
+      hardwardCode: license.hardware_code || "",
     };
 
     return { schema: baseSchema, defaultValues: base };
@@ -189,7 +198,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               log: [{
                 hardware_serial: result.updated[0].hardware_serial,
                 user: id,
-                action: "edit",
+                action: "success",
                 desc: result.status === "reissued_opt" ? '라이센스 키 재발급(소프트웨어 옵션 변경)' : result.status === "reissued_limit" ? '라이센스 키 재발급(유효기간 변경)' : '라이센스 키 재발급(소프트웨어 옵션, 유효기간 변경)',
               }]
             })
@@ -425,9 +434,22 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </Box>
               <Box display="flex" alignItems="center">
                 <FormLabel>하드웨어 인증키 :</FormLabel>
-                <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word', maxWidth: '100%' }}>
-                  {license.hardware_code.length > 60 ? `${license.hardware_code.slice(0, 60)}\n${license.hardware_code.slice(60)}` : license.hardware_code}
-                </p>
+                {isEdit && license.hardware_code === '' ? 
+                  <TextField
+                    size="small"
+                    sx={{ width: 600 }}
+                    {...register("hardwareCode", {
+                      onChange: (e) => {
+                        const value = e.target.value;
+                        setValue('hardwareCode', value.trim());
+                      }
+                    })}
+                    error={!!errors.regRequest}
+                  /> : 
+                  <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word', maxWidth: '100%' }}>
+                    {license.hardware_code.length > 60 ? `${license.hardware_code.slice(0, 60)}\n${license.hardware_code.slice(60)}` : license.hardware_code}
+                  </p>
+                }
               </Box>
               <Box display="flex" alignItems="center">
                 <FormLabel>인증키 :</FormLabel> <p>{licenseKey}</p>

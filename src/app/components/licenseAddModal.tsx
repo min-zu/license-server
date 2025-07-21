@@ -75,6 +75,13 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
             message: '만료일을 확인해주세요.',
           });
         }
+
+        if(value > "2036-12-31") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '2036년 12월 31일까지',
+          });
+        }
       }),
     regUser: z.string().optional(),
     regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),

@@ -92,6 +92,20 @@ export default function SignIn() {
       const errorMessage = result?.error === "CredentialsSignin"
         ? "아이디 또는 비밀번호가 올바르지 않습니다."
         : "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: "addLog",
+          log: [{
+            hardware_serial: '',
+            user: ID,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action: 'fail',
+            desc: errorMessage
+          }]
+        })
+      });
       return showToast(errorMessage, "error");
     }
 
@@ -102,9 +116,45 @@ export default function SignIn() {
       return showToast("계정이 비활성화되어 있습니다.", "warning");
     }
 
+    // 로그인 성공 시 license_log에 기록
+    try {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            user: ID,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action: 'success',
+            desc: '로그인'
+          }]
+        })
+      });
+    } catch (error) {
+      console.error('로그 기록 실패:', error);
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state: "addLog",
+          log: [{
+            hardware_serial: '',
+            user: ID,
+            action: "fail",
+            desc: '로그인 실패',
+          }]
+        })
+      });
+    }
+
     // 로그인 성공 시 페이지 이동
     document.cookie = "loginInit=true; max-age=10; path=/; SameSite=Lax";
     router.replace("/main");
+    
   };
 
   return (

@@ -143,11 +143,11 @@ export async function POST(request: NextRequest) {
     if(hardwareStatus === "ITU") {
       if(licenseKey) {        
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, demo_cnt, reg_auto,
+          number, reg_date, reissuance, demo_cnt, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, ${demoCnt}, ${regAuto},
+            0, now(), 0, ${demoCnt}, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -158,11 +158,11 @@ export async function POST(request: NextRequest) {
         );
       } else {
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, demo_cnt, license_key,
+          number, reg_date, reissuance, demo_cnt, license_key, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, project_name, customer_email,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
         ) VALUES (
-          0, now(), now(), 0, ${demoCnt}, ${regAuto},
+          0, now(), 0, ${demoCnt}, ${regAuto},
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?
         )`
@@ -176,11 +176,11 @@ export async function POST(request: NextRequest) {
     } else {
       if(licenseKey) {
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, process, reg_auto,
+          number, reg_date, reissuance, process, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, license_key, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 0, ${regAuto},
+            0, now(), 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -191,11 +191,11 @@ export async function POST(request: NextRequest) {
         );
       } else {
         sql = `INSERT INTO license (
-          number, reg_date, license_date, reissuance, license_key, process, reg_auto,
+          number, reg_date, reissuance, license_key, process, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), now(), 0, 0, 0, ${regAuto},
+            0, now(), 0, 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
@@ -207,6 +207,9 @@ export async function POST(request: NextRequest) {
       }
     }
     const result = await query(sql, params);
+    if(result.affectedRows > 0) {
+      await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, regUser, clientIp, "add", "라이센스 등록 완료"]);
+    }
     return NextResponse.json({ result: result, success: true });
   }
 }

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useIdleTimer } from 'react-idle-timer'
 
 // Auth.js (NextAuth.js v5)
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 
 export default function SessionChecker({
@@ -16,6 +16,8 @@ export default function SessionChecker({
 }) {
   // 화면 렌더링 허용 여부
   const [allowRender, setAllowRender] = useState(false);
+  const { data: session } = useSession();
+  const id = session?.user?.id;
 
   // 유휴 상태 감지 (5분 이상 아무 입력 없을 경우)
   useIdleTimer({
@@ -24,6 +26,19 @@ export default function SessionChecker({
       // 현재 페이지가 보이는 상태일 경우에만 세션만료 수행
       if (document.visibilityState === 'visible') {
         await signOut({ redirectTo: '/login?toast=timedout' });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              user: id,
+              action: 'success',
+              desc: '세션 만료'
+            }]
+          })
+        });
         return;
       } else {
         // 보이지 않는 경우에는 기록만 남기고 세션만료는 나중에 처리
@@ -42,6 +57,19 @@ export default function SessionChecker({
           (async () => {
             sessionStorage.removeItem('loginToast');
             await signOut({ redirectTo: '/login?toast=timedout' });
+            await fetch('/api/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                state: "addLog",
+                log: [{
+                  hardware_serial: '',
+                  user: id,
+                  action: 'success',
+                  desc: '세션 만료'
+                }]
+              })
+            });
             return;
           })();
         }

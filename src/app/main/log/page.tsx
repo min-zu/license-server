@@ -58,11 +58,18 @@ export default function LogPage() {
       headerClass: 'header-style',
       cellClass: 'cell-style',
       valueFormatter: (params) => {
+        // const map: { [key: string]: string } = {
+        //   auto: '자동발급',
+        //   del: '삭제',
+        //   edit: '수정',
+        //   fail: '실패',
+        //   add: '등록',
+        //   login: '로그인',
+        //   logout: '로그아웃'
+        // };
         const map: { [key: string]: string } = {
-          auto: '자동발급',
-          del: '삭제',
-          edit: '수정',
-          fail: '실패'
+          success: '성공',
+          fail: '실패',
         };
         return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
       }
@@ -185,6 +192,7 @@ export default function LogPage() {
             <MenuItem value="del">삭제</MenuItem>
             <MenuItem value="edit">수정</MenuItem>
             <MenuItem value="fail">실패</MenuItem>
+            <MenuItem value="add">등록</MenuItem>
           </Select>
         ) : (
           <TextField
@@ -192,6 +200,11 @@ export default function LogPage() {
             placeholder="검색어를 입력하세요"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
           />
         )}
 
@@ -200,11 +213,6 @@ export default function LogPage() {
           className="default-btn"
           size="small"
           onClick={() => {handleSearch()}}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSearch();
-            }
-          }}
         >
           검색
         </Button>

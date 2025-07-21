@@ -32,6 +32,41 @@ export default function Header() {
   // 로그아웃
   const handleLogout = async () => {
     await signOut({ redirectTo: '/login?toast=loggedout' });
+    try {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            user: id,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action: 'success',
+            desc: '로그아웃'
+          }]
+        })
+      });
+    } catch (error) {
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            user: id,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action: 'fail',
+            desc: '로그아웃'
+          }]
+        })
+      });
+    }
   };
 
   useEffect(() => {

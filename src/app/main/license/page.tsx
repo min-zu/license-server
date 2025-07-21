@@ -527,17 +527,28 @@ export default function LicensePage() {
             close={() => setIsDeleteModalOpen(false)}
             state="license"
             title="삭제"
-            message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`}
+            message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`} 
             deleteIds={deleteIds}
             onConfirm={(action?: string | null, desc?: string | null) => {
-              const logs = selectedRows.map(row => ({
-                hardware_serial: row.hardware_serial,
-                user: id,
-                action: action,
-                desc: desc
-              }));
-              addLog(logs);
-              loadLicenses();
+              try {
+                const logs = selectedRows.map(row => ({
+                  hardware_serial: row.hardware_serial,
+                  user: id,
+                  action: 'success',
+                  desc: '삭제'
+                }));                
+                addLog(logs);
+                loadLicenses();
+              } catch (error) {
+                console.error('로그 기록 중 오류 발생:', error);
+                const logs = selectedRows.map(row => ({
+                  hardware_serial: row.hardware_serial,
+                  user: id,
+                  action: 'fail',
+                  desc: '삭제'
+                }));
+                addLog(logs);
+              }
             }}
           />
 
