@@ -8,6 +8,7 @@ export async function GET(request:NextRequest) {
     return NextResponse.json(rows)
   } catch (e) {
     console.log('error', e);
+    return NextResponse.json({ error: '라이센스 데이터를 불러오는데 실패했습니다.' }, { status: 500 });
   }
 }
 
@@ -76,5 +77,25 @@ Deleted serials: ${JSON.stringify(codes)}
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const { hardwareSerial, licenseKey } = await request.json();
+    // const sql = `UPDATE license SET reg_auto = 4 WHERE hardware_serial = ? AND code = ?`;
+    const getSql = `SELECT * FROM license WHERE hardware_serial = ? AND license_key = ?`;
+    const result = await query(getSql, [hardwareSerial, licenseKey]);
+
+    if(result.length > 0) {
+      const putSql = `UPDATE license SET reg_auto = 4, license_key = NULL WHERE hardware_serial = ?`;
+      const putResult = await query(putSql, [hardwareSerial]);
+      return NextResponse.json({ success: true, result: putResult });
+    } else {
+      return NextResponse.json({ error: '라이센스 키가 일치하지 않습니다.' }, { status: 400 });
+    }
+    // return NextResponse.json({ success: true, result: result });
+  } catch (e) {
+    console.log('error', e);
+    return NextResponse.json({ error: '만료 처리 중 오류가 발생했습니다.' }, { status: 500 });
+  }
+}
 
 

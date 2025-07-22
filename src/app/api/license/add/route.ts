@@ -21,15 +21,16 @@ export async function GET(params: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  const role = session?.user?.role;
-  const demoCnt = role === 4 ? 0 : 1;
-  // 0:수동 1:자동 2:데모 3:발급전 4:만료
-  let regAuto = 0;
-  const data = await request.json();
-  const forwarded = request.headers.get('x-forwarded-for');
-  const clientIp = forwarded?.split(":").pop() || null;
-  const { hardwareStatus, hardwareSerial: rawSerial, softwareOpt, limitTimeStart, limitTimeEnd, regUser, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
+  try {
+    const session = await auth();
+    const role = session?.user?.role;
+    const demoCnt = role === 4 ? 0 : 1;
+    // 0:수동 1:자동 2:데모 3:미발급 4:만료
+    let regAuto = 0;
+    const data = await request.json();
+    const forwarded = request.headers.get('x-forwarded-for');
+    const clientIp = forwarded?.split(":").pop() || null;
+    const { hardwareStatus, hardwareSerial: rawSerial, softwareOpt, limitTimeStart, limitTimeEnd, regUser, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
   const hardwareSerial = rawSerial?.slice(0, 3).toUpperCase() === "ITU" ? rawSerial.toUpperCase() : rawSerial;
   // const license_key = await generateLicenseKey(data);
   
@@ -218,5 +219,11 @@ export async function POST(request: NextRequest) {
       await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, regUser, clientIp, "success", "라이센스 등록 완료"]);
     }
     return NextResponse.json({ result: result, success: true });
+  } else {
+    return NextResponse.json({ error: '하드웨어 시리얼이 필요합니다.' }, { status: 400 });
+  }
+  } catch (e) {
+    console.log('error', e);
+    return NextResponse.json({ error: '라이센스 등록 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

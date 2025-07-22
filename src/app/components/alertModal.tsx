@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Button, Dialog, DialogContent } from '@mui/material';
 
 // 라이선스 삭제
-import { deleteLicenses } from '@/app/api/license/license';
+import { deleteLicenses, expirationLicense } from '@/app/api/license/license';
 
 // ToastAlert
 import { useToastState } from '@/app/components/useToast';
@@ -17,12 +17,13 @@ interface AlertModalProps {
   title: string;
   message: string | React.ReactNode;
   deleteIds?: string[];
+  expirationData?: any;
   onConfirm?: ((action?: string | null, desc?: string | null) => void) | undefined;
   onDeleted?: (ids: string[]) => void;
   failedCsvBase64?: string;
 }
 
-export default function AlertModal({ open, close, state, title, message, deleteIds, onDeleted, onConfirm, failedCsvBase64 }: AlertModalProps) {
+export default function AlertModal({ open, close, state, title, message, deleteIds, expirationData, onDeleted, onConfirm, failedCsvBase64 }: AlertModalProps) {
   const { showToast, ToastComponent } = useToastState();
 
   const handleDeleteConfirm = async () => {
@@ -68,6 +69,21 @@ export default function AlertModal({ open, close, state, title, message, deleteI
   const handleEditConfirm = () => {
     onConfirm && onConfirm();
     close();
+  }
+
+  const handleExpirationConfirm = async () => {
+    try {
+      const res = await expirationLicense(expirationData?.hardware_serial, expirationData?.license_key);
+      if(res.success && res.result.affectedRows > 0) {
+        showToast(res.result.affectedRows + '개의 데이터가 만료되었습니다.', 'success');
+        onConfirm && onConfirm('expiration', null);
+        close();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('만료 처리 중 오류 발생', 'error');
+      onConfirm && onConfirm('fail', null);
+    }
   }
 
   const handleDownload = () => {
@@ -125,7 +141,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
           ) : (
             <Button
               className="default-btn"
-              onClick={() => { state === 'edit' ? handleEditConfirm() : handleDeleteConfirm(); } }>
+              onClick={() => { state === 'edit' ? handleEditConfirm() : state === 'expiration' ? handleExpirationConfirm() : handleDeleteConfirm(); } }>
               확인
             </Button>
           )}

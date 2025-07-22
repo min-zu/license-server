@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 // ag-grid
@@ -38,8 +38,8 @@ interface License {
   reg_user: string;
   reg_request: string;
   customer: string;
-  reg_auto: number;
-
+  reg_auto: number; 
+  expiration: number;
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
 
@@ -68,6 +68,10 @@ export default function LicensePage() {
   const [selectedRows, setSelectedRows] = useState<License[]>([]);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
+  // 만료 상태
+  const [expirationData, setExpirationData] = useState<License | undefined>(undefined);
+  const [expirationType, setExpirationType] = useState<string>('single');
+
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');  
   const [searchField, setSearchField] = useState('hardware_serial');
@@ -79,12 +83,14 @@ export default function LicensePage() {
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false); // 라이센스 상세보기 모달 열기 상태 추가
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false); // 삭제 모달 열기 상태 추가
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false); // 도움말 모달 열기 상태 추가
-  const [isFailModalOpen, setIsFailModalOpen] = useState<boolean>(false); // 파일 업로드 실패 모달 열기 상태 추가
+  const [isFailModalOpen, setIsFailModalOpen] = useState<boolean>(false); // 파일 업로드 실패 모달 열기 상태 추가  
+  const [isExpirationModalOpen, setIsExpirationModalOpen] = useState<boolean>(false); // 만료 모달 열기 상태 추가
   
   // 페이지 상태
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSizeType, setPageSizeType] = useState<string>('select');
 
   // 토스트 상태
   const { showToast, ToastComponent } = useToastState();
@@ -99,7 +105,7 @@ export default function LicensePage() {
   const detailModalClose = () => setDetailModalOpen(false);
 
   const softwareOptions = ['license_fw', 'license_vpn', 'license_s2', 'license_dpi', 'license_av', 'license_as', 'license_ot', 'license_zt'];
-  const searchOptions = ['hardware_serial', 'customer_email', 'reg_date', 'license_date', 'limit_time_start', 'limit_time_end', 'reg_user', 'reg_request', 'customer'];
+  const searchOptions = ['hardware_serial', 'customer_email', 'reg_date', 'license_date', 'limit_time_start', 'limit_time_end', ,'ip', 'reg_user', 'reg_request', 'customer', 'reg_auto'];
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px' }, cellClass: 'cell-style', width: 100 },
@@ -137,21 +143,29 @@ export default function LicensePage() {
       }
     },
     { field: 'limit_time_start', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
-      valueFormatter: (params: any) => {
+      cellRenderer: (params: any) => {
         const value = params.value; 
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        if(params.data.reg_auto === 4) {
+          return <span style={{ textDecoration: 'line-through', color: '#888' }}>{date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })}</span>
+        } else {
+          return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+        }
       }
     },
     { field: 'limit_time_end', headerName: '유효기간(만료)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
-      valueFormatter: (params: any) => {
+      cellRenderer: (params: any) => {
         const value = params.value;
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        if(params.data.reg_auto === 4) {
+          return <span style={{ textDecoration: 'line-through', color: '#888' }}>{date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })}</span>
+        } else {
+          return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+        }
       }
     },
     { field: 'ip', headerName: 'IP', headerClass: 'header-style', cellClass: 'cell-style', width: 120 },
@@ -161,9 +175,28 @@ export default function LicensePage() {
     { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 80,
       valueFormatter: (params: any) => {
         const value = params.value;
-        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : value === 3 ? '발급 전' : value === 4 ? '만료' : ''; 
+        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : value === 3 ? '미발급' : value === 4 ? '만료' : ''; 
       }
     },
+    { field: 'expiration', headerName: '만료', headerClass: 'header-style', cellStyle: { padding: 0 }, width: 40,
+      cellRenderer: (params: any) => {
+        if(params.data.reg_auto !== 4 && params.data.reg_auto !== 3) {
+          return (
+            <Button size="small" 
+              className="expiration-btn" 
+              onClick={() => {
+                setExpirationType('single');
+                setExpirationData(params.data);
+                setIsExpirationModalOpen(true);
+              }}
+            >
+            만료</Button>
+          )
+        } else {
+          return ''
+        }
+      }
+    }
   ]);
 
   // 라이센스 데이터 조회
@@ -188,8 +221,8 @@ export default function LicensePage() {
   }, []);
 
   const onRowClicked = (event: any) => {
-    if (event.column.getColId() === 'number') {
-      // No 컬럼 클릭 시 모달 안 열기
+    if (event.column.getColId() === 'number' || event.column.getColId() === 'expiration') {
+      // No, 만료 컬럼 클릭 시 모달 안 열기
       return;
     }
     event.api.deselectAll();
@@ -272,6 +305,32 @@ export default function LicensePage() {
     setIsDeleteModalOpen(true);
   };
 
+  // 개별 만료
+  const handleExpiration = (data: any) => {
+    if(expirationType === 'single') {
+      console.log('개별 만료 ::: ', data);
+      try {
+        const logs = [{
+          hardware_serial: data.hardware_serial,
+          user: id,
+          action: 'success',
+          desc: '만료'
+        }];                
+        addLog(logs);
+        loadLicenses();
+      } catch (error) {
+        console.error('로그 기록 중 오류 발생:', error);
+        const logs = [{
+          hardware_serial: data.hardware_serial,
+          user: id,
+          action: 'fail',
+          desc: '만료'
+        }];
+        addLog(logs);
+      }    
+    }
+  }
+
   // 파일 업로드
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -331,6 +390,13 @@ export default function LicensePage() {
     gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
+  useEffect(() => {
+    setSearchText('');
+    if(searchField === 'reg_auto') {
+      setSearchText('0'); 
+    } 
+  }, [searchField]);
+
   return (
     <div className="p-4">
         <div className="flex justify-between items-center w-full mb-4">
@@ -339,23 +405,40 @@ export default function LicensePage() {
               <>
                 <Button className="delete-btn" size="small" onClick={() => deleteSelectedRows()}>삭제</Button>
                 <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>라이센스 등록</Button>
+                <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>만료</Button>
               </>
             )}
 
             <FormControl size="small" sx={{ width: 80}}>
             <Select
-              value={pageSize}
+              value={pageSizeType === 'input' ? 'input' : pageSize}
               onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                gridRef.current?.api?.paginationGoToPage?.(0);
+                if(e.target.value !== 'input') {
+                  setPageSizeType('select');
+                  setPageSize(Number(e.target.value));
+                  gridRef.current?.api?.paginationGoToPage?.(0);
+                }else{
+                  setPageSizeType('input');
+                }
               }}
             >
                 <MenuItem value={20}>20개</MenuItem> 
                 <MenuItem value={50}>50개</MenuItem>
                 <MenuItem value={100}>100개</MenuItem>
+                <MenuItem value={'input'}>입력</MenuItem>
                 <MenuItem value={1000000}>전체</MenuItem>
               </Select>
             </FormControl>
+            {pageSizeType === 'input' && (
+              <FormControl size="small" sx={{ width: 80}}>
+              <TextField
+                size="small"
+                placeholder="입력"
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+              />
+              </FormControl>
+            )}
 
             <FormControl size="small" sx={{ width: 90 }}>
               <Select 
@@ -382,18 +465,32 @@ export default function LicensePage() {
               </Select>
             </FormControl>
 
-            <TextField
-              size="small"
-              placeholder="검색어를 입력하세요"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-            />
-
+            {searchField === 'reg_auto' ? (
+              <Select
+                size="small"
+                defaultValue={'0'}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              >
+                <MenuItem value={'0'}>수동</MenuItem>
+                <MenuItem value={'1'}>자동</MenuItem>
+                <MenuItem value={'2'}>데모</MenuItem>
+                <MenuItem value={'3'}>미발급</MenuItem>
+                <MenuItem value={'4'}>만료</MenuItem>
+              </Select>
+            ) : (
+              <TextField
+                size="small"
+                placeholder="검색어를 입력하세요"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
+            )}
             <Button
               className="default-btn"
               size="small"
@@ -525,7 +622,7 @@ export default function LicensePage() {
           <AlertModal
             open={isDeleteModalOpen}
             close={() => setIsDeleteModalOpen(false)}
-            state="license"
+            state="delete"
             title="삭제"
             message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`} 
             deleteIds={deleteIds}
@@ -550,6 +647,20 @@ export default function LicensePage() {
                 addLog(logs);
               }
             }}
+          />
+
+          <AlertModal
+            open={isExpirationModalOpen}
+            close={() => setIsExpirationModalOpen(false)}
+            state="expiration"
+            title="만료"
+            message={expirationData && expirationType === 'single' ? `${expirationData?.hardware_serial} 의 라이센스를 만료하시겠습니까?` : ''}
+            expirationData={expirationData}
+            onConfirm={(action?: string | null, desc?: string | null) => {
+                if (expirationData) {
+                  handleExpiration(expirationData);
+                }
+              }}
           />
 
           <AlertModal

@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
       const result = await query(sql, params);
       if(result.affectedRows > 0) {
         if(trimmedHardwareCode === '') {
-          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(발급 전)"]);
+          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(미발급)"]);
         }else{
           await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(수동)"]);
         }
