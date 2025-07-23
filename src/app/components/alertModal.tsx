@@ -73,9 +73,9 @@ export default function AlertModal({ open, close, state, title, message, deleteI
 
   const handleExpirationConfirm = async () => {
     try {
-      const res = await expirationLicense(expirationData?.hardware_serial, expirationData?.license_key);
-      if(res.success && res.result.affectedRows > 0) {
-        showToast(res.result.affectedRows + '개의 데이터가 만료되었습니다.', 'success');
+      const res = await expirationLicense(expirationData);
+      if(res.success && Number(res.result) > 0) {
+        showToast(res.result + '개의 데이터가 만료되었습니다.', 'success');
         onConfirm && onConfirm('expiration', null);
         close();
       }

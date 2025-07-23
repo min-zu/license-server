@@ -104,6 +104,12 @@ body {
   padding: 3px 10px !important;
 }
 
+.expired-btn {
+  background-color: #ff9100 !important;
+  color: #ffffff !important;
+  padding: 3px 10px !important;
+}
+
 /* ag-theme-alpine */
 .ag-header-cell.text-center {
   .ag-header-cell-label{
@@ -152,3 +158,9 @@ body {
     background-color: #808080 !important;
   }
 } 
+
+
+/* 만료된 라이센스 행 스타일 */
+.expired {
+  background-color: #dd3333 !important;
+}

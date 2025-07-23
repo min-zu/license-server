@@ -34,13 +34,13 @@ export const deleteLicenses = async (codes: string[]) => {
   return await response.json();
 };
 
-export const expirationLicense = async (hardwareSerial: string, licenseKey: string) => {
+export const expirationLicense = async (data: any) => {
   const response = await fetch('/api/license', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ hardwareSerial, licenseKey })
+    body: JSON.stringify({data: data})
   });
   if (!response.ok) {
     throw new Error('만료 처리 중 오류가 발생했습니다.');

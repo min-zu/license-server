@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 // ag-grid
@@ -69,7 +69,7 @@ export default function LicensePage() {
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
   // 만료 상태
-  const [expirationData, setExpirationData] = useState<License | undefined>(undefined);
+  const [expirationData, setExpirationData] = useState<License[]>([]);
   const [expirationType, setExpirationType] = useState<string>('single');
 
   // 검색 상태
@@ -183,10 +183,10 @@ export default function LicensePage() {
         if(params.data.reg_auto !== 4 && params.data.reg_auto !== 3) {
           return (
             <Button size="small" 
-              className="expiration-btn" 
+              className="expired-btn-s" 
               onClick={() => {
                 setExpirationType('single');
-                setExpirationData(params.data);
+                setExpirationData([params.data]);
                 setIsExpirationModalOpen(true);
               }}
             >
@@ -296,39 +296,49 @@ export default function LicensePage() {
     setSelectedRows([...selected]);
   };
 
-  const deleteSelectedRows = () => {
+  const handleSelectedRows = (type: string) => {
+    const word = type === 'del' ? '삭제' : '만료';
     if(selectedRows.length === 0) {
-      showToast('삭제할 데이터를 선택해주세요.', 'warning');
+      showToast(`${word}할 라이센스를 선택해주세요.`, 'warning');
       return;
     }
-    setDeleteIds(selectedRows.map((row) => row.hardware_serial));
-    setIsDeleteModalOpen(true);
+    if(type === 'del') {
+      setDeleteIds(selectedRows.map((row) => row.hardware_serial));
+      setIsDeleteModalOpen(true);
+    } else if(type === 'exp') {
+      if(selectedRows.length > 0 && selectedRows.every((item) => item.reg_auto !== 4 && item.reg_auto !== 3)) {
+        setExpirationType('multiple');
+        setExpirationData(selectedRows);
+        setIsExpirationModalOpen(true); 
+      } else {
+        showToast('미발급 / 만료된 라이센스는 선택할 수 없습니다.', 'warning');          
+      }
+    }
   };
 
-  // 개별 만료
   const handleExpiration = (data: any) => {
-    if(expirationType === 'single') {
-      console.log('개별 만료 ::: ', data);
+    data.forEach((item: any) => {
       try {
         const logs = [{
-          hardware_serial: data.hardware_serial,
+          hardware_serial: item.hardware_serial,
           user: id,
           action: 'success',
           desc: '만료'
-        }];                
+        }];                 
         addLog(logs);
-        loadLicenses();
       } catch (error) {
         console.error('로그 기록 중 오류 발생:', error);
         const logs = [{
-          hardware_serial: data.hardware_serial,
+          hardware_serial: item.hardware_serial,
           user: id,
           action: 'fail',
           desc: '만료'
         }];
-        addLog(logs);
-      }    
-    }
+          addLog(logs);
+        }    
+    });
+
+    searchText === '' ? loadLicenses() : handleSearch();
   }
 
   // 파일 업로드
@@ -402,19 +412,19 @@ export default function LicensePage() {
         <div className="flex justify-between items-center w-full mb-4">
           <div className="flex items-center gap-1">
             {role !== 1 && (
-              <>
-                <Button className="delete-btn" size="small" onClick={() => deleteSelectedRows()}>삭제</Button>
+              <>                
+                <Button className="expired-btn" size="small" onClick={() => handleSelectedRows('exp')}>일괄 만료</Button>
+                <Button className="delete-btn" size="small" onClick={() => handleSelectedRows('del')}>삭제</Button>
                 <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>라이센스 등록</Button>
-                <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>만료</Button>
               </>
             )}
-
+ 
             <FormControl size="small" sx={{ width: 80}}>
             <Select
               value={pageSizeType === 'input' ? 'input' : pageSize}
               onChange={(e) => {
                 if(e.target.value !== 'input') {
-                  setPageSizeType('select');
+                  setPageSizeType('select'); 
                   setPageSize(Number(e.target.value));
                   gridRef.current?.api?.paginationGoToPage?.(0);
                 }else{
@@ -654,14 +664,14 @@ export default function LicensePage() {
             close={() => setIsExpirationModalOpen(false)}
             state="expiration"
             title="만료"
-            message={expirationData && expirationType === 'single' ? `${expirationData?.hardware_serial} 의 라이센스를 만료하시겠습니까?` : ''}
+            message={expirationData && expirationType === 'single' ? `${expirationData[0]?.hardware_serial} 의 라이센스를 만료하시겠습니까?` : `${expirationData.length}개의 라이센스를 만료하시겠습니까?`}
             expirationData={expirationData}
             onConfirm={(action?: string | null, desc?: string | null) => {
                 if (expirationData) {
                   handleExpiration(expirationData);
                 }
               }}
-          />
+          />  
 
           <AlertModal
             open={isHelpModalOpen}

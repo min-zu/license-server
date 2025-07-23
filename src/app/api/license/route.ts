@@ -79,19 +79,21 @@ Deleted serials: ${JSON.stringify(codes)}
 
 export async function PUT(request: NextRequest) {
   try {
-    const { hardwareSerial, licenseKey } = await request.json();
-    // const sql = `UPDATE license SET reg_auto = 4 WHERE hardware_serial = ? AND code = ?`;
-    const getSql = `SELECT * FROM license WHERE hardware_serial = ? AND license_key = ?`;
-    const result = await query(getSql, [hardwareSerial, licenseKey]);
-
-    if(result.length > 0) {
-      const putSql = `UPDATE license SET reg_auto = 4, license_key = NULL WHERE hardware_serial = ?`;
-      const putResult = await query(putSql, [hardwareSerial]);
-      return NextResponse.json({ success: true, result: putResult });
-    } else {
-      return NextResponse.json({ error: '라이센스 키가 일치하지 않습니다.' }, { status: 400 });
+    const { data } = await request.json();
+    let total = 0;
+    console.log('data ::: ', data);
+    for (const item of data) {
+      const { hardware_serial, license_key } = item;
+      const getSql = `SELECT * FROM license WHERE hardware_serial = ? AND license_key = ?`;
+      const result = await query(getSql, [hardware_serial, license_key]);
+      if(result.length > 0) {
+        const putSql = `UPDATE license SET reg_auto = 4, license_key = NULL WHERE hardware_serial = ?`;
+        const putResult = await query(putSql, [hardware_serial]);
+        total++;
+      }
     }
-    // return NextResponse.json({ success: true, result: result });
+    console.log('total ::: ', total);
+    return NextResponse.json({ success: true, result: total });
   } catch (e) {
     console.log('error', e);
     return NextResponse.json({ error: '만료 처리 중 오류가 발생했습니다.' }, { status: 500 });
