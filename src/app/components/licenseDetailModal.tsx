@@ -15,9 +15,10 @@ interface LicenseDetailModalProps {
   close: () => void; // close prop 추가
   license: any; // license prop 추가
   onUpdated?: () => void;
+  isLog?: boolean;
 }
 
-const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated }) => {
+const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated, isLog = false }) => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const { showToast, ToastComponent } = useToastState();
@@ -490,7 +491,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               <div className="split-line"></div>
 
               <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
-                {role !== 1 && (
+                {role !== 1 && !isLog && (
                   <Button
                     className="default-btn"
                     onClick={() => isEdit ? setIsEditModalOpen(true) : setIsEdit(true)}
