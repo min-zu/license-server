@@ -196,11 +196,11 @@ export async function POST(request: NextRequest) {
         );
       } else {
         sql = `INSERT INTO license (
-          number, reg_date, reissuance, license_key, process, reg_auto,
+          number, reg_date, reissuance, process, reg_auto,
           hardware_serial, hardware_status, hardware_code, limit_time_start, limit_time_end, ip, reg_user, reg_request, customer, cpu_name, cfid,
           license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt
           ) VALUES (
-            0, now(), 0, 0, 0, ${regAuto},
+            0, now(), 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
             ?, ?, ?, ?, ?, ?, ?, ?
           )`;
