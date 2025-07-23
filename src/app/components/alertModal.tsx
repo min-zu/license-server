@@ -30,7 +30,7 @@ export default function AlertModal({ open, close, state, title, message, deleteI
     if (!deleteIds || deleteIds.length === 0) return;
   
     // 라이센스 삭제
-    if(state === 'license') {
+    if(state === 'delete') {
       try {
         const res = await deleteLicenses(deleteIds);
         if(res.success && res.result.affectedRows > 0) {
