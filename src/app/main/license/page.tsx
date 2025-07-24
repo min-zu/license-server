@@ -332,9 +332,14 @@ export default function LicensePage() {
     }
 
     if(role === 4) {
-      if(!selectedRows.every((item) => item.reg_auto === 2) || selectedRows.some(item => item.license_key === null)) {
-        showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
-        return;
+      if(!selectedRows.every((item) => item.reg_auto === 2)) {
+        if(type === 'del') {
+          showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
+          return;
+        } else if(type === 'exp' && selectedRows.some(item => item.license_key === null)) {
+          showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
+          return;
+        }
       }
     }
 
