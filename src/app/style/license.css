@@ -159,3 +159,8 @@
 .expired {
   background-color: #ffdbdb !important;
 }
+
+/* 데모 라이센스 행 스타일 */
+.demo {
+  background-color: #fffadb !important;
+}

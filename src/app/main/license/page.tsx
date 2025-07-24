@@ -455,6 +455,8 @@ export default function LicensePage() {
               (row as HTMLElement).classList.add('expired');
             } else if (rowData.reg_auto === 3) {
               (row as HTMLElement).classList.add('unissued');
+            } else if (rowData.reg_auto === 2) {
+              (row as HTMLElement).classList.add('demo');
             }
           }
         }

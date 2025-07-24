@@ -258,7 +258,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   useEffect(() => {
     if(role === 4) {
-      if(license.reg_auto === 2 || license.reg_auto === 3) {
+      if(license.reg_auto === 2) {
         setShowEditBtn(true);
       }
     } else if(role !== 1 && !isLog && license.reg_auto !== 4) {
