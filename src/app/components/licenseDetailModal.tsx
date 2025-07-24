@@ -36,6 +36,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   const [licenseKey, setLicenseKey] = useState<string>(license.license_key || "");
   const [ip, setIp] = useState<string>(license.ip || "");
 
+  const [showEditBtn, setShowEditBtn] = useState<boolean>(false);
+
   useEffect(() => {
     setLicenseDate(license.license_date || "");
     setLicenseKey(license.license_key || "");
@@ -103,7 +105,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       });
     }
   })
-
+  
   // 초기 렌더링 값 설정
   const { schema, defaultValues } = useMemo(() => {
     // 공통
@@ -254,6 +256,16 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     }
   }, [licenseKey])
 
+  useEffect(() => {
+    if(role === 4) {
+      if(license.reg_auto === 2 || license.reg_auto === 3) {
+        setShowEditBtn(true);
+      }
+    } else if(role !== 1 && !isLog && license.reg_auto !== 4) {
+      setShowEditBtn(true);
+    }
+  }, []);
+
   function addOneMonth(dateString: string) {
     const date = new Date(dateString); 
     date.setMonth(date.getMonth() + 1);
@@ -276,70 +288,17 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
-                  <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
+                  <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>라이센스 발급일 :</FormLabel> {(!licenseDate || licenseDate === "0000-00-00") ? "" : <p>{new Date(licenseDate).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
+                  <FormLabel>라이센스 발급일 :</FormLabel> {(!licenseDate || licenseDate === "0000-00-00") ? "" : <p>{new Date(licenseDate).toLocaleString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>발급이력 :</FormLabel> <p>{license.reissuance === 1 ? '재발급' : '초기발급'}</p>
                 </Box>
-              </Box>
-
-              {license.hardware_status.toUpperCase() === 'ITU' ? (
-                <Box className="detail-line-box">
-                  <Box className="detail-line-box-item">
-                    <FormLabel>데모 발급 가능 횟수 :</FormLabel> <p>{license.demo_cnt}</p> 
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>프로젝트명 :</FormLabel> 
-                    {isEdit ? 
-                      <TextField
-                        size="small"
-                        {...register("projectName", {
-                          onChange: (e) => {
-                            const value = e.target.value;
-                            setValue('projectName', value.trim());
-                          }
-                        })}
-                        error={!!errors.projectName}
-                      /> : 
-                      <p>{watch("projectName")}</p>} 
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>고객사 E-mail :</FormLabel> 
-                    {isEdit ? 
-                      <TextField
-                        size="small"
-                        {...register("customerEmail", {
-                          onChange: (e) => {
-                            const value = e.target.value;
-                            setValue('customerEmail', value.trim());
-                          }
-                        })}
-                        error={!!errors.customerEmail}
-                      /> : 
-                      <p>{watch("customerEmail")}</p>}
-                  </Box>
-                </Box>
-              ) : (
-                <Box className="detail-line-box">
-                  <Box className="detail-line-box-item">
-                    <FormLabel>PROCESS :</FormLabel> <p>{license.process}</p>
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>CPU명 :</FormLabel> <p>{license.cpu_name}</p>
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>CFID :</FormLabel> <p>{license.cfid}</p>
-                  </Box>
-                </Box>
-              )}
+              </Box> 
 
               <Box className="detail-line-box">
-                <Box className="detail-line-box-item">
-                  <FormLabel>IP :</FormLabel> <p>{ip}</p>
-                </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>유효기간(시작) :</FormLabel> 
                   {isEdit ? 
@@ -370,25 +329,63 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       disabled={role === 4}
                     /> : 
                     <p>{watch("limitTimeEnd")}</p>}
-                </Box>
+                </Box> 
+                <Box className="detail-line-box-item">
+                  <FormLabel>상태 :</FormLabel> <p>{license.reg_auto === 0 ? '수동 발급' : license.reg_auto === 1 ? '자동 발급' : license.reg_auto === 2 ? '데모 발급' : license.reg_auto === 3 ? '미발급' : '만료'}</p> 
+                </Box> 
               </Box>
 
-              <Box className="detail-line-box">
-                <Box className="detail-line-box-item">
-                  <FormLabel>발급자 :</FormLabel> 
-                  {isEdit ? 
-                    <TextField
-                      size="small"
-                      {...register("regUser", {
-                        onChange: (e) => {
-                          const value = e.target.value;
-                          setValue('regUser', value.trim());
-                        }
-                      })}
-                      error={!!errors.regUser}
-                    /> : 
-                    <p>{watch("regUser")}</p>}
+              {license.hardware_status.toUpperCase() === 'ITU' ? (
+                <Box className="detail-line-box">                  
+                  <Box className="detail-line-box-item">
+                    <FormLabel>프로젝트명 :</FormLabel> 
+                    {isEdit ? 
+                      <TextField
+                        size="small"
+                        {...register("projectName", {
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setValue('projectName', value.trim());
+                          }
+                        })}
+                        error={!!errors.projectName}
+                      /> : 
+                      <p>{watch("projectName")}</p>} 
+                  </Box>
+                  <Box className="detail-line-box-item">
+                    <FormLabel>발급자 :</FormLabel> 
+                    {isEdit ? 
+                      <TextField
+                        size="small"
+                        {...register("regUser", {
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setValue('regUser', value.trim());
+                          }
+                        })}
+                        error={!!errors.regUser}
+                      /> : 
+                      <p>{watch("regUser")}</p>}
+                  </Box>  
+                  <Box className="detail-line-box-item">
+                    <FormLabel>IP :</FormLabel> <p>{ip}</p>
+                  </Box>
                 </Box>
+              ) : (
+                <Box className="detail-line-box">
+                  <Box className="detail-line-box-item">
+                    <FormLabel>PROCESS :</FormLabel> <p>{license.process}</p>
+                  </Box>
+                  <Box className="detail-line-box-item">
+                    <FormLabel>CPU명 :</FormLabel> <p>{license.cpu_name}</p>
+                  </Box>
+                  <Box className="detail-line-box-item">
+                    <FormLabel>CFID :</FormLabel> <p>{license.cfid}</p>
+                  </Box>
+                </Box>
+              )}
+
+              <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
                   <FormLabel>발급요청사(총판사) :</FormLabel> 
                   {isEdit ? 
@@ -419,6 +416,22 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                     /> : 
                     <p>{watch("customer")}</p>}
                 </Box>
+                
+                <Box className="detail-line-box-item">
+                    <FormLabel>고객사 E-mail :</FormLabel> 
+                    {isEdit ? 
+                      <TextField
+                        size="small"
+                        {...register("customerEmail", {
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setValue('customerEmail', value.trim());
+                          }
+                        })}
+                        error={!!errors.customerEmail}
+                      /> : 
+                      <p>{watch("customerEmail")}</p>}
+                  </Box>
               </Box>
               {license.hardware_status.toUpperCase() === 'ITU' && (
                 <>
@@ -491,7 +504,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               <div className="split-line"></div>
 
               <Box display="flex" justifyContent="center" gap={0.5} mt={2}>
-                {role !== 1 && !isLog && (
+                {showEditBtn && (
                   <Button
                     className="default-btn"
                     onClick={() => isEdit ? setIsEditModalOpen(true) : setIsEdit(true)}
@@ -500,7 +513,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   </Button>
                 )}
                 <Button className="close-text-btn" onClick={close}>
-                  취소
+                  {isEdit ? '취소' : '닫기'}
                 </Button>
               </Box>
             </Box>  

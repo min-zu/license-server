@@ -8,6 +8,7 @@ import { query } from "@/app/db/database";
 import { exec } from 'child_process';
 import { promisify } from "util";
 import fs from "fs/promises";
+import { auth } from "@/auth";
 
 // exec 함수를 Promise 기반으로 변환하여 async/await 사용 가능하게 함
 const execAsync = promisify(exec);
@@ -30,6 +31,10 @@ export async function PUT(request: NextRequest) {
   const body = await request.json();
   const forwarded = request.headers.get('x-forwarded-for');
   const clientIp = forwarded?.split(":").pop() || null;
+  const session = await auth();
+  const role = session?.user?.role;
+  // 0:수동 1:자동 2:데모 3:미발급 4:만료
+  let regAuto = role === 4 ? 2 : 0;
 
   // body에서 필요한 값들을 꺼냄
   const {
@@ -205,7 +210,7 @@ export async function PUT(request: NextRequest) {
           customer = ?,
           project_name = ?,
           customer_email = ?,
-          reg_auto = 0,
+          reg_auto = ?,
           hardware_code = ?
         WHERE hardware_serial = ?
       `;
@@ -228,6 +233,7 @@ export async function PUT(request: NextRequest) {
         customer,
         projectName,
         customerEmail,
+        regAuto,
         hardwareCode,
         hardwareSerial,
       ];
@@ -253,7 +259,7 @@ export async function PUT(request: NextRequest) {
           reg_user = ?,
           reg_request = ?,
           customer = ?,
-          reg_auto = 0,
+          reg_auto = ?,
           hardware_code = ?
         WHERE hardware_serial = ?
       `;
@@ -274,6 +280,7 @@ export async function PUT(request: NextRequest) {
         regUser,
         regRequest,
         customer,
+        regAuto,
         hardwareCode,
         hardwareSerial,
       ];
@@ -301,6 +308,7 @@ export async function PUT(request: NextRequest) {
           customer = ?,
           project_name = ?,
           customer_email = ?,
+          reg_auto = ?,
           hardware_code = ?
         WHERE hardware_serial = ?
       `;
@@ -322,6 +330,7 @@ export async function PUT(request: NextRequest) {
         customer,
         projectName,
         customerEmail,
+        regAuto,
         hardwareCode,
         hardwareSerial,
       ];

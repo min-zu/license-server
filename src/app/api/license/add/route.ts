@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
   let _itmKey = null;
 
   // 발급구분
-  if (hardwareCode === "" || hardwareCode === undefined) regAuto = 3;
-  else if (role === 4) regAuto = 2;
+  if (role === 4) regAuto = 2;
+  else if (hardwareCode === "" || hardwareCode === undefined) regAuto = 3;
 
   // 라이센스 키
   if (hardwareStatus === 'ITU' && hardwareCode !== "" && hardwareCode !== undefined) {

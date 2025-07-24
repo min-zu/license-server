@@ -40,6 +40,7 @@ interface License {
   customer: string;
   reg_auto: number; 
   expiration: number;
+  license_key?: string;
   // 필요한 다른 라이센스 필드들을 여기에 추가
 }
 
@@ -76,6 +77,8 @@ export default function LicensePage() {
   const [searchText, setSearchText] = useState<string>('');  
   const [searchField, setSearchField] = useState('hardware_serial');
   const [hardwareStatus, setHardwareStatus] = useState('all');
+  const [searchStartDate, setSearchStartDate] = useState<string>('');
+  const [searchEndDate, setSearchEndDate] = useState<string>('');
 
   // 모달 열기 상태
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false); // 라이센스 등록 모달 열기 상태 추가
@@ -109,16 +112,16 @@ export default function LicensePage() {
 
   const [columnDefs] = useState<(ColDef<License, any> | ColGroupDef<any>)[]>([
     { field: 'number', headerName: 'No', checkboxSelection: true, headerCheckboxSelection: true, headerStyle: { textAlign: 'center', fontSize: '12px' }, cellClass: 'cell-style', width: 100 },
-    { field: 'reg_date', headerName: '등록일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
+    { field: 'reg_date', headerName: '등록일', headerClass: 'header-style', cellClass: 'cell-style', width: 140,
       valueFormatter: (params: any) => {
         const value = params.value;
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        return date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
-    { field: 'hardware_serial', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 220 },
+    { field: 'hardware_serial', headerName: '제품 시리얼 번호', headerClass: 'header-style', cellClass: 'cell-left', width: 200 },
     ...softwareOptions.map((item) => ({
       field: item as keyof License,
       headerName: item === 'license_s2' ? '행안부' : item === 'license_ot' ? '산업용 프로토콜' : item === 'license_zt' ? 'ITUz' : item.split('_')[1].toUpperCase(),
@@ -133,13 +136,13 @@ export default function LicensePage() {
         }
       }
     })),
-    { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
+    { field: 'license_date', headerName: '라이센스 발급일', headerClass: 'header-style', cellClass: 'cell-style', width: 140,
       valueFormatter: (params: any) => {
         const value = params.value;
         if(!value) return '';
         const date = new Date(value);
         if (isNaN(date.getTime())) return '';
-        return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        return date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' });
       }
     },
     { field: 'limit_time_start', headerName: '유효기간(시작)', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
@@ -172,22 +175,36 @@ export default function LicensePage() {
     { field: 'reg_user', headerName: '발급자', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
     { field: 'reg_request', headerName: '발급요청사(총판사)', headerClass: 'header-style', cellClass: 'cell-left', width: 120 },
     { field: 'customer', headerName: '고객사명', headerClass: 'header-style', cellClass: 'cell-left', width: 150 },
-    { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 80,
+    { field: 'reg_auto', headerName: '발급 구분', headerClass: 'header-style', cellClass: 'cell-style', width: 100,
       valueFormatter: (params: any) => {
         const value = params.value;
-        return value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : value === 3 ? '미발급' : value === 4 ? '만료' : ''; 
+        let text = value === 1 ? '자동' : value === 0 ? '수동' : value === 2 ? '데모' : value === 3 ? '미발급' : value === 4 ? '만료' : ''; 
+        if(value === 2 && params.data.license_key === null) {
+          text = '데모(미발급)';
+        }
+        return text
       }
     },
     { field: 'expiration', headerName: '만료', headerClass: 'header-style', cellStyle: { padding: 0 }, width: 40,
       cellRenderer: (params: any) => {
-        if(params.data.reg_auto !== 4 && params.data.reg_auto !== 3) {
+        if(params.data.license_key !== null && (params.data.reg_auto !== 4 && params.data.reg_auto !== 3)) {
           return (
             <Button size="small" 
               className="expired-btn-s" 
               onClick={() => {
-                setExpirationType('single');
-                setExpirationData([params.data]);
-                setIsExpirationModalOpen(true);
+                if(role === 4) {
+                  if(params.data.reg_auto === 2) {
+                    setExpirationType('single');
+                    setExpirationData([params.data]);
+                    setIsExpirationModalOpen(true);
+                  } else {
+                    showToast('만료 권한이 없습니다.', 'warning');
+                  }
+                } else {
+                  setExpirationType('single');
+                  setExpirationData([params.data]);
+                  setIsExpirationModalOpen(true);
+                }
               }}
             >
             만료</Button>
@@ -220,6 +237,8 @@ export default function LicensePage() {
     loadLicenses();
   }, []);
 
+
+
   const onRowClicked = (event: any) => {
     if (event.column.getColId() === 'number' || event.column.getColId() === 'expiration') {
       // No, 만료 컬럼 클릭 시 모달 안 열기
@@ -246,7 +265,6 @@ export default function LicensePage() {
     }
   }, [licenses, pageSize]);
 
-
   // 장비 상태
   const handelStatusChange = useCallback(async (status: string) => {
     const data = await fetchLicenses(); // 전체 라이센스 데이터 불러오기
@@ -266,19 +284,29 @@ export default function LicensePage() {
   useEffect(() => {
     handelStatusChange(hardwareStatus);
     setSearchText('');
+    setSearchStartDate('');
+    setSearchEndDate('');
     setSearchField('hardware_serial');
   }, [hardwareStatus]);
   
   // 검색
   const handleSearch = async () => {
-    if(searchText === '') {
+    const isDateField = searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end');
+    
+    if(!isDateField && searchText === '') {
       showToast('검색어가 입력되지 않았습니다.', 'warning');
       loadLicenses();
       return;
     }
 
+    if(isDateField && (!searchStartDate || !searchEndDate)) {
+      showToast('시작일과 종료일을 모두 입력해주세요.', 'warning');
+      return;
+    }
+
     try {
-      const data = await searchLicenses(hardwareStatus, searchField, searchText);
+      const searchData = isDateField ? { startDate: searchStartDate, endDate: searchEndDate } : searchText;
+      const data = await searchLicenses(hardwareStatus, searchField, searchData);
       setLicenses(data);
       setTotalPages(Math.ceil(data.length / pageSize));
       setCurrentPage(1);
@@ -302,11 +330,19 @@ export default function LicensePage() {
       showToast(`${word}할 라이센스를 선택해주세요.`, 'warning');
       return;
     }
+
+    if(role === 4) {
+      if(!selectedRows.every((item) => item.reg_auto === 2) || selectedRows.some(item => item.license_key === null)) {
+        showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
+        return;
+      }
+    }
+
     if(type === 'del') {
       setDeleteIds(selectedRows.map((row) => row.hardware_serial));
       setIsDeleteModalOpen(true);
     } else if(type === 'exp') {
-      if(selectedRows.length > 0 && selectedRows.every((item) => item.reg_auto !== 4 && item.reg_auto !== 3)) {
+      if(selectedRows.length > 0 && selectedRows.every((item) => item.reg_auto !== 4 && item.reg_auto !== 3 && item.license_key !== null)) {
         setExpirationType('multiple');
         setExpirationData(selectedRows);
         setIsExpirationModalOpen(true); 
@@ -396,12 +432,40 @@ export default function LicensePage() {
     loadLicenses();
     setHardwareStatus('all');
     setSearchText('');
-    setSearchField('hardware_serial');
+    setSearchField('hardware_serial');    
+    setSearchStartDate('');
+    setSearchEndDate('');
     gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
+  const onRowDataUpdated = useCallback(() => {    
+    // 데이터 업데이트 후 클래스 적용
+    setTimeout(() => {
+      const rows = document.querySelectorAll('.ag-row');
+      rows.forEach((row) => {
+        const rowId = row.getAttribute('row-id');
+        if (rowId) {
+          const rowData = licenses.find(item => String(item.number) === rowId);
+          if (rowData) {
+            // 먼저 모든 클래스 제거
+            (row as HTMLElement).classList.remove('expired', 'unissued');
+            
+            // reg_auto 조건에 따라 클래스 추가
+            if (rowData.reg_auto === 4) {
+              (row as HTMLElement).classList.add('expired');
+            } else if (rowData.reg_auto === 3) {
+              (row as HTMLElement).classList.add('unissued');
+            }
+          }
+        }
+      });
+    }, 50);
+  }, [licenses]);
+
   useEffect(() => {
-    setSearchText('');
+    setSearchText('');    
+    setSearchStartDate('');
+    setSearchEndDate('');
     if(searchField === 'reg_auto') {
       setSearchText('0'); 
     } 
@@ -417,8 +481,7 @@ export default function LicensePage() {
                 <Button className="delete-btn" size="small" onClick={() => handleSelectedRows('del')}>삭제</Button>
                 <Button className="default-btn" size="small" onClick={() => setIsAddModalOpen(true)}>라이센스 등록</Button>
               </>
-            )}
- 
+            )} 
             <FormControl size="small" sx={{ width: 80}}>
             <Select
               value={pageSizeType === 'input' ? 'input' : pageSize}
@@ -488,6 +551,24 @@ export default function LicensePage() {
                 <MenuItem value={'3'}>미발급</MenuItem>
                 <MenuItem value={'4'}>만료</MenuItem>
               </Select>
+            ) : searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end') ? (
+              <div className="flex gap-2">
+                <TextField
+                  type="date"
+                  size="small"
+                  value={searchStartDate}
+                  onChange={(e) => setSearchStartDate(e.target.value)}
+                  placeholder="시작일"
+                />
+                <span className="flex items-center">~</span>
+                <TextField
+                  type="date"
+                  size="small"
+                  value={searchEndDate}
+                  onChange={(e) => setSearchEndDate(e.target.value)}
+                  placeholder="종료일"
+                />
+              </div>
             ) : (
               <TextField
                 size="small"
@@ -582,6 +663,7 @@ export default function LicensePage() {
             onCellClicked={onRowClicked}
             onSelectionChanged={onSelectionChanged}
             suppressRowClickSelection={true}
+            onRowDataUpdated={onRowDataUpdated}
           />
         </div>
 

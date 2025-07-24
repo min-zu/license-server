@@ -14,7 +14,7 @@ export async function GET(request:NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { hardwareStatus, searchField, searchText } = await request.json();
+    const { hardwareStatus, searchField, searchData } = await request.json();
     
     let sql = "SELECT * FROM license WHERE ";
     const params = [];
@@ -23,15 +23,25 @@ export async function POST(request: NextRequest) {
       sql += `hardware_status = '${hardwareStatus}' AND`;
     }
 
-    if (searchText && searchField) {
+    if (searchData && searchField) {
       if (searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end')) {
-        sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
-        if(!searchText.includes('-')) {
-          params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
+        // 날짜 범위 검색
+        if (typeof searchData === 'object' && searchData.startDate && searchData.endDate) {
+          sql += ` ${searchField} BETWEEN ? AND ?`;
+          params.push(searchData.startDate, searchData.endDate);
         } else {
-          params.push(searchText);
+          // 단일 날짜 검색 (기존 로직)
+          const searchText = searchData as string;
+          sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
+          if(!searchText.includes('-')) {
+            params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
+          } else {
+            params.push(searchText);
+          }
         }
       } else {
+        // 일반 텍스트 검색
+        const searchText = searchData as string;
         sql += ` ${searchField} LIKE ? `;
         params.push(`%${searchText}%`);
       }
@@ -81,7 +91,6 @@ export async function PUT(request: NextRequest) {
   try {
     const { data } = await request.json();
     let total = 0;
-    console.log('data ::: ', data);
     for (const item of data) {
       const { hardware_serial, license_key } = item;
       const getSql = `SELECT * FROM license WHERE hardware_serial = ? AND license_key = ?`;
