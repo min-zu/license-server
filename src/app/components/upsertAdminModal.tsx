@@ -72,7 +72,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
   // 관리자 정보 수정 여부
   const isChanged =
   (mode === "other" && target && (
-    name !== (target.name ?? "") ||
+    id !== target.id ||
+    name !== target.name ||
     phone !== (target.phone ?? "") ||
     email !== (target.email ?? "") ||
     role !== target.role ||
@@ -80,7 +81,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
     passwd.trim() !== "" && confirmPasswd.trim() !== ""
   )) ||
   (mode === "self" && session?.user && (
-    name !== (session.user.name ?? "") ||
+    id !== session.user.id ||
+    name !== session.user.name ||
     phone !== (session.user.phone ?? "") ||
     email !== (session.user.email ?? "") ||
     passwd.trim() !== "" && confirmPasswd.trim() !== ""
@@ -97,16 +99,19 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
       isIdAvailable !== true || // 아이디 중복
       !!passwdError || // 비밀번호 유효성 오류
       confirmPasswdValid === false || // 비밀번호 확인이 비밀번호와 불일치
+      name.trim() === "" || // 이름이 공백
       !!nameError || // 이름 유효성 오류
       !!phoneError || // 휴대폰 번호 유효성 오류
       !!emailError // 이메일 유효성 오류
       )
     : ( // 관리자 수정
+      isIdAvailable !== true || // 아이디 중복
       (passwd !== "" || confirmPasswd !== "") && // 비밀번호 수정 중일 경우 (둘 중 하나라도 입력됨)
       (passwd.trim() === "" || // 비밀번호가 공백
       confirmPasswd.trim() === "" || // 비밀번호 확인이 공백
       !!passwdError || // 비밀번호 유효성 오류
       confirmPasswdValid === false) || // 비밀번호 확인이 비밀번호와 불일치
+      name.trim() === "" || // 이름이 공백
       !!nameError || // 이름 유효성 오류
       !!phoneError || // 휴대폰 번호 유효성 오류
       !!emailError || // 이메일 유효성 오류
@@ -156,18 +161,20 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
     else if (mode === "self" && session?.user) {
       setId(session.user.id);
       setRole(session.user.role);
-      setName(session.user.name ?? "");
+      setName(session.user.name);
       setPhone(session.user.phone ?? "");
       setEmail(session.user.email ?? "");
+      setIsIdAvailable(true);
     }
     // 관리자 정보 수정
     else if (mode === "other" && target) {
       setId(target.id);
       setRole(target.role);
-      setName(target.name ?? "");
+      setName(target.name);
       setPhone(target.phone ?? "");
       setEmail(target.email ?? "");
       setStatus(target.status ?? 1);
+      setIsIdAvailable(true);
     }
   }, [open, mode, session, target]);
 
@@ -245,10 +252,10 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}> 
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  {mode === "add" ? (<><span style={{ color: 'red' }}>*</span> 아이디</>) : ("아이디")}
+                  <><span style={{ color: 'red' }}>*</span> 아이디</>
                 </FormLabel>
 
-                {mode === "add" ? (
+                {mode === "add" || session?.user?.role === 3 ? (
                   <>
                   <TextField
                     name="id"
@@ -274,6 +281,16 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                         setIsIdAvailable(false);
                         return;
                       }
+                      if (mode === "self" && id === session?.user?.id) {
+                        setIdDupMessage("");
+                        setIsIdAvailable(true);
+                        return;
+                      }
+                      if (mode === "other" && id === target?.id) {
+                        setIdDupMessage("");
+                        setIsIdAvailable(true);
+                        return;
+                      }
                       const dupMsg = await checkIdDuplicate(id);
                       if(dupMsg === '0') {
                         setIdDupMessage("");
@@ -286,6 +303,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                     error={!!idFormatError || isIdAvailable === false}
                     helperText={idFormatError ? idFormatError : idDupMessage}
                   />
+
+                  <input type="hidden" name="uuid" value={mode === "self" ? session?.user?.uuid : target?.uuid} />
                   </>
                 ) : (
                   <>
@@ -419,7 +438,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <FormLabel>
-                  이름
+                <><span style={{ color: 'red' }}>*</span> 이름</>
                 </FormLabel>
                   <TextField
                   name="name"

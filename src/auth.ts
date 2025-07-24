@@ -16,6 +16,7 @@ import { RowDataPacket } from "mysql2/promise"; // 타입
 // Auth.js User, Session, JWT 타입 확장
 declare module "next-auth" {
   interface User {
+    uuid: string;
     role: number;
     status: number;
     phone?: string;
@@ -24,10 +25,11 @@ declare module "next-auth" {
 
   interface Session {
     user: {
+      uuid: string;
       role: number;
       status: number;
       id: string;
-      name?: string;
+      name: string;
       phone?: string;
       email?: string;
       login_ts?: string;
@@ -37,6 +39,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    uuid: string;
     role: number;
     status: number;
     phone?: string;
@@ -82,6 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         
         // 로그인 성공 시 세션에 저장할 사용자 정보 반환
         return {
+          uuid: users[0].uuid,
           role: users[0].role,
           status: users[0].status,
           id: users[0].id,
@@ -103,6 +107,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger }) {
        // 로그인 성공 시: 토큰에 사용자 정보 저장
       if (user) {
+        token.uuid = user.uuid;
         token.role = user.role;
         token.status = user.status;
         token.sub = user.id;
@@ -115,12 +120,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       
       // 세션 갱신 시 (trigger: 'update'): DB에서 최신 사용자 정보 조회로 토큰 갱신
       if (trigger === 'update') {
-        const rows = (await query("SELECT * FROM admin WHERE id = ?", [token.sub]) as RowDataPacket[]);
+        const rows = (await query("SELECT * FROM admin WHERE uuid = ?", [token.uuid]) as RowDataPacket[]);
         const updated = rows[0];
 
         if (updated) {
           token.role = updated.role;
           token.status = updated.status;
+          token.sub = updated.id;
           token.name = updated.name;
           token.phone = updated.phone;
           token.email = updated.email;
@@ -131,6 +137,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     // 세션 콜백 함수: JWT 토큰 정보를 클라이언트로 반환될 세션 객체에 저장
     async session({ session, token }) {
+      session.user.uuid = token.uuid;
       session.user.role = token.role;
       session.user.status = token.status;
       session.user.id = token.sub!;

@@ -97,11 +97,11 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
   const data = await request.json();
-  const { id, role, name, phone, email, passwd, status } = data;
+  const { uuid, id, role, name, phone, email, passwd, status } = data;
 
   try {
     // 기존 정보 불러오기
-    const rows  = (await query("SELECT * FROM admin WHERE id = ?", [id]) as RowDataPacket[]);
+    const rows  = (await query("SELECT * FROM admin WHERE uuid = ?", [uuid]) as RowDataPacket[]);
     const existing = rows[0];
 
     // 기존 정보 없음
@@ -123,6 +123,21 @@ export async function PUT(request: NextRequest) {
     if (!isNaN(Number(status)) && Number(status) !== existing.status) {
       updates.push("status = ?");
       values.push(Number(status));
+    }
+
+    // 아이디 변경이 있는 경우 유효성 검사와 중복 체크 후 추가
+    if (id !== undefined && id !== existing.id) {
+      // 유효성 검사
+      const idCheck = ValidID(id);
+      if (idCheck !== true) return NextResponse.json({ success: false, error: idCheck }, { status: 400 });
+      
+      // 중복 체크
+      const rows = (await query("SELECT COUNT(*) as count FROM admin WHERE id = ?", [id]) as RowDataPacket[]);
+      const count = rows[0]?.count || 0;
+      if (count > 0) return NextResponse.json({ success: false, error: "중복된 아이디입니다." }, { status: 400 });
+
+      updates.push("id = ?");
+      values.push(id);
     }
 
     // 이름 변경이 있는 경우 유효성 검사 후 추가
@@ -170,9 +185,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // 최종 업데이트 쿼리 실행
-    const queryStr = `UPDATE admin SET ${updates.join(", ")} WHERE id = ?`;
-    values.push(id);
-
+    const queryStr = `UPDATE admin SET ${updates.join(", ")} WHERE uuid = ?`;
+    values.push(uuid);
     await query(queryStr, values);
 
     return NextResponse.json({ success: true });

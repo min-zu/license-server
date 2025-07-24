@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 // AG Grid
 import { ColDef, Module, ICellRendererParams, RowSelectionOptions, PaginationModule, CellStyleModule } from 'ag-grid-community';
@@ -20,8 +21,9 @@ import { useToastState } from '@/app/components/useToast'; // ToastAlert
 
 
 export interface Admin {
+  uuid: string;
   id: string;
-  name?: string;
+  name: string;
   email?: string;
   phone?: string;
   role: number;
@@ -34,6 +36,8 @@ export default function AdminPage() {
   const modules: Module[] = [ClientSideRowModelModule, CellStyleModule, RowSelectionModule, PaginationModule];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
+  // 세션 정보
+  const { data: session, update } = useSession();
   // 전체 관리자 데이터
   const [rowData, setRowData] = useState<Admin[]>([]);
   // 전체 페이지 수
@@ -43,7 +47,7 @@ export default function AdminPage() {
   // 페이지당 보여줄 행(관리자) 수
   const [pageSize, setPageSize] = useState(20);
   // mode ('add' = 추가, 'other' = 수정)
-  const [upsertMode, setUpsertMode] = useState<'add' | 'other'>();
+  const [upsertMode, setUpsertMode] = useState<'add' | 'other' | 'self'>();
   // 수정 대상 정보
   const [editTarget, setEditTarget] = useState<Admin>();
   // 관리자 추가/수정 모달 열림 여부
@@ -78,7 +82,7 @@ export default function AdminPage() {
   // 처음 화면이 나타나면 실행
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [session]);
 
   // 현재 페이지 번호와 전체 페이지 수
   const handlePaginationChanged = (params: any) => {
@@ -167,7 +171,12 @@ export default function AdminPage() {
           <IconButton
             onClick={() => {
               setEditTarget(data);
-              setUpsertMode('other');
+              // 세션 정보(session?.user?.id)와 편집 대상(data.id) 비교
+              if (session?.user?.id === data?.id) {
+                setUpsertMode('self');   // 본인 계정이면 'self'
+              } else {
+                setUpsertMode('other');  // 타인이면 'other'
+              }
               setOpenUpsert(true);
             }}
             >
@@ -217,11 +226,17 @@ export default function AdminPage() {
             mode={upsertMode}
             open={openUpsert}
             onClose={() => setOpenUpsert(false)}
-            onAdded={() => {
+            session={session}
+            onAdded={async () => {
               let message = "";
               if (upsertMode === "add") {
                 message = "관리자 계정이 생성되었습니다.";
-              } else if (upsertMode === "other") {
+              } 
+              else if (upsertMode === "self") {
+                await update({ trigger: "update" });
+                message = "내 정보가 수정되었습니다.";
+              }
+              else if (upsertMode === "other") {
                 message = "관리자 계정이 수정되었습니다.";
               }
               
@@ -230,7 +245,7 @@ export default function AdminPage() {
               }
               fetchData();
             }}
-            target={upsertMode === "other" ? editTarget : undefined}
+            target={upsertMode !== "add" ? editTarget : undefined}
           />
         )}
         <AlertModal 
