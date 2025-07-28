@@ -33,9 +33,12 @@ export default function SessionChecker({
             state: "addLog",
             log: [{
               hardware_serial: '',
+              customer: '',
               user: id,
+              ip: '',
+              action_type: 'logout',
               action: 'success',
-              desc: '세션 만료'
+              desc: '로그아웃(세션 만료)'
             }]
           })
         });
@@ -64,9 +67,12 @@ export default function SessionChecker({
                 state: "addLog",
                 log: [{
                   hardware_serial: '',
+                  customer: '',
                   user: id,
+                  ip: '',
+                  action_type: 'logout',
                   action: 'success',
-                  desc: '세션 만료'
+                  desc: '로그아웃(세션 만료)'
                 }]
               })
             });
@@ -93,6 +99,22 @@ export default function SessionChecker({
 
       if (navType === 'navigate' && !isLogin) {
         await signOut({ redirectTo: '/login?toast=forced' });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: id,
+              ip: '',
+              action_type: 'logout',
+              action: 'success',
+              desc: '로그아웃(비정상 접근)'
+            }]
+          })
+        });
         return;
       }
       else {
@@ -128,6 +150,22 @@ export default function SessionChecker({
       if (wasExternal && (e?.persisted || navType === 'back_forward')) {
         sessionStorage.removeItem('wasExternal')
         await signOut({ redirectTo: '/login?toast=forced' });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: id,
+              ip: '',
+              action_type: 'logout',
+              action: 'success',
+              desc: '로그아웃(비정상 접근)'
+            }]
+          })
+        });
         return;
       }
       else {

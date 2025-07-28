@@ -30,6 +30,22 @@ export default function SignIn() {
       const session = await getSession();
       if (session) {
         await signOut({ redirect: false });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: session.user.id,
+              ip: '',
+              action_type: 'logout',
+              action: 'success',
+              desc: '로그아웃(로그인된 사용자의 로그인 페이지 접근)'
+            }]
+          })
+        });
       }
     })();
   }, []);
@@ -99,8 +115,10 @@ export default function SignIn() {
           state: "addLog",
           log: [{
             hardware_serial: '',
+            customer: '',
             user: ID,
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'login',
             action: 'fail',
             desc: errorMessage
           }]
@@ -113,6 +131,24 @@ export default function SignIn() {
     const session = await getSession();
     if (session?.user?.status === 0) {
       await signOut({ redirect: false }); // 세션 삭제
+      await fetch('/api/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            customer: '',
+            user: ID,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'login',
+            action: 'fail',
+            desc: '로그인 실패(계정 비활성화)'
+          }]
+        })
+      });
       return showToast("계정이 비활성화되어 있습니다.", "warning");
     }
 
@@ -127,8 +163,10 @@ export default function SignIn() {
           state: 'addLog',
           log: [{
             hardware_serial: '',
+            customer: '',
             user: ID,
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'login',
             action: 'success',
             desc: '로그인'
           }]
@@ -143,7 +181,10 @@ export default function SignIn() {
           state: "addLog",
           log: [{
             hardware_serial: '',
+            customer: '',
             user: ID,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'login',
             action: "fail",
             desc: '로그인 실패',
           }]
