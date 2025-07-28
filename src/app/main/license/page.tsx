@@ -192,18 +192,12 @@ export default function LicensePage() {
             <Button size="small" 
               className="expired-btn-s" 
               onClick={() => {
-                if(role === 4) {
-                  if(params.data.reg_auto === 2) {
-                    setExpirationType('single');
-                    setExpirationData([params.data]);
-                    setIsExpirationModalOpen(true);
-                  } else {
-                    showToast('만료 권한이 없습니다.', 'warning');
-                  }
-                } else {
+                if(role === 3 || (role === 4 && params.data.reg_auto === 2) || (role !== 1 && role !== 4 && params.data.reg_auto !== 4 && params.data.reg_auto !== 2)) {
                   setExpirationType('single');
                   setExpirationData([params.data]);
-                  setIsExpirationModalOpen(true);
+                  setIsExpirationModalOpen(true);                  
+                } else {
+                  showToast('만료 권한이 없습니다.', 'warning');
                 }
               }}
             >
@@ -331,16 +325,12 @@ export default function LicensePage() {
       return;
     }
 
-    if(role === 4) {
-      if(!selectedRows.every((item) => item.reg_auto === 2)) {
-        if(type === 'del') {
-          showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
-          return;
-        } else if(type === 'exp' && selectedRows.some(item => item.license_key === null)) {
-          showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
-          return;
-        }
-      }
+    if(role === 4 && type === 'exp' && !selectedRows.every((item) => item.reg_auto === 2)) {
+      showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
+      return;
+    } else if(role !== 4 && type === 'exp' && selectedRows.some((item) => item.reg_auto === 2)) {
+      showToast(`데모 라이센스가 포함되어있습니다.`, 'warning');
+      return;
     }
 
     if(type === 'del') {

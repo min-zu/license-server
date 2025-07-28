@@ -46,7 +46,21 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   const baseSchema = z.object({
     softwareOpt: z.record(z.number()),
-    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
+    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
+      .superRefine((value, ctx) => {
+        if(role === 4) {          
+          const start = new Date(value);
+          const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
+          const today = new Date();
+          const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
+          if (startMonthDay > todayMonthDay) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '유효기간(시작)은 오늘 이후로 설정할 수 없습니다.',
+            });
+          }
+        }
+      }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
         if(value > "2099-12-31") {
@@ -104,6 +118,20 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         message: '유효기간(만료)은 시작일 이전일 수 없습니다.',
       });
     }
+
+    // if(role === 4) {
+    //   // 월, 일까지만 비교 (시간 무시)
+    //   const today = new Date();
+    //   const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
+    //   const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
+    //   if (startMonthDay > todayMonthDay) {
+    //     ctx.addIssue({
+    //       path: ['limitTimeStart'],
+    //       code: z.ZodIssueCode.custom,
+    //       message: '유효기간(시작)은 오늘 이후로 설정할 수 없습니다.',
+    //     });
+    //   }
+    // }
   })
   
   // 초기 렌더링 값 설정
@@ -257,11 +285,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   }, [licenseKey])
 
   useEffect(() => {
+    if(license.reg_auto === 4) {
+      setShowEditBtn(false);
+      return;
+    } else if (role === 3) {
+      setShowEditBtn(true);
+      return;
+    }
+
     if(role === 4) {
       if(license.reg_auto === 2) {
         setShowEditBtn(true);
       }
-    } else if(role !== 1 && !isLog && license.reg_auto !== 4) {
+    } else if(role !== 1 && !isLog && license.reg_auto !== 4 && license.reg_auto !== 2) {
       setShowEditBtn(true);
     }
   }, []);
@@ -277,7 +313,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       <div className="w-full h-full flex justify-center items-center license-detail-modal-wrap">
         <div className="w-1/2 bg-white rounded-md">
           <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
-            <h2 className="text-xl font-semibold text-white">{license.hardware_status.toUpperCase()} 라이센스 상세보기</h2>
+            <h2 className="text-xl font-semibold text-white">{license.hardware_status.toUpperCase()} {license.reg_auto === 2 ? "데모" : ""} 라이센스 상세보기</h2>
             <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
           </div>
           <div className="flex flex-col gap-4 p-10 text-13" style={{ fontSize: '13px' }}>

@@ -22,7 +22,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const [isContinue, setIsContinue] = useState(false);
   const { data: session } = useSession();
   const id = session?.user?.id;
-  const role = session?.user?.role;
+  const role = session?.user?.role; 
 
   const textFieldTooltip = (text: string) => {
     return (
@@ -63,7 +63,21 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         }
       }),
     softwareOpt: z.record(z.number()),
-    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' }),
+    limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
+      .superRefine((value, ctx) => {
+        if(role === 4) {          
+          const start = new Date(value);
+          const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
+          const today = new Date();
+          const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
+          if (startMonthDay > todayMonthDay) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '유효기간(시작)은 오늘 날짜까지.',
+            });
+          }
+        }
+      }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
         const startDate = getValues('limitTimeStart');
@@ -314,7 +328,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       <div className="w-1/2 bg-white rounded-md">
         {ToastComponent}
         <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
-          <h2 className="text-xl font-semibold text-white">라이센스 등록</h2>
+          <h2 className="text-xl font-semibold text-white">{role === 4 ? "데모" : ""} 라이센스 등록</h2>
           <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
         </div>
         <div className="flex flex-col gap-4 p-10">
