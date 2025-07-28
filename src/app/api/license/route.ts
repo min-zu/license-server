@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         // 날짜 범위 검색
         if (typeof searchData === 'object' && searchData.startDate && searchData.endDate) {
           sql += ` ${searchField} BETWEEN ? AND ?`;
-          params.push(searchData.startDate, searchData.endDate);
+          params.push(`${searchData.startDate} 00:00:00`, `${searchData.endDate} 23:59:59`);
         } else {
           // 단일 날짜 검색 (기존 로직)
           const searchText = searchData as string;

@@ -14,9 +14,11 @@ import bcrypt from "bcryptjs";
 // 유효성 검사
 import { ValidID, ValidPW, ValidName, ValidPhone, ValidEmail } from "../validation";
 
+const LOG_API_URL = process.env.AUTH_URL + "/api/log";
 
 // admin 테이블 조회
 export async function GET(request: NextRequest) {
+  const session = await auth();
   // (Server Only) 요청 URL에서 mode, id 파라미터 추출
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get("mode");
@@ -37,8 +39,6 @@ export async function GET(request: NextRequest) {
   // admin 목록
   else if (mode === 'adminList') {
     try {
-      const session = await auth();
-
       // 세션 없거나 슈퍼 관리자가 아닐 경우 권한 에러 반환
       if (!session || session.user.role !== 3) {
         return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
 
 // 관리자 추가
 export async function POST(request: NextRequest) {
+  const session = await auth();
   // 관리자 추가에 필요한 ID, 이름, 휴대폰 번호, 이메일, 비밀번호, 권한 추출
   const data = await request.json();
   const { id, role, name, phone, email, passwd } = data;
@@ -83,18 +84,58 @@ export async function POST(request: NextRequest) {
     const hashedPw = await bcrypt.hash(passwd, 10);
 
     // admin 테이블에 저장
-    await query(
+    const result = await query(
       "INSERT INTO admin (role, status, id, name, phone, email, passwd) VALUES (?, 1, ?, ?, ?, ?, ?)",
       [role, id, name || null, phone || null, email || null, hashedPw]
     );
+
+    if (result.affectedRows > 0) {
+      await fetch(LOG_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            customer: '',
+            user: session?.user?.id,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'account',
+            action: 'success',
+            desc: `계정(${id}) 추가`
+          }]
+        })
+      });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
+    await fetch(LOG_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        state: 'addLog',
+        log: [{
+          hardware_serial: '',
+          customer: '',
+          user: session?.user?.id,
+          ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+          action_type: 'account',
+          action: 'fail',
+          desc: `계정(${id}) 추가 실패: DB 오류`
+        }]
+      })
+    });
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
 
 // 관리자 수정
 export async function PUT(request: NextRequest) {
+  const session = await auth();
   // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
   const data = await request.json();
   const { uuid, id, role, name, phone, email, passwd, status } = data;
@@ -103,6 +144,9 @@ export async function PUT(request: NextRequest) {
     // 기존 정보 불러오기
     const rows  = (await query("SELECT * FROM admin WHERE uuid = ?", [uuid]) as RowDataPacket[]);
     const existing = rows[0];
+    // 변경된 정보 저장
+    const changedInfo = [];
+    let statusChange = null;
 
     // 기존 정보 없음
     if (!existing) {
@@ -117,12 +161,14 @@ export async function PUT(request: NextRequest) {
     if (!isNaN(Number(role)) && Number(role) !== existing.role) {
       updates.push("role = ?");
       values.push(Number(role));
+      changedInfo.push("권한");
     }
 
     // status가 숫자이고 기존 값과 다르면 updates와 values에 추가
     if (!isNaN(Number(status)) && Number(status) !== existing.status) {
       updates.push("status = ?");
       values.push(Number(status));
+      statusChange = (Number(status) === 1) ? "활성화" : "비활성화";
     }
 
     // 아이디 변경이 있는 경우 유효성 검사와 중복 체크 후 추가
@@ -138,6 +184,7 @@ export async function PUT(request: NextRequest) {
 
       updates.push("id = ?");
       values.push(id);
+      changedInfo.push("아이디");
     }
 
     // 이름 변경이 있는 경우 유효성 검사 후 추가
@@ -146,6 +193,7 @@ export async function PUT(request: NextRequest) {
       if (nameCheck !== true) return NextResponse.json({ success: false, error: nameCheck }, { status: 400 });
       updates.push("name = ?");
       values.push(name);
+      changedInfo.push("이름");
     }
     
     // 휴대폰 번호 변경이 있는 경우 유효성 검사 후 추가
@@ -154,6 +202,7 @@ export async function PUT(request: NextRequest) {
       if (phoneCheck !== true) return NextResponse.json({ success: false, error: phoneCheck }, { status: 400 });
       updates.push("phone = ?");
       values.push(phone);
+      changedInfo.push("휴대폰 번호");
     }
     
     // 이메일 변경이 있는 경우 유효성 검사 후 추가
@@ -162,6 +211,7 @@ export async function PUT(request: NextRequest) {
       if (emailCheck !== true) return NextResponse.json({ success: false, error: emailCheck }, { status: 400 });
       updates.push("email = ?");
       values.push(email);
+      changedInfo.push("이메일");
     }
 
     // 비밀번호 변경이 있는 경우 유효성 검사 및 해시 후 추가
@@ -176,6 +226,7 @@ export async function PUT(request: NextRequest) {
         const hashedPw = await bcrypt.hash(passwd, 10);
         updates.push("passwd = ?");
         values.push(hashedPw);
+        changedInfo.push("비밀번호");
       }
     }
 
@@ -187,23 +238,81 @@ export async function PUT(request: NextRequest) {
     // 최종 업데이트 쿼리 실행
     const queryStr = `UPDATE admin SET ${updates.join(", ")} WHERE uuid = ?`;
     values.push(uuid);
-    await query(queryStr, values);
+    const result = await query(queryStr, values);
 
+    if (result.affectedRows > 0) {
+      if (changedInfo.length > 0) {
+        await fetch(LOG_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            state: 'addLog',
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: session?.user?.id,
+              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+              action_type: 'account',
+              action: 'success',
+              desc: `계정(${id}) 수정: ${changedInfo.join(", ")}`
+            }]
+          })
+        });
+      }
+      if (statusChange) {
+        await fetch(LOG_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            state: 'addLog',
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: session?.user?.id,
+              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+              action_type: 'account',
+              action: 'success',
+              desc: `계정(${id}) 상태 변경: ${statusChange}`
+            }]
+          })
+        });
+      }
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("관리자 수정 오류:", error);
+    await fetch(LOG_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        state: 'addLog',
+        log: [{
+          hardware_serial: '',
+          customer: '',
+          user: session?.user?.id,
+          ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+          action_type: 'account',
+          action: 'fail',
+          desc: `계정(${id}) 수정 실패: DB 오류`
+        }]
+      })
+    });
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
 
 // 관리자 삭제
 export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  // 삭제할 ID 추출
+  const { ids } = await request.json();
   try {
-    // 로그인한 관리자 세션 정보
-    const session = await auth();
-    // 삭제할 ID 추출
-    const { ids } = await request.json();
-
     // ID 배열이 없거나 형식이 잘못된경우 예외 처리
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ success: false, error: '삭제할 ID가 없습니다.' }, { status: 400 });
@@ -214,14 +323,53 @@ export async function DELETE(request: NextRequest) {
 
     // 삭제할 ID 목록 기반으로 admin 테이블에서 삭제
     const sql = `DELETE FROM admin WHERE id IN (${placeholders})`;
-    await query(sql, ids);
+    const result = await query(sql, ids);
 
-    // 삭제 대상에 로그인한 관리자 계정이 포함되어 있는지 확인
-    const deletedSelf = session?.user?.id && ids.includes(session.user.id);
-
-    return NextResponse.json({ success: true, deletedSelf });
+    if (result.affectedRows > 0) {
+      await Promise.all(ids.map(async (id: string) => {
+        await fetch(LOG_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            state: 'addLog',
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: session?.user?.id,
+              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+              action_type: 'account',
+              action: 'success',
+              desc: `계정(${id}) 삭제`
+            }]
+          })
+        });
+      }));
+    }
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('관리자 삭제 오류:', error);
+    await Promise.all(ids.map(async (id: string) => {
+      await fetch(LOG_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          state: 'addLog',
+          log: [{
+            hardware_serial: '',
+            customer: '',
+            user: session?.user?.id,
+            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'account',
+            action: 'success',
+            desc: `계정(${id}) 삭제`
+          }]
+        })
+      });
+    }));
     return NextResponse.json({ success: false, error: '서버 오류' }, { status: 500 });
   }
 }

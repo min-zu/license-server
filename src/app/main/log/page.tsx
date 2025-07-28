@@ -4,9 +4,12 @@ import { useEffect, useState, useRef } from 'react';
 // ag-grid
 import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, ValidationModule, RowSelectionModule, CellStyleModule, ColDef, Module, PaginationModule } from 'ag-grid-community';
-import { Button, FormControl, MenuItem, Select, TextField } from '@mui/material';
+import { Button, FormControl, MenuItem, Select, TextField, Modal } from '@mui/material';
 import Pagenation from '@/app/components/pagenation';
-import { fetchLogs, searchLogs } from '@/app/api/log/log'; // API 요청 함수 임포트
+import { fetchLogs, searchLogs, fetchLogDetail } from '@/app/api/log/log'; // API 요청 함수 임포트
+
+// 컴포넌트
+import LicenseDetailModal from '@/app/components/licenseDetailModal'; // 라이센스 상세 모달 임포트
 
 // toast
 import { useToastState } from '@/app/components/useToast';
@@ -15,10 +18,30 @@ interface Log {
   number: number;
   action_date: string;
   hardware_serial: string;
+  customer: string | null;
+  action: string;
+  action_type: string | null;
   user: string | null;
   ip: string;
-  action: string;
   desc: string | null;
+}
+
+interface LogDetail {
+  number: number;
+  reg_date: string;
+  hardware_serial: string;
+  hardware_status: string;
+  software_opt: object;
+  license_date: string;
+  limit_time_start: string;
+  limit_time_end: string;
+  ip: string;
+  reg_user: string;
+  reg_request: string;
+  customer: string;
+  reg_auto: number; 
+  expiration: number;
+  // 필요한 다른 라이센스 필드들을 여기에 추가
 }
 
 export default function LogPage() {
@@ -38,11 +61,18 @@ export default function LogPage() {
   // 검색 상태
   const [searchText, setSearchText] = useState<string>('');
   const [searchField, setSearchField] = useState<string>('hardware_serial');
+  const [searchStartDate, setSearchStartDate] = useState<string>('');
+  const [searchEndDate, setSearchEndDate] = useState<string>('');
 
   // 페이지 상태
   const [pageSize, setPageSize] = useState<number>(20);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // 라이센스 상세보기 모달 열기 상태 추가
+  const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false);
+  const [logDetail, setLogDetail] = useState<LogDetail | null>(null); // 선택된 라이센스 상태 추가
+  const detailModalClose = () => setDetailModalOpen(false);
   
 
   // ToastAlert
@@ -51,6 +81,23 @@ export default function LogPage() {
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'customer', headerName: '고객사 명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
+    {
+      field: 'action_type',
+      headerName: '분류',
+      flex: 1,
+      headerClass: 'header-style',
+      cellClass: 'cell-style',
+      valueFormatter: (params) => {
+        const map: { [key: string]: string } = {
+          account: '계정',
+          license: '라이센스',
+          login: '로그인',
+          logout: '로그아웃'
+        };
+        return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
+      }
+    },
     {
       field: 'action',
       headerName: '상태',
@@ -58,15 +105,6 @@ export default function LogPage() {
       headerClass: 'header-style',
       cellClass: 'cell-style',
       valueFormatter: (params) => {
-        // const map: { [key: string]: string } = {
-        //   auto: '자동발급',
-        //   del: '삭제',
-        //   edit: '수정',
-        //   fail: '실패',
-        //   add: '등록',
-        //   login: '로그인',
-        //   logout: '로그아웃'
-        // };
         const map: { [key: string]: string } = {
           success: '성공',
           fail: '실패',
@@ -112,18 +150,44 @@ export default function LogPage() {
   }, []);
 
   const handleSearch = async () => {
-    if(searchText === '') {
+    const isDateField = searchField.includes('date');
+    if(!isDateField && searchText === '') {
       showToast('검색어가 입력되지 않았습니다.', 'warning');
       loadLogs();
       return;
     }
+    if(isDateField && (!searchStartDate || !searchEndDate)) {
+      showToast('시작일과 종료일을 모두 입력해주세요.', 'warning');
+      return;
+    }
     try {
-      const data = await searchLogs(searchField, searchText);
+      const searchData = isDateField ? { startDate: searchStartDate, endDate: searchEndDate } : searchText;
+      const data = await searchLogs(searchField, searchData);
       setLogs(data);
       setTotalPages(Math.ceil(data.length / pageSize));
       setCurrentPage(1);
     } catch (error) {
       console.error('검색 중 오류 발생:', error);
+    }
+  };
+
+  // 로그 상세 모달 열기
+  const onRowClicked = async (event: any) => {
+    // hardware_serial 값이 없으면 상세 모달 열지 않음
+    if (!event.data?.hardware_serial) {
+      return;
+    }
+    event.api.deselectAll();
+    event.node.setSelected(true);
+    
+    try {
+      const date = new Date(event.data.action_date);
+      const data = await fetchLogDetail(event.data.hardware_serial, date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }));
+
+      setLogDetail(data[0]);
+      setDetailModalOpen(true); // 모달 열기
+    } catch (error) {
+      console.error('로그 상세 데이터 조회 중 오류 발생:', error);
     }
   };
 
@@ -145,6 +209,10 @@ export default function LogPage() {
       setSearchText('success'); 
     } 
   }, [searchField]);
+
+  useEffect(() => {
+    console.log("logDetail 값:", logDetail);
+  }, [logDetail]);
 
   return (
     <div className="p-4">
@@ -171,7 +239,7 @@ export default function LogPage() {
             onChange={(e) => setSearchField(e.target.value)}
           >
             {columnDefs
-              .filter(item => item.field !== 'number' && item.field !== 'action_date')
+              .filter(item => item.field !== 'number')
               .map((item) => (
                 <MenuItem key={item.field} value={item.field}>
                   {item.headerName}
@@ -196,6 +264,24 @@ export default function LogPage() {
             <MenuItem value="success">성공</MenuItem>
             <MenuItem value="fail">실패</MenuItem>
           </Select>
+        ) : searchField.includes('date') ? (
+          <div className="flex gap-2">
+            <TextField
+              type="date"
+              size="small"
+              value={searchStartDate}
+              onChange={(e) => setSearchStartDate(e.target.value)}
+              placeholder="시작일"
+            />
+            <span className="flex items-center">~</span>
+            <TextField
+              type="date"
+              size="small"
+              value={searchEndDate}
+              onChange={(e) => setSearchEndDate(e.target.value)}
+              placeholder="종료일"
+            />
+          </div>
         ) : (
           <TextField
             size="small"
@@ -238,6 +324,7 @@ export default function LogPage() {
         <AgGridReact
           // rowData={getCurrentPageData()}
           rowData={logs}
+          rowSelection="single"
           rowHeight={30}
           headerHeight={30}
           columnDefs={columnDefs}
@@ -248,6 +335,7 @@ export default function LogPage() {
             resizable: true,
             headerClass: 'text-center' // 헤더 텍스트 가운데 정렬
           }}
+          onCellClicked={onRowClicked}
           pagination={true}
           suppressPaginationPanel={true}
           paginationPageSize={pageSize}
@@ -272,7 +360,20 @@ export default function LogPage() {
         <span className='text-13 text-black'>총 {logs.length}개</span>
       </footer>
       
+      <Modal
+          open={isDetailModalOpen}
+          onClose={detailModalClose}
+          >
+            <span>
+            <LicenseDetailModal 
+              close={detailModalClose}
+              license={logDetail}
+              isLog={true}
+            />
+            </span>
+          </Modal>
       {ToastComponent}
     </div>
   );
 } 
+

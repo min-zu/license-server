@@ -44,6 +44,7 @@ export default function Header() {
             hardware_serial: '',
             user: id,
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'logout',
             action: 'success',
             desc: '로그아웃'
           }]
@@ -61,6 +62,7 @@ export default function Header() {
             hardware_serial: '',
             user: id,
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
+            action_type: 'logout',
             action: 'fail',
             desc: '로그아웃'
           }]
