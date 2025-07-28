@@ -433,31 +433,37 @@ export default function LicensePage() {
     gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
-  const onRowDataUpdated = useCallback(() => {    
+    const applyRowClasses = useCallback(() => {
     // 데이터 업데이트 후 클래스 적용
-    setTimeout(() => {
-      const rows = document.querySelectorAll('.ag-row');
-      rows.forEach((row) => {
-        const rowId = row.getAttribute('row-id');
-        if (rowId) {
-          const rowData = licenses.find(item => String(item.number) === rowId);
-          if (rowData) {
-            // 먼저 모든 클래스 제거
-            (row as HTMLElement).classList.remove('expired', 'unissued');
-            
-            // reg_auto 조건에 따라 클래스 추가
-            if (rowData.reg_auto === 4) {
-              (row as HTMLElement).classList.add('expired');
-            } else if (rowData.reg_auto === 3) {
-              (row as HTMLElement).classList.add('unissued');
-            } else if (rowData.reg_auto === 2) {
-              (row as HTMLElement).classList.add('demo');
-            }
+    const rows = document.querySelectorAll('.ag-row');
+    rows.forEach((row) => {
+      const rowId = row.getAttribute('row-id');
+      if (rowId) {
+        const rowData = licenses.find(item => String(item.number) === rowId);
+        if (rowData) {
+          // 먼저 모든 클래스 제거
+          (row as HTMLElement).classList.remove('expired', 'unissued');
+          
+          // reg_auto 조건에 따라 클래스 추가
+          if (rowData.reg_auto === 4) {
+            (row as HTMLElement).classList.add('expired');
+          } else if (rowData.reg_auto === 3) {
+            (row as HTMLElement).classList.add('unissued');
+          } else if (rowData.reg_auto === 2) {
+            (row as HTMLElement).classList.add('demo');
           }
         }
-      });
-    }, 50);
+      }
+    });
+  }, [licenses, currentPage]);
+
+  const onRowDataUpdated = useCallback(() => {
+    applyRowClasses();
   }, [licenses]);
+
+  useEffect(() => {
+    applyRowClasses();
+  }, [currentPage]);
 
   useEffect(() => {
     setSearchText('');    
