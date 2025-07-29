@@ -39,8 +39,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   const [showEditBtn, setShowEditBtn] = useState<boolean>(false);
 
-  if(!license) return null;
-
   useEffect(() => {
     setLicenseDate(license.license_date || "");
     setLicenseKey(license.license_key || "");
@@ -285,12 +283,14 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   };
 
   useEffect(() => {
-    if(licenseKey !== "" && licenseKey !== null && licenseKey !== undefined && licenseKey !== license.license_key) {
+    if(license && licenseKey !== "" && licenseKey !== null && licenseKey !== undefined && licenseKey !== license.license_key) {
       showToast(`라이센스 인증키가 변경되었습니다.\nITU 장비에서 라이센스 자동발급을 다시 해주세요.`, "info");
     }
-  }, [licenseKey])
+  }, [licenseKey, license])
 
   useEffect(() => {
+    if (!license) return;
+    
     if(license.reg_auto === 4 || isLog) {
       setShowEditBtn(false);
       return;
@@ -306,12 +306,17 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     } else if(role !== 1 && !isLog && license.reg_auto !== 4 && license.reg_auto !== 2) {
       setShowEditBtn(true);
     }
-  }, []);
+  }, [license, role, isLog]);
 
   function addOneMonth(dateString: string) {
     const date = new Date(dateString); 
     date.setMonth(date.getMonth() + 1);
     return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); // yyyy-mm-dd 형식
+  }
+
+  // license가 없으면 렌더링하지 않음
+  if (!license) {
+    return null;
   }
 
   return (
