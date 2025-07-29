@@ -14,8 +14,6 @@ import bcrypt from "bcryptjs";
 // 유효성 검사
 import { ValidID, ValidPW, ValidName, ValidPhone, ValidEmail } from "../validation";
 
-const LOG_API_URL = process.env.AUTH_URL + "/api/log";
-
 // admin 테이블 조회
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -62,6 +60,7 @@ export async function POST(request: NextRequest) {
   // 관리자 추가에 필요한 ID, 이름, 휴대폰 번호, 이메일, 비밀번호, 권한 추출
   const data = await request.json();
   const { id, role, name, phone, email, passwd } = data;
+  const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
   
   // 유효성 검사
   const idCheck = ValidID(id);
@@ -90,45 +89,11 @@ export async function POST(request: NextRequest) {
     );
 
     if (result.affectedRows > 0) {
-      await fetch(LOG_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          state: 'addLog',
-          log: [{
-            hardware_serial: '',
-            customer: '',
-            user: session?.user?.id,
-            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-            action_type: 'account',
-            action: 'success',
-            desc: `계정(${id}) 추가`
-          }]
-        })
-      });
+      await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 추가`, "account"]);
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    await fetch(LOG_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        state: 'addLog',
-        log: [{
-          hardware_serial: '',
-          customer: '',
-          user: session?.user?.id,
-          ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-          action_type: 'account',
-          action: 'fail',
-          desc: `계정(${id}) 추가 실패: DB 오류`
-        }]
-      })
-    });
+    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "fail", `계정(${id}) 추가 실패: DB 오류`, "account"]);
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
@@ -139,7 +104,8 @@ export async function PUT(request: NextRequest) {
   // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
   const data = await request.json();
   const { uuid, id, role, name, phone, email, passwd, status } = data;
-
+  const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
+  
   try {
     // 기존 정보 불러오기
     const rows  = (await query("SELECT * FROM admin WHERE uuid = ?", [uuid]) as RowDataPacket[]);
@@ -242,67 +208,16 @@ export async function PUT(request: NextRequest) {
 
     if (result.affectedRows > 0) {
       if (changedInfo.length > 0) {
-        await fetch(LOG_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            state: 'addLog',
-            log: [{
-              hardware_serial: '',
-              customer: '',
-              user: session?.user?.id,
-              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-              action_type: 'account',
-              action: 'success',
-              desc: `계정(${id}) 수정: ${changedInfo.join(", ")}`
-            }]
-          })
-        });
+        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 수정: ${changedInfo.join(", ")}`, "account"]);
       }
       if (statusChange) {
-        await fetch(LOG_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            state: 'addLog',
-            log: [{
-              hardware_serial: '',
-              customer: '',
-              user: session?.user?.id,
-              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-              action_type: 'account',
-              action: 'success',
-              desc: `계정(${id}) 상태 변경: ${statusChange}`
-            }]
-          })
-        });
+        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 상태 변경: ${statusChange}`, "account"]);
       }
     }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("관리자 수정 오류:", error);
-    await fetch(LOG_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        state: 'addLog',
-        log: [{
-          hardware_serial: '',
-          customer: '',
-          user: session?.user?.id,
-          ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-          action_type: 'account',
-          action: 'fail',
-          desc: `계정(${id}) 수정 실패: DB 오류`
-        }]
-      })
-    });
+    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "fail", `계정(${id}) 수정 실패: DB 오류`, "account"]);
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
@@ -312,6 +227,8 @@ export async function DELETE(request: NextRequest) {
   const session = await auth();
   // 삭제할 ID 추출
   const { ids } = await request.json();
+  const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
+  
   try {
     // ID 배열이 없거나 형식이 잘못된경우 예외 처리
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -327,48 +244,14 @@ export async function DELETE(request: NextRequest) {
 
     if (result.affectedRows > 0) {
       await Promise.all(ids.map(async (id: string) => {
-        await fetch(LOG_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            state: 'addLog',
-            log: [{
-              hardware_serial: '',
-              customer: '',
-              user: session?.user?.id,
-              ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-              action_type: 'account',
-              action: 'success',
-              desc: `계정(${id}) 삭제`
-            }]
-          })
-        });
+        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 삭제`, "account"]);
       }));
     }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('관리자 삭제 오류:', error);
     await Promise.all(ids.map(async (id: string) => {
-      await fetch(LOG_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          state: 'addLog',
-          log: [{
-            hardware_serial: '',
-            customer: '',
-            user: session?.user?.id,
-            ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
-            action_type: 'account',
-            action: 'success',
-            desc: `계정(${id}) 삭제`
-          }]
-        })
-      });
+      await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "fail", `계정(${id}) 삭제 실패: DB 오류`, "account"]);
     }));
     return NextResponse.json({ success: false, error: '서버 오류' }, { status: 500 });
   }

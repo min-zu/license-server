@@ -164,7 +164,7 @@ export default function SignIn() {
           log: [{
             hardware_serial: '',
             customer: '',
-            user: ID,
+            user: session?.user?.name + '(' + session?.user?.id + ')',
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
             action_type: 'login',
             action: 'success',
