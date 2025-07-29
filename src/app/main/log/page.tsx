@@ -80,7 +80,7 @@ export default function LogPage() {
 
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
-    { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 2, headerClass: 'header-style', cellClass: 'cell-style' },
+    { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'customer', headerName: '고객사 명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     {
       field: 'action_type',
@@ -209,10 +209,6 @@ export default function LogPage() {
       setSearchText('success'); 
     } 
   }, [searchField]);
-
-  useEffect(() => {
-    console.log("logDetail 값:", logDetail);
-  }, [logDetail]);
 
   return (
     <div className="p-4">

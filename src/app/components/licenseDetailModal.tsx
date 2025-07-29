@@ -38,6 +38,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   const [showEditBtn, setShowEditBtn] = useState<boolean>(false);
 
+  if(!license) return null;
+
   useEffect(() => {
     setLicenseDate(license.license_date || "");
     setLicenseKey(license.license_key || "");
@@ -225,14 +227,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         },
         body: JSON.stringify(data),
       });
-  
-      // if (!res.ok) {
-      //   const errorData = await res.json();
-      //   console.error("업데이트 실패:", errorData);
-      //   showToast("업데이트 실패: " + (errorData?.error || "알 수 없는 오류"), "error");
-      //   return;
-      // }
-  
+      
       const result = await res.json();
       
       if (res.ok) {
@@ -309,7 +304,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   }, [licenseKey])
 
   useEffect(() => {
-    if(license.reg_auto === 4) {
+    if(license.reg_auto === 4 || isLog) {
       setShowEditBtn(false);
       return;
     } else if (role === 3) {

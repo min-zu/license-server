@@ -61,7 +61,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(rows);
     }
     else if(state === 'logDetail') {
-      const rows = await query("SELECT * FROM log_detail WHERE hardware_serial = ? AND action_date = ?;", [hardware_serial, action_date]);
+      // action_date를 분까지만 비교 (초 제외)
+      const rows = await query(
+        "SELECT * FROM log_detail WHERE hardware_serial = ? AND DATE_FORMAT(action_date, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i');", 
+        [hardware_serial, action_date]
+      );
       return NextResponse.json(rows);
     }
 
