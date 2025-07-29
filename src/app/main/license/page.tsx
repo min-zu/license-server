@@ -104,6 +104,13 @@ export default function LicensePage() {
   const [failedCsvBase64, setFailedCsvBase64] = useState<string | undefined>(undefined);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
+  // 데이터 인덱스 계산 함수
+  const getDataRange = () => {
+    const startIndex = (currentPage - 1) * pageSize + 1;
+    const endIndex = Math.min(currentPage * pageSize, licenses.length);
+    return licenses.length > 0 ? `${startIndex}-${endIndex}` : '0';
+  };
+
   // 모달 닫기 함수
   const addModalClose = () => setIsAddModalOpen(false);
   const detailModalClose = () => setDetailModalOpen(false);
@@ -687,7 +694,9 @@ export default function LicensePage() {
               }}
             />
           </div>
-          <span className='text-13 text-black'>총 {licenses.length}개</span>
+          <span className='text-13 text-black'>
+            {getDataRange()} / 총 {licenses.length}개
+          </span>
         </footer>
 
         {/* modal */}

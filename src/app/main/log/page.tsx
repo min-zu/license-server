@@ -79,6 +79,13 @@ export default function LogPage() {
   // ToastAlert
   const {  showToast, ToastComponent } = useToastState();
 
+  // 데이터 인덱스 계산 함수
+  const getDataRange = () => {
+    const startIndex = (currentPage - 1) * pageSize + 1;
+    const endIndex = Math.min(currentPage * pageSize, logs.length);
+    return logs.length > 0 ? `${startIndex}-${endIndex}` : '0';
+  };
+
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
@@ -367,7 +374,9 @@ export default function LogPage() {
             }}
           />
         </div>
-        <span className='text-13 text-black'>총 {logs.length}개</span>
+        <span className='text-13 text-black'>
+          {getDataRange()} / 총 {logs.length}개
+        </span>
       </footer>
       
       <Modal
