@@ -303,7 +303,7 @@ export default function LicensePage() {
       const data = await searchLicenses(hardwareStatus, searchField, searchData);
       setLicenses(data);
       setTotalPages(Math.ceil(data.length / pageSize));
-      setCurrentPage(1);
+      gridRef.current?.api?.paginationGoToPage?.(0);
     } catch (error) {
       console.error('검색 중 오류 발생:', error);
     }

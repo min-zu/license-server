@@ -236,7 +236,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       const result = await res.json();
       
       if (res.ok) {
-        if (result.status && result.status.includes("reissued")) {
+        if(result.changedKeyInfo.length > 0 && result.status) {
           await fetch('/api/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -244,9 +244,30 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               state: "addLog",
               log: [{
                 hardware_serial: result.updated[0].hardware_serial,
+                customer: result.updated[0].customer,
                 user: id,
+                ip: '',
+                action_type: 'license',
                 action: "success",
-                desc: result.status === "reissued_reg" ? '수등 발급' : result.status === "reissued_hardware_code" ? '하드웨어 인증키 변경' : result.status === "reissued_opt" ? '소프트웨어 옵션 변경' : result.status === "reissued_limit" ? '유효기간 변경' : '소프트웨어 옵션, 유효기간 변경',
+                desc: (result.isITU ? "ITU" : "ITM") + (result.status === "issued_reg" ? `라이센스 발급: ${result.changedKeyInfo}` : `라이센스 재발급: ${result.changedKeyInfo}`),
+              }]
+            })
+          });
+        }
+        else {
+          await fetch('/api/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              state: "addLog",
+              log: [{
+                hardware_serial: result.updated[0].hardware_serial,
+                customer: result.updated[0].customer,
+                user: id,
+                ip: '',
+                action_type: 'license',
+                action: "success",
+                desc: (result.isITU ? "ITU" : "ITM") + `라이센스 정보 수정: ${result.changedInfo}`,
               }]
             })
           });
@@ -268,7 +289,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           state: "addLog",
           log: [{
             hardware_serial: data.hardwareSerial,
+            customer: data.customer,
             user: id,
+            ip: '',
+            action_type: 'license',
             action: "fail",
             desc: '라이센스 정보 수정 실패',
           }]

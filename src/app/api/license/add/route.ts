@@ -216,7 +216,21 @@ export async function POST(request: NextRequest) {
       if(hardwareCode !== "" && hardwareCode !== undefined) {
         await query(`UPDATE license SET license_date = now() WHERE hardware_code = ?`, [hardwareCode]);
       }
-      await query("INSERT INTO license_log (action_date, customer, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?, ?)", [customer, hardwareSerial, regUser, clientIp, "success", "라이센스 등록 완료"]);
+      let desc = "";
+      if(hardwareStatus === "ITU") {
+        if(licenseKey) {
+          desc = `ITU 라이센스 정보 등록 완료: 라이센스 키 수동 발급 완료`;
+        } else {
+          desc = `ITU 라이센스 정보 등록 완료: 라이센스 키 미발급`;
+        }
+      } else {
+        if(licenseKey) {
+          desc = `ITM 라이센스 정보 등록 완료: 라이센스 키 수동 발급 완료`;
+        } else {
+          desc = `ITM 라이센스 정보 등록 완료: 라이센스 키 미발급`;
+        }
+      }
+      await query("INSERT INTO license_log (action_date, customer, hardware_serial, user, ip, action_type, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [customer, hardwareSerial, regUser, clientIp, "license", "success", desc]);
       await query(
         `INSERT INTO log_detail (
           reg_date, hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt, license_date, license_key, ip, reg_user, reg_request, project_name, customer_email, process, customer, cpu_name, cfid, reissuance, demo_cnt, reg_auto, action_date

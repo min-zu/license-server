@@ -310,7 +310,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           state: "addLog",
           log: [{
             hardware_serial: data.hardwareSerial,
+            customer: data.customer,
             user: id,
+            ip: '',
+            action_type: 'license',
             action: "fail",
             desc: '라이센스 등록 실패',
           }]

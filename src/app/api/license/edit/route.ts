@@ -13,6 +13,8 @@ import { auth } from "@/auth";
 // exec 함수를 Promise 기반으로 변환하여 async/await 사용 가능하게 함
 const execAsync = promisify(exec);
 
+const LOG_API_URL = process.env.AUTH_URL + "/api/log";
+
 export async function GET(params: NextRequest) {
   const url = new URL(params.url); 
   const hardwareCode = url.searchParams.get('hardwareCode'); 
@@ -94,6 +96,43 @@ export async function PUT(request: NextRequest) {
   const isLimitTimeEndChanged = kstEndDate !== limitTimeEnd;
   const isHardwareCodeChanged = currentData.hardware_code !== hardwareCode;
   const needReissue = isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
+
+  const projectNameChanged = currentData.project_name !== projectName;
+  const customerChanged = currentData.customer !== customer;
+  const customerEmailChanged = currentData.customer_email !== customerEmail;
+  const regUserChanged = currentData.reg_user !== regUser;
+  const regRequestChanged = currentData.reg_request !== regRequest;
+
+  const changedKeyInfo = [];
+  if (isSoftwareOptChanged) {
+    changedKeyInfo.push("소프트웨어 옵션");
+  }
+  if (isLimitTimeStartChanged) {
+    changedKeyInfo.push("유효기간 시작");
+  }
+  if (isLimitTimeEndChanged) {
+    changedKeyInfo.push("유효기간 종료");
+  }
+  if (isHardwareCodeChanged) {
+    changedKeyInfo.push("하드웨어 인증키");
+  }
+
+  const changedInfo = [];
+  if (projectNameChanged) {
+    changedInfo.push("프로젝트명");
+  }
+  if (customerChanged) {
+    changedInfo.push("고객사명");
+  }
+  if (customerEmailChanged) {
+    changedInfo.push("고객사 이메일");
+  }
+  if (regUserChanged) {
+    changedInfo.push("발급자");
+  }
+  if (regRequestChanged) {
+    changedInfo.push("발급요청사");
+  }
 
   if(isHardwareCode) {
     if (needReissue) {
@@ -392,15 +431,18 @@ export async function PUT(request: NextRequest) {
   const response: any = {
     message: "라이선스 업데이트 완료",
     updated: updatedRows,
+    isITU,
+    changedKeyInfo,
+    changedInfo,
   };
-
+  
   if (isNewLicenseKey) {
-    if(isHardwareCodeChanged && currentData.reg_auto === 3) response.status = "reissued_reg";
-    else if(isHardwareCodeChanged) response.status = "reissued_hardware_code";
+    if(isHardwareCodeChanged && currentData.reg_auto === 3) response.status = "issued_reg"; // 발급
+    else if(currentData.reg_auto !== 3 && (isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_reg"; // 재발급
   }
-  if(isSoftwareOptChanged && (isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_all";
-  else if(isSoftwareOptChanged) response.status = "reissued_opt";
-  else if(isLimitTimeStartChanged || isLimitTimeEndChanged) response.status = "reissued_limit";
-
+  console.log('response :::::::::::::::::::::: ',response);
   return NextResponse.json(response);
+
+
+  
 }
