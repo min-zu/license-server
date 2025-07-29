@@ -68,6 +68,7 @@ export default function LogPage() {
   const [pageSize, setPageSize] = useState<number>(20);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSizeType, setPageSizeType] = useState<string>('select');
 
   // 라이센스 상세보기 모달 열기 상태 추가
   const [isDetailModalOpen, setDetailModalOpen] = useState<boolean>(false);
@@ -82,12 +83,7 @@ export default function LogPage() {
     { field: 'number', headerName: 'No', width: 120, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'hardware_serial', headerName: '제품 시리얼 번호', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'customer', headerName: '고객사 명', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
-    {
-      field: 'action_type',
-      headerName: '분류',
-      flex: 1,
-      headerClass: 'header-style',
-      cellClass: 'cell-style',
+    { field: 'action_type', headerName: '분류', flex: 1, headerClass: 'header-style', cellClass: 'cell-style',
       valueFormatter: (params) => {
         const map: { [key: string]: string } = {
           account: '계정',
@@ -98,13 +94,8 @@ export default function LogPage() {
         return map[params.value] ?? null;  // 정의되지 않은 값이면 null 반환
       }
     },
-    {
-      field: 'action',
-      headerName: '상태',
-      flex: 1,
-      headerClass: 'header-style',
-      cellClass: 'cell-style',
-      valueFormatter: (params) => {
+    { field: 'action', headerName: '상태', flex: 1, headerClass: 'header-style', cellClass: 'cell-style',
+        valueFormatter: (params) => {
         const map: { [key: string]: string } = {
           success: '성공',
           fail: '실패',
@@ -119,12 +110,7 @@ export default function LogPage() {
     },
     { field: 'user', headerName: '사용자 ID', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
     { field: 'ip', headerName: '사용자 IP', flex: 1, headerClass: 'header-style', cellClass: 'cell-style' },
-    { 
-      field: 'action_date', 
-      headerName: '날짜', 
-      flex: 1,
-      headerClass: 'header-style',
-      cellClass: 'cell-style',
+    { field: 'action_date', headerName: '날짜', flex: 1, headerClass: 'header-style', cellClass: 'cell-style',
       valueFormatter: (params: any) => {
         const value = params.value;
         if(!value) return '';
@@ -165,7 +151,7 @@ export default function LogPage() {
       const data = await searchLogs(searchField, searchData);
       setLogs(data);
       setTotalPages(Math.ceil(data.length / pageSize));
-      setCurrentPage(1);
+      gridRef.current?.api?.paginationGoToPage?.(0);
     } catch (error) {
       console.error('검색 중 오류 발생:', error);
     }
@@ -208,6 +194,9 @@ export default function LogPage() {
     if(searchField === 'action') {
       setSearchText('success'); 
     } 
+    if(searchField === 'action_type') {
+      setSearchText('license');
+    }
   }, [searchField]);
 
   return (
@@ -215,19 +204,34 @@ export default function LogPage() {
       <div className="flex items-center gap-1 mb-4">
         <FormControl size="small" sx={{ width: 90 }}>
           <Select
-            value={pageSize}
+            value={pageSizeType === 'input' ? 'input' : pageSize}
             onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              // setCurrentPage(1);
-              gridRef.current?.api?.paginationGoToPage?.(0);
+              if(e.target.value !== 'input') {
+                setPageSizeType('select'); 
+                setPageSize(Number(e.target.value));
+                gridRef.current?.api?.paginationGoToPage?.(0);
+              }else{
+                setPageSizeType('input');
+              }
             }}
           >
-            <MenuItem value={20}>20개</MenuItem>
+            <MenuItem value={20}>20개</MenuItem> 
             <MenuItem value={50}>50개</MenuItem>
             <MenuItem value={100}>100개</MenuItem>
+            <MenuItem value={'input'}>입력</MenuItem>
             <MenuItem value={1000000}>전체</MenuItem>
           </Select>
         </FormControl>
+        {pageSizeType === 'input' && (
+          <FormControl size="small" sx={{ width: 80}}>
+          <TextField
+            size="small"
+            placeholder="입력"
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+          />
+          </FormControl>
+        )}
         
         <FormControl size="small" sx={{ width: 160 }}>
           <Select
@@ -252,13 +256,20 @@ export default function LogPage() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           >
-            {/* <MenuItem value="auto">자동발급</MenuItem>
-            <MenuItem value="del">삭제</MenuItem>
-            <MenuItem value="edit">수정</MenuItem>
-            <MenuItem value="fail">실패</MenuItem>
-            <MenuItem value="add">등록</MenuItem> */}
             <MenuItem value="success">성공</MenuItem>
             <MenuItem value="fail">실패</MenuItem>
+          </Select>
+        ) : searchField === 'action_type' ? (
+          <Select
+            size="small"
+            defaultValue="license"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          >
+            <MenuItem value="license">라이센스</MenuItem>
+            <MenuItem value="account">계정</MenuItem>
+            <MenuItem value="login">로그인</MenuItem>
+            <MenuItem value="logout">로그아웃</MenuItem>
           </Select>
         ) : searchField.includes('date') ? (
           <div className="flex gap-2">

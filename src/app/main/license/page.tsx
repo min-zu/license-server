@@ -486,18 +486,18 @@ export default function LicensePage() {
               </>
             )} 
             <FormControl size="small" sx={{ width: 80}}>
-            <Select
-              value={pageSizeType === 'input' ? 'input' : pageSize}
-              onChange={(e) => {
-                if(e.target.value !== 'input') {
-                  setPageSizeType('select'); 
-                  setPageSize(Number(e.target.value));
-                  gridRef.current?.api?.paginationGoToPage?.(0);
-                }else{
-                  setPageSizeType('input');
-                }
-              }}
-            >
+              <Select
+                value={pageSizeType === 'input' ? 'input' : pageSize}
+                onChange={(e) => {
+                  if(e.target.value !== 'input') {
+                    setPageSizeType('select'); 
+                    setPageSize(Number(e.target.value));
+                    gridRef.current?.api?.paginationGoToPage?.(0);
+                  }else{
+                    setPageSizeType('input');
+                  }
+                }}
+              >
                 <MenuItem value={20}>20개</MenuItem> 
                 <MenuItem value={50}>50개</MenuItem>
                 <MenuItem value={100}>100개</MenuItem>
