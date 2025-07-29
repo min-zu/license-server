@@ -314,7 +314,7 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                       value={id}
                       disabled
                     />
-
+                    <input type="hidden" name="uuid" value={mode === "self" ? session?.user?.uuid : target?.uuid} />
                     <input type="hidden" name="id" value={id || ""} />
                   </>
                 )}
