@@ -20,14 +20,21 @@ export async function POST(request: NextRequest) {
       const sql = "INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, customer, action_type) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)";
       
       if (log.length > 1) {
-        const results = await Promise.all(log.map((item: any) => {
+        const results = await Promise.all(log.map(async (item: any) => {
           const params = [item.hardware_serial, item.user ? item.user : '', item.ip ? item.ip : clientIp, item.action, item.desc, item.customer ? item.customer : '', item.action_type];
-          return query(sql, params);
+          const result = await query(sql, params);
+          if(result.affectedRows > 0 && item.hardware_serial) {
+            await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [item.hardware_serial]);
+          }
+          return NextResponse.json(result);
         }));
         return NextResponse.json(results);
       } else {
         const params = [log[0].hardware_serial, log[0].user ? log[0].user : '', log[0].ip ? log[0].ip : clientIp, log[0].action, log[0].desc, log[0].customer ? log[0].customer : '', log[0].action_type];
         const result = await query(sql, params);
+        if(result.affectedRows > 0 && log[0].hardware_serial) {
+          await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [log[0].hardware_serial]);
+        }
         return NextResponse.json(result);
       }
     }

@@ -231,12 +231,9 @@ export async function POST(request: NextRequest) {
         }
       }
       await query("INSERT INTO license_log (action_date, customer, hardware_serial, user, ip, action_type, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [customer, hardwareSerial, regUser, clientIp, "license", "success", desc]);
-      await query(
-        `INSERT INTO log_detail
-        SELECT *, NOW()
-        FROM license
-        WHERE hardware_serial = ?;`, [hardwareSerial]
-      );
+      if(result.affectedRows > 0) {
+        await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [hardwareSerial]);
+      }
     }
     return NextResponse.json({ result: result, success: true });
   } else {

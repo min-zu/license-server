@@ -110,26 +110,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const rows2 = await query("SELECT hardware_serial, hardware_code, license_key, process, cpu_name, cfid FROM license");
+    const rows2 = await query("SELECT hardware_serial, hardware_code, license_key, process, cpu_name, cfid, customer FROM license");
     const today = new Date().toISOString().split('T')[0];
     
     for (const row of rows2 as any[]) {
       if (row.hardware_serial === hardwareSerial){
         if(row.license_key === '0') {
-          await query(`UPDATE license SET license_key = ?, license_date = ?, reg_auto = ? WHERE hardware_serial = ?`, [licenseKey, today, 1, hardwareSerial]);
+          const result = await query(`UPDATE license SET license_key = ?, license_date = ?, reg_auto = ? WHERE hardware_serial = ?`, [licenseKey, today, 1, hardwareSerial]);
+          if (result.affectedRows > 0) {
+            try {
+              await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "success", "라이센스 키 자동발급", "license", row.customer]);
+              await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [hardwareSerial]);
+            } catch (error) {
+              await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "fail", "라이센스 자동발급 실패: " + error, "license", row.customer]);
+            }
+          }
         } else {
           let comment = '';
           await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareSerial, hardwareCode, row.process, row.cpu_name, row.cfid, comment]);
         }
       }
     }
-
-    await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "auto", null]);
-    
     return NextResponse.json(licenseKey);
   } else {
-    await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "fail", "라이센스 자동발급 실패"]);
-    
     return NextResponse.json('');
   }
 }

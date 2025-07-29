@@ -438,13 +438,6 @@ export async function PUT(request: NextRequest) {
     changedKeyInfo,
     changedInfo,
   };
-
-  await query(
-    `INSERT INTO log_detail
-    SELECT *, NOW()
-    FROM license
-    WHERE hardware_serial = ?;`, [hardwareSerial]
-  );
   
   if (isNewLicenseKey) {
     if(isHardwareCodeChanged && currentData.reg_auto === 3) response.status = "issued_reg"; // 발급

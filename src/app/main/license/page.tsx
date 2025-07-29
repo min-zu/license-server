@@ -352,18 +352,24 @@ export default function LicensePage() {
       try {
         const logs = [{
           hardware_serial: item.hardware_serial,
+          customer: item.customer,
           user: id,
+          ip: '',
+          action_type: 'license',
           action: 'success',
-          desc: '만료'
+          desc: '라이센스 키 만료 처리'
         }];                 
         addLog(logs);
       } catch (error) {
         console.error('로그 기록 중 오류 발생:', error);
         const logs = [{
           hardware_serial: item.hardware_serial,
+          customer: item.customer,
           user: id,
+          ip: '',
+          action_type: 'license',
           action: 'fail',
-          desc: '만료'
+          desc: '라이센스 키 만료 처리 실패'
         }];
           addLog(logs);
         }    
@@ -725,9 +731,12 @@ export default function LicensePage() {
               try {
                 const logs = selectedRows.map(row => ({
                   hardware_serial: row.hardware_serial,
+                  customer: row.customer,
                   user: id,
+                  ip: '',
+                  action_type: 'license',
                   action: 'success',
-                  desc: '삭제'
+                  desc: '라이센스 정보 및 라이센스 키 삭제'
                 }));                
                 addLog(logs);
                 loadLicenses();
@@ -735,9 +744,12 @@ export default function LicensePage() {
                 console.error('로그 기록 중 오류 발생:', error);
                 const logs = selectedRows.map(row => ({
                   hardware_serial: row.hardware_serial,
+                  customer: row.customer,
                   user: id,
+                  ip: '',
+                  action_type: 'license',
                   action: 'fail',
-                  desc: '삭제'
+                  desc: '라이센스 정보 및 라이센스 키 삭제 실패'
                 }));
                 addLog(logs);
               }

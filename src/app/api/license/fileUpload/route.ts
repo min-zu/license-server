@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
       if (errorMessages.length > 0) {
         failedRows.push([...trimmedRow, errorMessages.join(', ')]);
-        await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "fail", "파일 업로드 실패(" + errorMessages.join(', ') + ")"]);
+        await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "fail", "파일 업로드 실패(" + errorMessages.join(', ') + ")", "license", customer]);
         continue;
       }
 
@@ -321,9 +321,11 @@ export async function POST(request: NextRequest) {
       const result = await query(sql, params);
       if(result.affectedRows > 0) {
         if(trimmedHardwareCode === '') {
-          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(미발급)"]);
+          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(미발급)", "license", customer]);
+          await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [trimmedSerial]);
         }else{
-          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(수동)"]);
+          await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [trimmedSerial, regUser, clientIp, "success", "파일 업로드 완료(수동)", "license", customer]);
+          await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [trimmedSerial]);
         }
       }
     }

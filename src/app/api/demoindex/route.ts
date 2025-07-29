@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     license_key = typeof _ituKey === 'string' ? _ituKey : null; // exec의 결과가 문자열인지 확인
   }
 
-  const rows3 = await query("SELECT hardware_serial, hardware_code, license_key, demo_cnt, project_name, customer_email FROM license");
+  const rows3 = await query("SELECT hardware_serial, hardware_code, license_key, demo_cnt, project_name, customer_email, customer FROM license");
   
   for (const row of rows3 as any[]) {
     if (row.hardware_serial === hardwareSerial)
@@ -95,9 +95,12 @@ export async function GET(request: NextRequest) {
       await query(`UPDATE license SET limit_time_end = ? WHERE hardware_serial = ?`, [endDate.toISOString().split("T")[0], hardwareSerial]);
       await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
       await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
-
-      await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "auto", "데모 라이센스 발급"]);
-
+      try {
+        await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "success", "데모 라이센스 키 자동 발급", "license", row.customer]);
+        await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [hardwareSerial]);
+      } catch (error) {
+        await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "fail", "데모 라이센스 키 자동 발급 실패: " + error, "license", row.customer]);
+      }
       return NextResponse.json(license_key);
       } else {
         let comment = '';
