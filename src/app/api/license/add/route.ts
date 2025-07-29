@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
           desc = `ITM 라이센스 정보 등록 완료: 라이센스 키 미발급`;
         }
       }
-      await query("INSERT INTO license_log (action_date, customer, hardware_serial, user, ip, action_type, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [customer, hardwareSerial, regUser, clientIp, "license", "success", desc]);
+      await query("INSERT INTO license_log (action_date, customer, hardware_serial, user, ip, action_type, action, `desc`) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [customer, hardwareSerial, session?.user?.name + '(' + session?.user?.id + ')', clientIp, "license", "success", desc]);
       if(result.affectedRows > 0) {
         await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [hardwareSerial]);
       }
