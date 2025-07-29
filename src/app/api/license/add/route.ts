@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const forwarded = request.headers.get('x-forwarded-for');
     const clientIp = forwarded?.split(":").pop() || null;
-    const { hardwareStatus, hardwareSerial: rawSerial, softwareOpt, limitTimeStart, limitTimeEnd, regUser, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
+    const { hardwareStatus, hardwareSerial: rawSerial, softwareOpt, limitTimeStart, limitTimeEnd, regRequest, projectName, customer, customerEmail, hardwareCode } = data;
   const hardwareSerial = rawSerial?.slice(0, 3).toUpperCase() === "ITU" ? rawSerial.toUpperCase() : rawSerial;
   // const license_key = await generateLicenseKey(data);
+  const regUser = session?.user?.name + '(' + session?.user?.id + ')';
   
   const fw = Number(softwareOpt.fw) || 0;
   const vpn = Number(softwareOpt.vpn) || 0;

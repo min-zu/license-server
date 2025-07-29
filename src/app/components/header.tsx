@@ -26,6 +26,7 @@ export default function Header() {
   const { data: session, update } = useSession();
   const role = session?.user?.role;
   const id = session?.user?.id;
+  const name = session?.user?.name;
 
   const [openUpsert, setOpenUpsert] = useState(false);
   
@@ -42,7 +43,7 @@ export default function Header() {
           state: 'addLog',
           log: [{
             hardware_serial: '',
-            user: id,
+            user: name + '(' + id + ')',
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
             action_type: 'logout',
             action: 'success',
@@ -60,7 +61,7 @@ export default function Header() {
           state: 'addLog',
           log: [{
             hardware_serial: '',
-            user: id,
+            user: name + '(' + id + ')',
             ip: '', // 클라이언트 IP는 서버에서 자동으로 가져옴
             action_type: 'logout',
             action: 'fail',

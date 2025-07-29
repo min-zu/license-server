@@ -60,8 +60,10 @@ export async function PUT(request: NextRequest) {
   }
 
   // 기존 데이터 조회
-  const rows = await query("SELECT hardware_status, hardware_serial, hardware_code, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt, reg_auto FROM license WHERE hardware_serial = ?", [hardwareSerial]);
+  const rows = await query("SELECT * FROM license WHERE hardware_serial = ?", [hardwareSerial]);
   const currentData = rows[0];
+
+  if(currentData.reg_auto === 2) regAuto = 2;
 
   // DB에서 불러온 date타입 한국시간 YYYY-MM-DD 형식으로 변환
   const kstStartDate = new Date(currentData.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'});
@@ -97,21 +99,21 @@ export async function PUT(request: NextRequest) {
   const isHardwareCodeChanged = currentData.hardware_code !== hardwareCode;
   const needReissue = isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
 
-  const projectNameChanged = currentData.project_name !== projectName;
-  const customerChanged = currentData.customer !== customer;
-  const customerEmailChanged = currentData.customer_email !== customerEmail;
-  const regUserChanged = currentData.reg_user !== regUser;
-  const regRequestChanged = currentData.reg_request !== regRequest;
+  const projectNameChanged = currentData.project_name === null ? false : currentData.project_name !== projectName;
+  const customerChanged = currentData.customer === null ? false : currentData.customer !== customer;
+  const customerEmailChanged = currentData.customer_email === null ? false : currentData.customer_email !== customerEmail;
+  const regUserChanged = currentData.reg_user === null ? false : currentData.reg_user !== regUser;
+  const regRequestChanged = currentData.reg_request === null ? false : currentData.reg_request !== regRequest;
 
   const changedKeyInfo = [];
   if (isSoftwareOptChanged) {
     changedKeyInfo.push("소프트웨어 옵션");
   }
   if (isLimitTimeStartChanged) {
-    changedKeyInfo.push("유효기간 시작");
+    changedKeyInfo.push("유효기간(시작)");
   }
   if (isLimitTimeEndChanged) {
-    changedKeyInfo.push("유효기간 종료");
+    changedKeyInfo.push("유효기간(만료)");
   }
   if (isHardwareCodeChanged) {
     changedKeyInfo.push("하드웨어 인증키");
@@ -326,7 +328,6 @@ export async function PUT(request: NextRequest) {
     }
   }
   else {
-    role === 4 ? regAuto = 2 : regAuto = 3;
     // ITU 장비일 경우
     if (isITU) {
       updateQuery = `
@@ -341,7 +342,7 @@ export async function PUT(request: NextRequest) {
           license_av = ?,
           license_as = ?,
           license_ot = ?,
-          license_zt = ?,
+          license_zt = ?,  
           ip = ?,
           reg_user = ?,
           reg_request = ?,

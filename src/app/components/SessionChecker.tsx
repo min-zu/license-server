@@ -18,6 +18,7 @@ export default function SessionChecker({
   const [allowRender, setAllowRender] = useState(false);
   const { data: session } = useSession();
   const id = session?.user?.id;
+  const name = session?.user?.name;
 
   // 유휴 상태 감지 (5분 이상 아무 입력 없을 경우)
   useIdleTimer({
@@ -34,7 +35,7 @@ export default function SessionChecker({
             log: [{
               hardware_serial: '',
               customer: '',
-              user: id,
+              user: name + '(' + id + ')',
               ip: '',
               action_type: 'logout',
               action: 'success',
@@ -68,7 +69,7 @@ export default function SessionChecker({
                 log: [{
                   hardware_serial: '',
                   customer: '',
-                  user: id,
+                  user: name + '(' + id + ')',
                   ip: '',
                   action_type: 'logout',
                   action: 'success',
@@ -107,7 +108,7 @@ export default function SessionChecker({
             log: [{
               hardware_serial: '',
               customer: '',
-              user: id,
+              user: name + '(' + id + ')',
               ip: '',
               action_type: 'logout',
               action: 'success',
@@ -158,7 +159,7 @@ export default function SessionChecker({
             log: [{
               hardware_serial: '',
               customer: '',
-              user: id,
+              user: name + '(' + id + ')',
               ip: '',
               action_type: 'logout',
               action: 'success',

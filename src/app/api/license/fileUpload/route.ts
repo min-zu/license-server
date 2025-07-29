@@ -163,10 +163,7 @@ export async function POST(request: NextRequest) {
       const startDate = limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
       const endDate = limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
       
-      // 발급구분
-      if (trimmedHardwareCode === "" || trimmedHardwareCode === undefined) regAuto = 3;
-      else if (role === 4) regAuto = 2;
-
+      // 라이센스 키 생성
       if(trimmedHardwareCode !== '') {
 
         const functionMap = 
@@ -194,9 +191,28 @@ export async function POST(request: NextRequest) {
         licenseKey = typeof _ituKey === 'string' ? _ituKey : null;
       }
 
+      // 발급구분 설정 (라이센스 키 생성 후)
+      if (licenseKey) {
+        // 라이센스 키가 생성되면 수동 발급 (0)
+        regAuto = 0;
+      } else if (trimmedHardwareCode === "" || trimmedHardwareCode === undefined) {
+        // 하드웨어 코드가 없으면 미발급 (3)
+        regAuto = 3;
+      } else {
+        // 그 외의 경우는 자동 발급 (1)
+        regAuto = 1;
+      }
+
+      if(role === 4) {
+        regAuto = 2;
+      }
+
       if(originalProjectName === '') {
         projectName = customer;
       }
+
+      console.log('licenseKey :::::::::::::::::::::: ',licenseKey);
+      console.log('regAuto :::::::::::::::::::::: ',regAuto);
 
       if(licenseKey) {        
         sql = `INSERT INTO license (

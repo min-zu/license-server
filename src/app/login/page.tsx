@@ -38,7 +38,7 @@ export default function SignIn() {
             log: [{
               hardware_serial: '',
               customer: '',
-              user: session.user.id,
+              user: session.user.name + '(' + session.user.id + ')',
               ip: '',
               action_type: 'logout',
               action: 'success',

@@ -22,6 +22,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const [isContinue, setIsContinue] = useState(false);
   const { data: session } = useSession();
   const id = session?.user?.id;
+  const name = session?.user?.name;
   const role = session?.user?.role; 
 
   const textFieldTooltip = (text: string) => {
@@ -311,7 +312,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           log: [{
             hardware_serial: data.hardwareSerial,
             customer: data.customer,
-            user: id,
+            user: name + '(' + id + ')',
             ip: '',
             action_type: 'license',
             action: "fail",

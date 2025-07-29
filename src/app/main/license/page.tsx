@@ -59,6 +59,7 @@ export default function LicensePage() {
   const { data: session } = useSession();
   const role = session?.user?.role;
   const id = session?.user?.id;
+  const name = session?.user?.name;
 
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -353,7 +354,7 @@ export default function LicensePage() {
         const logs = [{
           hardware_serial: item.hardware_serial,
           customer: item.customer,
-          user: id,
+          user: name + '(' + id + ')',
           ip: '',
           action_type: 'license',
           action: 'success',
@@ -365,7 +366,7 @@ export default function LicensePage() {
         const logs = [{
           hardware_serial: item.hardware_serial,
           customer: item.customer,
-          user: id,
+          user: name + '(' + id + ')',
           ip: '',
           action_type: 'license',
           action: 'fail',
@@ -732,7 +733,7 @@ export default function LicensePage() {
                 const logs = selectedRows.map(row => ({
                   hardware_serial: row.hardware_serial,
                   customer: row.customer,
-                  user: id,
+                  user: name + '(' + id + ')',
                   ip: '',
                   action_type: 'license',
                   action: 'success',
@@ -745,7 +746,7 @@ export default function LicensePage() {
                 const logs = selectedRows.map(row => ({
                   hardware_serial: row.hardware_serial,
                   customer: row.customer,
-                  user: id,
+                  user: name + '(' + id + ')',
                   ip: '',
                   action_type: 'license',
                   action: 'fail',

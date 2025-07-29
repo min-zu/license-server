@@ -26,6 +26,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   // role
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const name = session?.user?.name;
   const id = session?.user?.id;
 
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
@@ -50,7 +51,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
       .superRefine((value, ctx) => {
-        if(role === 4) {          
+        if(license.reg_auto === 2) {          
           const start = new Date(value);
           const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
           const today = new Date();
@@ -120,20 +121,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         message: '유효기간(만료)은 시작일 이전일 수 없습니다.',
       });
     }
-
-    // if(role === 4) {
-    //   // 월, 일까지만 비교 (시간 무시)
-    //   const today = new Date();
-    //   const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
-    //   const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
-    //   if (startMonthDay > todayMonthDay) {
-    //     ctx.addIssue({
-    //       path: ['limitTimeStart'],
-    //       code: z.ZodIssueCode.custom,
-    //       message: '유효기간(시작)은 오늘 이후로 설정할 수 없습니다.',
-    //     });
-    //   }
-    // }
   })
   
   // 초기 렌더링 값 설정
@@ -240,7 +227,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               log: [{
                 hardware_serial: result.updated[0].hardware_serial,
                 customer: result.updated[0].customer,
-                user: id,
+                user: name + '(' + id + ')',
                 ip: '',
                 action_type: 'license',
                 action: "success",
@@ -258,7 +245,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               log: [{
                 hardware_serial: result.updated[0].hardware_serial,
                 customer: result.updated[0].customer,
-                user: id,
+                user: name + '(' + id + ')',
                 ip: '',
                 action_type: 'license',
                 action: "success",
@@ -285,7 +272,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
           log: [{
             hardware_serial: data.hardwareSerial,
             customer: data.customer,
-            user: id,
+            user: name + '(' + id + ')',
             ip: '',
             action_type: 'license',
             action: "fail",
@@ -364,7 +351,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       error={!!errors.limitTimeStart}
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (role === 4) {
+                        if (license.reg_auto === 2) {
                           if (value) {
                             setValue("limitTimeEnd", addOneMonth(value));
                           }
@@ -381,7 +368,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeEnd")}
                       type="date"
                       error={!!errors.limitTimeEnd}
-                      disabled={role === 4}
+                      disabled={license.reg_auto === 2}
                     /> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box> 
