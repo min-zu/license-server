@@ -89,11 +89,11 @@ export async function POST(request: NextRequest) {
     );
 
     if (result.affectedRows > 0) {
-      await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', "success", `계정(${id}) 추가`, "account"]);
+      await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 추가`, "account"]);
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', "fail", `계정(${id}) 추가 실패: DB 오류`, "account"]);
+    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "fail", `계정(${id}) 추가 실패: DB 오류`, "account"]);
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
@@ -208,16 +208,16 @@ export async function PUT(request: NextRequest) {
 
     if (result.affectedRows > 0) {
       if (changedInfo.length > 0) {
-        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', "success", `계정(${id}) 수정: ${changedInfo.join(", ")}`, "account"]);
+        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 수정: ${changedInfo.join(", ")}`, "account"]);
       }
       if (statusChange) {
-        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', "success", `계정(${id}) 상태 변경: ${statusChange}`, "account"]);
+        await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "success", `계정(${id}) 상태 변경: ${statusChange}`, "account"]);
       }
     }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("관리자 수정 오류:", error);
-    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', "fail", `계정(${id}) 수정 실패: DB 오류`, "account"]);
+    await query("insert into license_log (action_date, user, ip, action, `desc`, action_type) VALUES (now(), ?, ?, ?, ?, ?);", [session?.user?.name + '(' + session?.user?.id + ')', ip, "fail", `계정(${id}) 수정 실패: DB 오류`, "account"]);
     return NextResponse.json({ success: false, error: "DB 오류" }, { status: 500 });
   }
 }
