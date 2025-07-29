@@ -69,6 +69,13 @@ export async function POST(request: NextRequest) {
     }
     else if(state === 'logDetail') {
       // action_date를 분까지만 비교 (초 제외)
+      if(clientIp === "1") {
+        const rows = await query(
+          "SELECT * FROM log_detail WHERE hardware_serial = ? AND DATE_FORMAT(action_date, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i');", 
+          [hardware_serial, action_date.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })]
+        );
+        return NextResponse.json(rows);
+      }
       const rows = await query(
         "SELECT * FROM log_detail WHERE hardware_serial = ? AND DATE_FORMAT(action_date, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i');", 
         [hardware_serial, action_date]
