@@ -103,8 +103,10 @@ export async function PUT(request: NextRequest) {
   const session = await auth();
   // 관리자 수정에 필요한 ID, 권한, 이름, 휴대폰 번호, 이메일, 비밀번호, 계정 활성화 상태 추출
   const data = await request.json();
-  const { uuid, id, role, name, phone, email, passwd, status } = data;
   const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
+  let { uuid, id, role, name, phone, email, passwd, status } = data;
+  phone = phone === "" ? null : phone;
+  email = email === "" ? null : email;
   
   try {
     // 기존 정보 불러오기

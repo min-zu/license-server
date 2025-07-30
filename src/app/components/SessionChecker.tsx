@@ -61,22 +61,6 @@ export default function SessionChecker({
           (async () => {
             sessionStorage.removeItem('loginToast');
             await signOut({ redirectTo: '/login?toast=timedout' });
-            await fetch('/api/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                state: "addLog",
-                log: [{
-                  hardware_serial: '',
-                  customer: '',
-                  user: name + '(' + id + ')',
-                  ip: '',
-                  action_type: 'logout',
-                  action: 'success',
-                  desc: '로그아웃(세션 만료)'
-                }]
-              })
-            });
             return;
           })();
         }
@@ -100,22 +84,6 @@ export default function SessionChecker({
 
       if (navType === 'navigate' && !isLogin) {
         await signOut({ redirectTo: '/login?toast=forced' });
-        await fetch('/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            state: "addLog",
-            log: [{
-              hardware_serial: '',
-              customer: '',
-              user: name + '(' + id + ')',
-              ip: '',
-              action_type: 'logout',
-              action: 'success',
-              desc: '로그아웃(비정상 접근)'
-            }]
-          })
-        });
         return;
       }
       else {
@@ -151,22 +119,6 @@ export default function SessionChecker({
       if (wasExternal && (e?.persisted || navType === 'back_forward')) {
         sessionStorage.removeItem('wasExternal')
         await signOut({ redirectTo: '/login?toast=forced' });
-        await fetch('/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            state: "addLog",
-            log: [{
-              hardware_serial: '',
-              customer: '',
-              user: name + '(' + id + ')',
-              ip: '',
-              action_type: 'logout',
-              action: 'success',
-              desc: '로그아웃(비정상 접근)'
-            }]
-          })
-        });
         return;
       }
       else {

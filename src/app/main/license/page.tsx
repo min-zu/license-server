@@ -755,33 +755,7 @@ export default function LicensePage() {
             title="삭제"
             message={`선택하신 ${selectedRows.length}개의 데이터를 삭제하시겠습니까?`} 
             deleteIds={deleteIds}
-            onConfirm={(action?: string | null, desc?: string | null) => {
-              try {
-                const logs = selectedRows.map(row => ({
-                  hardware_serial: row.hardware_serial,
-                  customer: row.customer,
-                  user: name + '(' + id + ')',
-                  ip: '',
-                  action_type: 'license',
-                  action: 'success',
-                  desc: '라이센스 정보 및 라이센스 키 삭제'
-                }));                
-                addLog(logs);
-                loadLicenses();
-              } catch (error) {
-                console.error('로그 기록 중 오류 발생:', error);
-                const logs = selectedRows.map(row => ({
-                  hardware_serial: row.hardware_serial,
-                  customer: row.customer,
-                  user: name + '(' + id + ')',
-                  ip: '',
-                  action_type: 'license',
-                  action: 'fail',
-                  desc: '라이센스 정보 및 라이센스 키 삭제 실패'
-                }));
-                addLog(logs);
-              }
-            }}
+            onConfirm={() => loadLicenses()}
           />
 
           <AlertModal
