@@ -101,7 +101,6 @@ export async function PUT(request: NextRequest) {
         total++;
       }
     }
-    console.log('total ::: ', total);
     return NextResponse.json({ success: true, result: total });
   } catch (e) {
     console.log('error', e);

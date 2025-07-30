@@ -154,7 +154,7 @@ export async function PUT(request: NextRequest) {
         const hex_expire = Math.floor(expireDate).toString(16);
 
         if(clientIp === "1") { // 로컬테스트 환경
-          _ituKey = "editTestLicenseKeyByITU";
+          _ituKey = "editTestLicenseKeyByITU" + Math.floor(Math.random() * (1000000 - 1 + 1)) + 1;
         } else {
           const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
           const result = await execAsync(cmd);
@@ -219,8 +219,6 @@ export async function PUT(request: NextRequest) {
       }
     }
   }
-
-  console.log('newLicenseKey :::::::::::::::::::::: ',newLicenseKey);
 
   // 초기화
   let updateQuery = "";
