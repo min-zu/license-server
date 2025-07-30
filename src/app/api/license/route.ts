@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/app/db/database";
 import fs from "fs/promises"
+import { auth } from "@/auth";
 
 export async function GET(request:NextRequest) {
   try {
@@ -59,12 +60,26 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await auth();
+    const ip = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
     const { codes } = await request.json(); // codes로 변경
 
     const placeholders = codes.map(() => '?').join(',');
-    const sql = `DELETE FROM license WHERE hardware_serial IN (${placeholders})`;
-    
+    const selectSql = `SELECT * FROM license WHERE hardware_serial IN (${placeholders})`;
+    const selectResult = await query(selectSql, codes);
+
+    const sql = `DELETE FROM license WHERE hardware_serial IN (${placeholders})`;    
     const result = await query(sql, codes);
+
+    if(result.affectedRows > 0) {
+      const columns = Object.keys(selectResult[0]);
+      for(const row of selectResult) {
+        const logSql = "INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, customer, action_type) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)";
+        await query(logSql, [row.hardware_serial, session?.user?.name + '(' + session?.user?.id + ')', ip, 'success', '라이센스 정보 및 라이센스 키 삭제', row.customer, 'license']);
+        const values = columns.map(col => row[col]);
+        await query(`INSERT INTO log_detail (${columns.join(',')}, action_date) VALUES (${columns.map(() => '?').join(',')}, NOW())`, values);
+      }
+    }
 
     // Log
     const logPath = "/home/future/license/log/delete_license.log"

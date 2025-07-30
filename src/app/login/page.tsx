@@ -42,7 +42,7 @@ export default function SignIn() {
               ip: '',
               action_type: 'logout',
               action: 'success',
-              desc: '로그아웃(로그인된 사용자의 로그인 페이지 접근)'
+              desc: '로그아웃(세션 만료)'
             }]
           })
         });

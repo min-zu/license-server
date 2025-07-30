@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
       const [
         hardwareSerial,
         hardwareCode,
-        limitTimeStart,
-        limitTimeEnd,
+        originalLimitTimeStart,
+        originalLimitTimeEnd,
         originalRegUser,
         regRequest,
         originalProjectName,
@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
         ...options // 나머지 옵션 필드들은 배열로 받음
       ] = trimmedRow;
       
+      let limitTimeStart = originalLimitTimeStart;
+      let limitTimeEnd = originalLimitTimeEnd;
       let projectName = originalProjectName;
       let regUser = originalRegUser;
       if(originalRegUser === '') {
@@ -98,6 +100,22 @@ export async function POST(request: NextRequest) {
           }
       }
 
+      const todayKST = new Date(Date.now() + 9*60*60*1000);
+      if(limitTimeStart === '') {
+        const todayYYYYMMDD = todayKST.toISOString().slice(0,10).replace(/-/g,'');
+        limitTimeStart = todayYYYYMMDD;
+      }
+
+      if(limitTimeEnd === '') {
+        if(role === 4) {
+          const oneMonthLater = new Date(todayKST);
+          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+          limitTimeEnd = oneMonthLater.toISOString().slice(0,10).replace(/-/g,'');
+        } else {
+          limitTimeEnd = '20991231';
+        }
+      }
+
       if (isNaN(Number(limitTimeStart)) || isNaN(Number(limitTimeEnd)) || limitTimeStart.length !== 8 || limitTimeEnd.length !== 8) {
         errorMessages.push(`유효기간 오류, 8자(YYYYMMDD) 입력`);
       }
@@ -111,7 +129,7 @@ export async function POST(request: NextRequest) {
         const demoEndDate = new Date(limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
         const oneMonthLater = new Date(demoStartDate);
         oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        
+
         if(demoEndDate > oneMonthLater) {
           errorMessages.push(`유효기간은 최대 1개월까지 설정 가능합니다`);
         }
@@ -130,9 +148,10 @@ export async function POST(request: NextRequest) {
       }
 
       const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
-      if(customerEmail === '') {
-        errorMessages.push(`고객사 E-mail 입력`);
-      } else if (!emailRegex.test(customerEmail)) {
+      // if(customerEmail === '') {
+      //   errorMessages.push(`고객사 E-mail 입력`);
+      // }
+      if (!emailRegex.test(customerEmail)) {
         errorMessages.push(`고객사 E-mail 형식 오류`);
       }
 
