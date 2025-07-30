@@ -19,6 +19,7 @@ interface LicenseDetailModalProps {
 }
 
 const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license, onUpdated, isLog = false }) => {
+  const [detailData, setDetailData] = useState<any>(license);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const { showToast, ToastComponent } = useToastState();
@@ -26,6 +27,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   // role
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const userType = role === 4 ? 'demo' : role === 3 ? 'super' : role === 2 ? 'setting' : 'monitor';
   const name = session?.user?.name;
   const id = session?.user?.id;
 
@@ -43,13 +45,19 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     setLicenseDate(license.license_date || "");
     setLicenseKey(license.license_key || "");
     setIp(license.ip || "");
-  }, [license.license_date, license.license_key, license.ip]);
+    setValue("regUser", license.reg_user || "");
+  }, [license.license_date, license.license_key, license.ip, license.reg_user]);
+
+  // license가 변경될 때 detailData 업데이트
+  useEffect(() => {
+    setDetailData(license);
+  }, [license]);
 
   const baseSchema = z.object({
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
       .superRefine((value, ctx) => {
-        if(license.reg_auto === 2) {          
+        if(userType === 'demo' && license.reg_auto === 2) {          
           const start = new Date(value);
           const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
           const today = new Date();
@@ -126,29 +134,27 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     // 공통
     const base = {
       softwareOpt: {
-        FW: license.license_fw === "1" ? 1 : 0,
-        VPN: license.license_vpn === "1" ? 1 : 0,
-        S2: license?.license_s2 === "1" ? 1 : 0,
-        DPI: license?.license_dpi === "1" ? 1 : 0,
-        AV: license.license_av === "1" ? 1 : 0,
-        AS: license.license_as === "1" ? 1 : 0,
-        OT: license.license_ot === "1" ? 1 : 0,
-        ZT: license.license_zt === "1" ? 1 : 0,
+        FW: detailData.license_fw === "1" ? 1 : 0,
+        VPN: detailData.license_vpn === "1" ? 1 : 0,
+        S2: detailData?.license_s2 === "1" ? 1 : 0,
+        DPI: detailData?.license_dpi === "1" ? 1 : 0,
+        AV: detailData.license_av === "1" ? 1 : 0,
+        AS: detailData.license_as === "1" ? 1 : 0,
+        OT: detailData.license_ot === "1" ? 1 : 0,
+        ZT: detailData.license_zt === "1" ? 1 : 0,
       },
-      limitTimeStart: new Date(license.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      limitTimeEnd: new Date(license.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      regUser: license.reg_user,
-      regRequest: license.reg_request,
-      customer: license.customer,
-      hardwareSerial: license.hardware_serial,
-      hardwareCode: license.hardware_code,
-      projectName: license.project_name || "",
-      customerEmail: license.customer_email || "",
-      hardwardCode: license.hardware_code || "",
+      limitTimeStart: new Date(detailData.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
+      limitTimeEnd: new Date(detailData.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
+      regUser: detailData.reg_user,
+      regRequest: detailData.reg_request,
+      customer: detailData.customer,
+      hardwareSerial: detailData.hardware_serial,
+      hardwareCode: detailData.hardware_code || "",
+      projectName: detailData.project_name || "",
+      customerEmail: detailData.customer_email || "",
     };
-
     return { schema: baseSchema, defaultValues: base };
-  }, [license]);
+  }, [detailData]);
 
   const {
     control,
@@ -166,8 +172,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   });
 
   useEffect(() => {
-    reset(defaultValues);
-  }, [defaultValues, reset]);
+    if (defaultValues && detailData) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset, detailData]);
 
   const isOptionDisabled = (isEdit: boolean, field: any, label: string, value: string) => {
     if(!isEdit) return true;
@@ -190,8 +198,40 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
 
   // 저장 버튼 클릭 시 실행되는 submit 함수
   const onSubmit = async (data: z.infer<typeof schema>) => {
+    // data와 defaultValues의 모든 값을 깊게 비교하여 동일하면 true, 아니면 false를 반환
+    function deepEqual(obj1: any, obj2: any): boolean {
+      if (obj1 === obj2) return true;
+      if (typeof obj1 !== typeof obj2) return false;
+      if (typeof obj1 !== 'object' || obj1 === null || obj2 === null) return false;
+
+      const keys1 = Object.keys(obj1);
+      const keys2 = Object.keys(obj2);
+      if (keys1.length !== keys2.length) return false;
+
+      for (const key of keys1) {
+        if (!keys2.includes(key)) return false;
+        if (!deepEqual(obj1[key], obj2[key])) return false;
+      }
+      return true;
+    }
+
+    const isSame = deepEqual(data, defaultValues);
+    
+    if (isSame) {
+      showToast("변경된 내용이 없습니다.", "warning");
+      return;
+    }
+
+    if(data.hardwareCode === '' || data.hardwareCode === null || data.hardwareCode === undefined) {
+      if(licenseKey !== '') {
+        showToast("하드웨어 인증키를 입력해주세요.", "warning");
+        return;
+      }
+    }
+
     if (data.hardwareCode) {
-      if(data.hardwareCode !== license.hardware_code) {
+      if(data.hardwareCode !== defaultValues.hardwareCode) {
+
         const codeCount = await checkHardwareCode(data.hardwareCode);
         if (Number(codeCount) !== 0) {
           setError("hardwareCode", {
@@ -255,9 +295,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         
         showToast("라이센스 정보 수정이 완료되었습니다.", "success");
         setIsEdit(false); // 저장 후 수정 모드 종료
+
+        setDetailData(result.updated[0]);
         setLicenseDate(result.updated[0].license_date);
         setLicenseKey(result.updated[0].license_key);
         setIp(result.updated[0].ip);
+
         onUpdated?.(); // 데이터 갱신
       }
         
@@ -291,22 +334,29 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   useEffect(() => {
     if (!license) return;
     
-    if(license.reg_auto === 4 || isLog) {
-      setShowEditBtn(false);
-      return;
-    } else if (role === 3) {
-      setShowEditBtn(true);
-      return;
-    }
-
-    if(role === 4) {
-      if(license.reg_auto === 2) {
-        setShowEditBtn(true);
+    // 편집 버튼 표시 여부를 결정하는 함수
+    const shouldShowEditButton = () => {
+      // 로그 모드이거나 만료된 경우 편집 불가
+      if (isLog || license.reg_auto === 4) {
+        return false;
       }
-    } else if(role !== 1 && !isLog && license.reg_auto !== 4 && license.reg_auto !== 2) {
-      setShowEditBtn(true);
-    }
-  }, [license, role, isLog]);
+      
+      // 슈퍼 사용자는 항상 편집 가능
+      if (userType === 'super' || userType === 'setting') {
+        return true;
+      }
+      
+      // 데모 사용자는 reg_auto가 2인 경우에만 편집 가능
+      if (userType === 'demo') {
+        return license.reg_auto === 2;
+      }
+
+      // 모니터 사용자는 편집 불가 
+      return false;
+    };
+    
+    setShowEditBtn(shouldShowEditButton());
+  }, [license, userType, isLog]);
 
   function addOneMonth(dateString: string) {
     const date = new Date(dateString); 
@@ -324,7 +374,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       <div className="w-full h-full flex justify-center items-center license-detail-modal-wrap">
         <div className="w-1/2 bg-white rounded-md">
           <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
-            <h2 className="text-xl font-semibold text-white">{license.hardware_status.toUpperCase()} {license.reg_auto === 2 ? "데모" : ""} 라이센스 상세보기</h2>
+            <h2 className="text-xl font-semibold text-white">{detailData.hardware_status.toUpperCase()} {detailData.reg_auto === 2 ? "데모" : ""} 라이센스 상세보기</h2>
             <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
           </div>
           <div className="flex flex-col gap-4 p-10 text-13" style={{ fontSize: '13px' }}>
@@ -335,13 +385,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </div>
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
-                  <FormLabel>등록일 :</FormLabel> <p>{new Date(license.reg_date).toLocaleString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
+                  <FormLabel>등록일 :</FormLabel> <p>{new Date(detailData.reg_date).toLocaleString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>
                 </Box>
                 <Box className="detail-line-box-item">
                   <FormLabel>라이센스 발급일 :</FormLabel> {(!licenseDate || licenseDate === "0000-00-00") ? "" : <p>{new Date(licenseDate).toLocaleString('sv-SE', {timeZone: 'Asia/Seoul'})}</p>}
                 </Box>
                 <Box className="detail-line-box-item">
-                  <FormLabel>발급이력 :</FormLabel> <p>{license.reissuance === 1 ? '재발급' : '초기발급'}</p>
+                  <FormLabel>발급이력 :</FormLabel> <p>{detailData.reissuance === 1 ? '재발급' : '초기발급'}</p>
                 </Box>
               </Box> 
 
@@ -356,7 +406,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       error={!!errors.limitTimeStart}
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (license.reg_auto === 2) {
+                        if (userType === 'demo' && detailData.reg_auto === 2) {
                           if (value) {
                             setValue("limitTimeEnd", addOneMonth(value));
                           }
@@ -373,16 +423,16 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeEnd")}
                       type="date"
                       error={!!errors.limitTimeEnd}
-                      disabled={license.reg_auto === 2}
+                      disabled={userType === 'demo' && detailData.reg_auto === 2}
                     /> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box> 
                 <Box className="detail-line-box-item">
-                  <FormLabel>상태 :</FormLabel> <p>{license.reg_auto === 0 ? '수동 발급' : license.reg_auto === 1 ? '자동 발급' : license.reg_auto === 2 ? '데모 발급' : license.reg_auto === 3 ? '미발급' : '만료'}</p> 
+                  <FormLabel>상태 :</FormLabel> <p>{detailData.reg_auto === 0 ? '수동 발급' : detailData.reg_auto === 1 ? '자동 발급' : detailData.reg_auto === 2 ? '데모 발급' : detailData.reg_auto === 3 ? '미발급' : '만료'}</p> 
                 </Box> 
               </Box>
 
-              {license.hardware_status.toUpperCase() === 'ITU' ? (
+              {detailData.hardware_status.toUpperCase() === 'ITU' ? (
                 <Box className="detail-line-box">                  
                   <Box className="detail-line-box-item">
                     <FormLabel>프로젝트명 :</FormLabel> 
@@ -421,13 +471,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               ) : (
                 <Box className="detail-line-box">
                   <Box className="detail-line-box-item">
-                    <FormLabel>PROCESS :</FormLabel> <p>{license.process}</p>
+                    <FormLabel>PROCESS :</FormLabel> <p>{detailData.process}</p>
                   </Box>
                   <Box className="detail-line-box-item">
-                    <FormLabel>CPU명 :</FormLabel> <p>{license.cpu_name}</p>
+                    <FormLabel>CPU명 :</FormLabel> <p>{detailData.cpu_name}</p>
                   </Box>
                   <Box className="detail-line-box-item">
-                    <FormLabel>CFID :</FormLabel> <p>{license.cfid}</p>
+                    <FormLabel>CFID :</FormLabel> <p>{detailData.cfid}</p>
                   </Box>
                 </Box>
               )}
@@ -480,7 +530,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       <p>{watch("customerEmail")}</p>}
                   </Box>
               </Box>
-              {license.hardware_status.toUpperCase() === 'ITU' && (
+              {detailData.hardware_status.toUpperCase() === 'ITU' && (
                 <>
                 <div className="split-wrap">
                   <span>소프트웨어 옵션</span>
@@ -520,7 +570,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
               </div>
               
               <Box display="flex" alignItems="center">
-                <FormLabel>제품 시리얼번호 :</FormLabel> <p>{license.hardware_serial}</p>
+                <FormLabel>제품 시리얼번호 :</FormLabel> <p>{detailData.hardware_serial}</p>
               </Box>
               <Box display="flex" alignItems="center">
                 <FormLabel>하드웨어 인증키 :</FormLabel>

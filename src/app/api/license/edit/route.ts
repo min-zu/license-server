@@ -35,8 +35,8 @@ export async function PUT(request: NextRequest) {
   const clientIp = forwarded?.split(":").pop() || null;
   const session = await auth();
   const role = session?.user?.role;
-  // 0:수동 1:자동 2:데모 3:미발급 4:만료
-  let regAuto = role === 4 ? 2 : 0;
+  const name = session?.user?.name;
+  const id = session?.user?.id;
 
   // body에서 필요한 값들을 꺼냄
   const {
@@ -63,8 +63,6 @@ export async function PUT(request: NextRequest) {
   const rows = await query("SELECT * FROM license WHERE hardware_serial = ?", [hardwareSerial]);
   const currentData = rows[0];
 
-  if(currentData.reg_auto === 2) regAuto = 2;
-
   // DB에서 불러온 date타입 한국시간 YYYY-MM-DD 형식으로 변환
   const kstStartDate = new Date(currentData.limit_time_start).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'});
   const kstEndDate = new Date(currentData.limit_time_end).toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'});
@@ -82,6 +80,10 @@ export async function PUT(request: NextRequest) {
   let _ituKey = null;
   let _itmKey = null;
 
+  // 0:수동 1:자동 2:데모 3:미발급 4:만료
+  let regAuto = 0;
+  if(role === 4) regAuto = 2;
+  else if(!isHardwareCode) regAuto = 3;
 
   // 라이선스 키 재발급 해야하는지 확인
   const isSoftwareOptChanged = 
@@ -97,7 +99,6 @@ export async function PUT(request: NextRequest) {
   const isLimitTimeStartChanged = kstStartDate !== limitTimeStart;
   const isLimitTimeEndChanged = kstEndDate !== limitTimeEnd;
   const isHardwareCodeChanged = currentData.hardware_code !== hardwareCode;
-  const needReissue = isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged;
 
   const projectNameChanged = currentData.project_name === null ? false : currentData.project_name !== projectName;
   const customerChanged = currentData.customer === null ? false : currentData.customer !== customer;
@@ -109,7 +110,7 @@ export async function PUT(request: NextRequest) {
   if (isSoftwareOptChanged) {
     changedKeyInfo.push("소프트웨어 옵션");
   }
-  if (isLimitTimeStartChanged) {
+  if (!isITU && isLimitTimeStartChanged) {
     changedKeyInfo.push("유효기간(시작)");
   }
   if (isLimitTimeEndChanged) {
@@ -120,6 +121,9 @@ export async function PUT(request: NextRequest) {
   }
 
   const changedInfo = [];
+  if(isITU && isLimitTimeStartChanged) {
+    changedInfo.push("유효기간(시작)");
+  }
   if (projectNameChanged) {
     changedInfo.push("프로젝트명");
   }
@@ -137,7 +141,7 @@ export async function PUT(request: NextRequest) {
   }
 
   if(isHardwareCode) {
-    if (needReissue) {
+    if (changedKeyInfo.length > 0) {
       if (isITU) {
         const functionMap = 
           (Number(softwareOpt.FW) || 0) * 1 +
@@ -193,7 +197,7 @@ export async function PUT(request: NextRequest) {
         const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
         if(clientIp === "1") { // 로컬테스트 환경
-          _itmKey = "editTestLicenseKeyByITM";
+          _itmKey = "editTestLicenseKeyByITM" + Math.floor(Math.random() * (1000000 - 1 + 1)) + 1;
         } else {
           const cmd = `/home/future/license/fslicense3 -n -k ${hardwareCode} -s ${serial} -b ${startDateStr} -e ${endDateStr}`;
           const result = await execAsync(cmd);
@@ -267,7 +271,7 @@ export async function PUT(request: NextRequest) {
         softwareOpt.ZT,
         newLicenseKey,
         clientIp,
-        regUser,
+        name + "(" + id + ")",
         regRequest,
         customer,
         projectName,
@@ -316,7 +320,7 @@ export async function PUT(request: NextRequest) {
         softwareOpt.ZT,
         newLicenseKey,
         clientIp,
-        regUser,
+        name + "(" + id + ")",
         regRequest,
         customer,
         regAuto,
@@ -440,7 +444,7 @@ export async function PUT(request: NextRequest) {
   
   if (isNewLicenseKey) {
     if(isHardwareCodeChanged && currentData.reg_auto === 3) response.status = "issued_reg"; // 발급
-    else if(currentData.reg_auto !== 3 && (isHardwareCodeChanged || isSoftwareOptChanged || isLimitTimeStartChanged || isLimitTimeEndChanged)) response.status = "reissued_reg"; // 재발급
+    else if(currentData.reg_auto !== 3 && changedKeyInfo.length > 0) response.status = "reissued_reg"; // 재발급
   }
   return NextResponse.json(response);  
 }

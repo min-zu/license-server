@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 
 // ag-grid
 import { AgGridReact } from 'ag-grid-react';
-import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi, PaginationModule } from 'ag-grid-community';
+import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi, PaginationModule, RowApiModule } from 'ag-grid-community';
 
 // mui
 import { Button, FormControl, MenuItem, Modal, Select, TextField } from '@mui/material';
@@ -50,7 +50,8 @@ export default function LicensePage() {
     ClientSideRowModelModule,
     CellStyleModule,
     RowSelectionModule,
-    PaginationModule
+    PaginationModule,
+    RowApiModule
   ];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
@@ -58,11 +59,13 @@ export default function LicensePage() {
   // session
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const userType = role === 4 ? 'demo' : role === 3 ? 'super' : role === 2 ? 'setting' : 'monitor';
   const id = session?.user?.id;
   const name = session?.user?.name;
 
   // 데이터 상태
   const [licenses, setLicenses] = useState<License[]>([]);
+  const [currLicenses, setCurrLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,7 +203,7 @@ export default function LicensePage() {
             <Button size="small" 
               className="expired-btn-s" 
               onClick={() => {
-                if(role === 3 || (role === 4 && params.data.reg_auto === 2) || (role !== 1 && role !== 4 && params.data.reg_auto !== 4 && params.data.reg_auto !== 2)) {
+                if((userType === 'demo' && params.data.reg_auto === 2) || (userType !== 'monitor' && userType !== 'demo' && params.data.reg_auto !== 4)) {
                   setExpirationType('single');
                   setExpirationData([params.data]);
                   setIsExpirationModalOpen(true);                  
@@ -217,6 +220,13 @@ export default function LicensePage() {
       }
     }
   ]);
+
+  // 페이지네이션을 위한 데이터 슬라이싱 함수
+  const sliceDataForPage = (data: License[], page: number, size: number) => {
+    const startIdx = (page - 1) * size;
+    const endIdx = startIdx + size;
+    return data.slice(startIdx, endIdx);
+  };
 
   // 라이센스 데이터 조회
   const loadLicenses = async () => {
@@ -238,8 +248,6 @@ export default function LicensePage() {
   useEffect(() => {
     loadLicenses();
   }, []);
-
-
 
   const onRowClicked = (event: any) => {
     if (event.column.getColId() === 'number' || event.column.getColId() === 'expiration') {
@@ -320,10 +328,15 @@ export default function LicensePage() {
   // 삭제
   const selectedRowsRef = useRef<any[]>([]);
 
-  const onSelectionChanged = (e: any) => {
+  // currLicenses에 포함된 데이터만 선택/해제 가능하도록 필터링
+  const onSelectionChanged = (e: any, currLicenses: License[]) => {
     const selected = e.api.getSelectedRows();
-    selectedRowsRef.current = selected;
-    setSelectedRows([...selected]);
+    // currLicenses의 hardware_serial만 추출
+    const currSerials = currLicenses.map(item => item.hardware_serial);
+    // currLicenses에 포함된 데이터만 필터링
+    const filtered = selected.filter((row: any) => currSerials.includes(row.hardware_serial));
+    selectedRowsRef.current = filtered;
+    setSelectedRows([...filtered]);
   };
 
   const handleSelectedRows = (type: string) => {
@@ -333,10 +346,10 @@ export default function LicensePage() {
       return;
     }
 
-    if(role === 4 && type === 'exp' && !selectedRows.every((item) => item.reg_auto === 2)) {
+    if(userType === 'demo' && !selectedRows.every((item) => item.reg_auto === 2)) {
       showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
       return;
-    } else if(role !== 4 && type === 'exp' && selectedRows.some((item) => item.reg_auto === 2)) {
+    } else if(userType !== 'monitor' && userType !== 'demo' && type === 'exp' && selectedRows.some((item) => item.reg_auto === 2)) {
       showToast(`데모 라이센스가 포함되어있습니다.`, 'warning');
       return;
     }
@@ -447,29 +460,29 @@ export default function LicensePage() {
     gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
-    const applyRowClasses = useCallback(() => {
+  const applyRowClasses = () => {
     // 데이터 업데이트 후 클래스 적용
-    const rows = document.querySelectorAll('.ag-row');
-    rows.forEach((row) => {
-      const rowId = row.getAttribute('row-id');
-      if (rowId) {
-        const rowData = licenses.find(item => String(item.number) === rowId);
-        if (rowData) {
-          // 먼저 모든 클래스 제거
-          (row as HTMLElement).classList.remove('expired', 'unissued');
-          
-          // reg_auto 조건에 따라 클래스 추가
-          if (rowData.reg_auto === 4) {
-            (row as HTMLElement).classList.add('expired');
-          } else if (rowData.reg_auto === 3) {
-            (row as HTMLElement).classList.add('unissued');
-          } else if (rowData.reg_auto === 2) {
-            (row as HTMLElement).classList.add('demo');
+      const rows = document.querySelectorAll('.ag-row');
+      rows.forEach((row) => {
+        const rowId = row.getAttribute('row-id');
+        if (rowId) {
+          const rowData = licenses.find(item => String(item.number) === rowId);
+          if (rowData) {
+            // 먼저 모든 클래스 제거
+            (row as HTMLElement).classList.remove('expired', 'unissued');
+            
+            // reg_auto 조건에 따라 클래스 추가
+            if (rowData.reg_auto === 4) {
+              (row as HTMLElement).classList.add('expired');
+            } else if (rowData.reg_auto === 3) {
+              (row as HTMLElement).classList.add('unissued');
+            } else if (rowData.reg_auto === 2) {
+              (row as HTMLElement).classList.add('demo');
+            }
           }
         }
-      }
-    });
-  }, [licenses, currentPage]);
+      });
+  };
 
   const onRowDataUpdated = useCallback(() => {
     applyRowClasses();
@@ -477,7 +490,12 @@ export default function LicensePage() {
 
   useEffect(() => {
     applyRowClasses();
+    gridRef.current?.api?.deselectAll();
   }, [currentPage]);
+
+  useEffect(() => {
+    setCurrLicenses(sliceDataForPage(licenses, currentPage, pageSize));
+  }, [licenses, currentPage, pageSize]);
 
   useEffect(() => {
     setSearchText('');    
@@ -492,7 +510,7 @@ export default function LicensePage() {
     <div className="p-4">
         <div className="flex justify-between items-center w-full mb-4">
           <div className="flex items-center gap-1">
-            {role !== 1 && (
+            {userType !== 'monitor' && (
               <>                
                 <Button className="expired-btn" size="small" onClick={() => handleSelectedRows('exp')}>일괄 만료</Button>
                 <Button className="delete-btn" size="small" onClick={() => handleSelectedRows('del')}>삭제</Button>
@@ -616,7 +634,7 @@ export default function LicensePage() {
             </Button>
           </div>
 
-          {role !== 1 && (
+          {userType !== 'monitor' && (
             <div className="flex items-center gap-1">
               <Button
                 className="default-btn"
@@ -678,7 +696,7 @@ export default function LicensePage() {
             onPaginationChanged={handlePaginationChanged}
             ref={gridRef}
             onCellClicked={onRowClicked}
-            onSelectionChanged={onSelectionChanged}
+            onSelectionChanged={(e) => onSelectionChanged(e, currLicenses)}
             suppressRowClickSelection={true}
             onRowDataUpdated={onRowDataUpdated}
           />

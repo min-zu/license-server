@@ -25,3 +25,10 @@ export const ituOps = [
   { label: 'OT', value: 'ot' },
   { label: 'ZT', value: 'zt' },
 ] 
+
+export const userType = [
+  { label: '데모 관리자', value: 'demo' },
+  { label: '슈퍼 관리자', value: 'super' },
+  { label: '설정 관리자', value: 'setting' },
+  { label: '모니터 관리자', value: 'monitor' },
+]

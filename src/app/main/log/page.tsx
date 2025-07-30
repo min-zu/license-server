@@ -175,7 +175,7 @@ export default function LogPage() {
     
     try {
       const date = new Date(event.data.action_date);
-      const data = await fetchLogDetail(event.data.hardware_serial, date.toLocaleString('sv-SE', { timeZone: 'UTC' }));
+      const data = await fetchLogDetail(event.data.hardware_serial, date.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }));
       if(data === undefined || data.length === 0) {
         showToast('상세보기 데이터가 없습니다.', 'warning');
         return;

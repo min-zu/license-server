@@ -211,9 +211,6 @@ export async function POST(request: NextRequest) {
         projectName = customer;
       }
 
-      console.log('licenseKey :::::::::::::::::::::: ',licenseKey);
-      console.log('regAuto :::::::::::::::::::::: ',regAuto);
-
       if(licenseKey) {        
         sql = `INSERT INTO license (
           number, reg_date, license_date, reissuance, demo_cnt, reg_auto,

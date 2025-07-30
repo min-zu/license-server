@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
           const result = await query(sql, params);
           if(result.affectedRows > 0 && item.hardware_serial) {
             await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [item.hardware_serial]);
-            if(item.action_type === 'license' && item.desc.includes('만료')) {
+            if(item.action_type === 'license' && item.desc === '라이센스 키 만료 처리') {
               await query(`UPDATE license SET reg_auto = 4 WHERE hardware_serial = ?;`, [item.hardware_serial]);
             }
           }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         const result = await query(sql, params);
         if(result.affectedRows > 0 && log[0].hardware_serial) {
           await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [log[0].hardware_serial]);
-          if(log[0].action_type === 'license' && log[0].desc.includes('만료')) {
+          if(log[0].action_type === 'license' && log[0].desc === '라이센스 키 만료 처리') {
             await query(`UPDATE license SET reg_auto = 4 WHERE hardware_serial = ?;`, [log[0].hardware_serial]);
           }
         }
