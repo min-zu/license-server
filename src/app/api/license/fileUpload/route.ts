@@ -138,20 +138,12 @@ export async function POST(request: NextRequest) {
       if(regRequest === '') {
         errorMessages.push(`발급요청사 입력`);
       }
-
-      // if(projectName === '') {
-      //   errorMessages.push(`프로젝트명 입력`);
-      // }
-
       if(customer === '') {
         errorMessages.push(`고객사명 입력`);
       }
 
       const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
-      // if(customerEmail === '') {
-      //   errorMessages.push(`고객사 E-mail 입력`);
-      // }
-      if (!emailRegex.test(customerEmail)) {
+      if (customerEmail !== '' && !emailRegex.test(customerEmail)) {
         errorMessages.push(`고객사 E-mail 형식 오류`);
       }
 
