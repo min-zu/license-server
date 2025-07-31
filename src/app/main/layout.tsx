@@ -20,7 +20,7 @@ export default async function mainLayout({ children }: { children: React.ReactNo
   }
   return (
     <SessionProvider>
-      <SessionChecker>
+      <SessionChecker session={session}>
         <Header/>
         {children}
       </SessionChecker>
