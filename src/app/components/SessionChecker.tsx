@@ -6,17 +6,19 @@ import { useEffect, useState } from 'react';
 import { useIdleTimer } from 'react-idle-timer'
 
 // Auth.js (NextAuth.js v5)
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
+import { Session } from 'next-auth';
 
 
 export default function SessionChecker({
   children,
+  session,
 }: {
   children: React.ReactNode;
+  session: Session;
 }) {
   // 화면 렌더링 허용 여부
   const [allowRender, setAllowRender] = useState(false);
-  const { data: session } = useSession();
   const id = session?.user?.id;
   const name = session?.user?.name;
 
@@ -61,6 +63,22 @@ export default function SessionChecker({
           (async () => {
             sessionStorage.removeItem('loginToast');
             await signOut({ redirectTo: '/login?toast=timedout' });
+            await fetch('/api/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                state: "addLog",
+                log: [{
+                  hardware_serial: '',
+                  customer: '',
+                  user: name + '(' + id + ')',
+                  ip: '',
+                  action_type: 'logout',
+                  action: 'success',
+                  desc: '로그아웃(세션 만료)'
+                }]
+              })
+            });
             return;
           })();
         }
@@ -84,6 +102,22 @@ export default function SessionChecker({
 
       if (navType === 'navigate' && !isLogin) {
         await signOut({ redirectTo: '/login?toast=forced' });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: name + '(' + id + ')',
+              ip: '',
+              action_type: 'logout',
+              action: 'success',
+              desc: '로그아웃(비정상접근-url 직접 입력)'
+            }]
+          })
+        });
         return;
       }
       else {
@@ -119,6 +153,22 @@ export default function SessionChecker({
       if (wasExternal && (e?.persisted || navType === 'back_forward')) {
         sessionStorage.removeItem('wasExternal')
         await signOut({ redirectTo: '/login?toast=forced' });
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: '',
+              customer: '',
+              user: name + '(' + id + ')',
+              ip: '',
+              action_type: 'logout',
+              action: 'success',
+              desc: '로그아웃(비정상접근-외부페이지 복귀)'
+            }]
+          })
+        });
         return;
       }
       else {
