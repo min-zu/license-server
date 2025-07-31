@@ -108,9 +108,9 @@ export async function POST(request: NextRequest) {
 
       if(limitTimeEnd === '') {
         if(role === 4) {
-          const oneMonthLater = new Date(todayKST);
-          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-          limitTimeEnd = oneMonthLater.toISOString().slice(0,10).replace(/-/g,'');
+          const demoStartDate = new Date(limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+          demoStartDate.setMonth(demoStartDate.getMonth() + 1);
+          limitTimeEnd = demoStartDate.toISOString().slice(0,10).replace(/-/g,'');
         } else {
           limitTimeEnd = '20991231';
         }
