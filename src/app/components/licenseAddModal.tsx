@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Box, Button, Checkbox, FormControl, FormControlLabel, FormGroup, FormLabel, styled, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 
 // 데이터
-import { defaultOps, ituOps } from "@/app/data/config";
+import { defaultOps, ituOps, userType } from "@/app/data/config";
 import { checkHardwareSerial, checkHardwareCode } from "@/app/api/validation";
 
 // form
@@ -24,6 +24,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const id = session?.user?.id;
   const name = session?.user?.name;
   const role = session?.user?.role; 
+  const userType = role === 4 ? 'demo' : role === 3 ? 'super' : role === 2 ? 'setting' : 'monitor';
 
   const textFieldTooltip = (text: string) => {
     return (
@@ -66,28 +67,23 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     softwareOpt: z.record(z.number()),
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
       .superRefine((value, ctx) => {
-        if(role === 4) {          
-          const start = new Date(value);
-          const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
-          const today = new Date();
-          const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
-          if (startMonthDay > todayMonthDay) {
+        if(userType === 'demo') {         
+          const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+          if (value > today) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: '유효기간(시작)은 오늘 날짜까지.',
+              message: '시작일은 오늘 날짜까지.',
             });
           }
         }
       }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
-        const startDate = getValues('limitTimeStart');
-        const endDate = new Date(value);
-        
-        if (value <= startDate) {
+        const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+        if (value < today) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '만료일을 확인해주세요.',
+            message: '만료일은 오늘 날짜 부터.',
           });
         }
 
@@ -105,7 +101,9 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     customerEmail: z.string(),
     hardwareCode: z.string().optional(),
   }).superRefine((data, ctx) => {
-    const { hardwareStatus, customerEmail, projectName, hardwareSerial } = data;
+    const { hardwareStatus, customerEmail, projectName, hardwareSerial, limitTimeStart, limitTimeEnd } = data;
+    // console.log('limitTimeStart', limitTimeStart);
+    // console.log('limitTimeEnd', limitTimeEnd);
     const isITU = hardwareStatus === 'ITU';
     const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 
@@ -117,23 +115,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       });
     }
 
-    // if (!projectName || projectName.trim() === '') {
-    //   ctx.addIssue({
-    //     path: ["projectName"],
-    //     code: z.ZodIssueCode.custom,
-    //     message: isITU ? '프로젝트명을 입력해주세요.' : 'CPU명을 입력해주세요.',
-    //   });
-    // }
-    
-    // if (!customerEmail || customerEmail.trim() === '') {
-    //   ctx.addIssue({
-    //     path: ["customerEmail"],
-    //     code: z.ZodIssueCode.custom,
-    //     message: isITU ? '고객사 E-mail을 입력해주세요.' : 'CF ID를 입력해주세요.',
-    //   });
-    //   return;
-    // }
-
     if (isITU) {
       if (customerEmail && !emailRegex.test(customerEmail)) {
         ctx.addIssue({
@@ -142,6 +123,18 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           message: '이메일 형식이 올바르지 않습니다.',
         })
       }
+    }
+
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+
+    if(limitTimeStart > limitTimeEnd) {
+      ctx.addIssue({
+        path: ["limitTimeEnd"],
+        code: z.ZodIssueCode.custom,
+        message: '만료일을 다시 설정해주세요.',
+      });
+    } else if (today <= limitTimeEnd) {
+      clearErrors("limitTimeEnd");
     }
   });
 
@@ -189,7 +182,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
   const fieldsToCheck = ["hardwareSerial", "regRequest", "customer", "projectName", "customerEmail"] as const;
 
   useEffect(() => {
-    if (role === 4) {
+    if (userType === 'demo') {
       setValue(
         "limitTimeEnd",
         new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
@@ -197,7 +190,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     } else {
       setValue("limitTimeEnd", "2099-12-31");
     }
-  }, [role, setValue]);
+  }, [userType, setValue]);
 
   function addOneMonth(dateString: string) {
     const date = new Date(dateString); 
@@ -217,7 +210,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       });
     }
 
-    if (role === 4) {
+    if (userType === 'demo') {
       if (name === "limitTimeStart" && _value.limitTimeStart) {
         setValue("limitTimeEnd", addOneMonth(_value.limitTimeStart));
       }
@@ -332,7 +325,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       <div className="w-1/2 bg-white rounded-md">
         {ToastComponent}
         <div className="flex justify-between items-center p-4 border-b bg-cyan-950">
-          <h2 className="text-xl font-semibold text-white">{role === 4 ? "데모" : ""} 라이센스 등록</h2>
+          <h2 className="text-xl font-semibold text-white">{userType === 'demo' ? "데모" : ""} 라이센스 등록</h2>
           <Button className="close-btn" onClick={close}><span style={{color:'#fff'}}>X</span></Button>
         </div>
         <div className="flex flex-col gap-4 p-10">
@@ -432,10 +425,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 type="date"
                 error={errors.limitTimeEnd !== undefined}
                 helperText={errors.limitTimeEnd?.message}
-                disabled={role === 4}
+                disabled={userType === 'demo'}
                 {...register('limitTimeEnd')}
               />
-              {textFieldTooltip(role === 4 ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2099년 12월 31일까지 가능합니다.')}
+              {textFieldTooltip(userType === 'demo' ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2099년 12월 31일까지 가능합니다.')}
             </Box>
 
             <Box display="flex" alignItems="center">

@@ -58,11 +58,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     limitTimeStart: z.string().min(1, { message: '유효기간(시작)을 입력해주세요.' })
       .superRefine((value, ctx) => {
         if(userType === 'demo' && license.reg_auto === 2) {          
-          const start = new Date(value);
-          const startMonthDay = `${start.getMonth() + 1}-${start.getDate()}`;
-          const today = new Date();
-          const todayMonthDay = `${today.getMonth() + 1}-${today.getDate()}`;
-          if (startMonthDay > todayMonthDay) {
+          const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+          if (value > today) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: '유효기간(시작)은 오늘 이후로 설정할 수 없습니다.',
@@ -72,10 +69,17 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       }),
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
+        const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
         if(value > "2099-12-31") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: '2099년 12월 31일까지',
+          });
+        }
+        if(value < today) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '만료일은 오늘 날짜 부터 설정할 수 있습니다.',
           });
         }
       }),
@@ -88,20 +92,6 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     customerEmail: z.string().optional().nullable(),
   }).superRefine((data, ctx) => {
     if (isITU) {
-      // if (!data.projectName || data.projectName.trim() === "") {
-      //   ctx.addIssue({
-      //     path: ['projectName'],
-      //     code: z.ZodIssueCode.custom,
-      //     message: '프로젝트명을 입력해주세요.',
-      //   });
-      // }
-      // if (!data.customerEmail || data.customerEmail.trim() === "") {
-      //   ctx.addIssue({
-      //     path: ['customerEmail'],
-      //     code: z.ZodIssueCode.custom,
-      //     message: '고객사 E-mail을 입력해주세요.',
-      //   });
-      // } else {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (data.customerEmail && !emailRegex.test(data.customerEmail)) {
           ctx.addIssue({
@@ -223,7 +213,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     }
 
     if(data.hardwareCode === '' || data.hardwareCode === null || data.hardwareCode === undefined) {
-      if(licenseKey !== '') {
+      if(licenseKey !== '' && licenseKey !== null && licenseKey !== undefined) {
         showToast("하드웨어 인증키를 입력해주세요.", "warning");
         return;
       }
@@ -295,7 +285,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         
         showToast("라이센스 정보 수정이 완료되었습니다.", "success");
         setIsEdit(false); // 저장 후 수정 모드 종료
-
+        
         setDetailData(result.updated[0]);
         setLicenseDate(result.updated[0].license_date);
         setLicenseKey(result.updated[0].license_key);
@@ -432,55 +422,50 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </Box> 
               </Box>
 
-              {detailData.hardware_status.toUpperCase() === 'ITU' ? (
-                <Box className="detail-line-box">                  
-                  <Box className="detail-line-box-item">
-                    <FormLabel>프로젝트명 :</FormLabel> 
-                    {isEdit ? 
-                      <TextField
-                        size="small"
-                        {...register("projectName", {
-                          onChange: (e) => {
-                            const value = e.target.value;
-                            setValue('projectName', value.trim());
-                          }
-                        })}
-                        error={!!errors.projectName}
-                      /> : 
-                      <p>{watch("projectName")}</p>} 
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>발급자 :</FormLabel> 
-                    {isEdit ? 
-                      <TextField
-                        size="small"
-                        {...register("regUser", {
-                          onChange: (e) => {
-                            const value = e.target.value;
-                            setValue('regUser', value.trim());
-                          }
-                        })}
-                        error={!!errors.regUser}
-                      /> : 
-                      <p>{watch("regUser")}</p>}
-                  </Box>  
-                  <Box className="detail-line-box-item">
-                    <FormLabel>IP :</FormLabel> <p>{ip}</p>
-                  </Box>
+              <Box className="detail-line-box">                  
+                <Box className="detail-line-box-item">
+                {detailData.hardware_status.toUpperCase() === 'ITU' ? (
+                  <>
+                  <FormLabel>프로젝트명 :</FormLabel> 
+                  {isEdit ? 
+                    <TextField
+                      size="small"
+                      {...register("projectName", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('projectName', value.trim());
+                        }
+                      })}
+                      error={!!errors.projectName}
+                    /> : 
+                    <p>{watch("projectName")}</p>
+                  } 
+                  </>
+                ) : (
+                  <>
+                  <FormLabel>CPU명 :</FormLabel> <p>{detailData.cpu_name}</p>
+                  </>
+                )}
                 </Box>
-              ) : (
-                <Box className="detail-line-box">
-                  <Box className="detail-line-box-item">
-                    <FormLabel>PROCESS :</FormLabel> <p>{detailData.process}</p>
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>CPU명 :</FormLabel> <p>{detailData.cpu_name}</p>
-                  </Box>
-                  <Box className="detail-line-box-item">
-                    <FormLabel>CFID :</FormLabel> <p>{detailData.cfid}</p>
-                  </Box>
+                <Box className="detail-line-box-item">
+                  <FormLabel>발급자 :</FormLabel> 
+                  {isEdit ? 
+                    <TextField
+                      size="small"
+                      {...register("regUser", {
+                        onChange: (e) => {
+                          const value = e.target.value;
+                          setValue('regUser', value.trim());
+                        }
+                      })}
+                      error={!!errors.regUser}
+                    /> : 
+                    <p>{watch("regUser")}</p>}
+                </Box>  
+                <Box className="detail-line-box-item">
+                  <FormLabel>IP :</FormLabel> <p>{ip}</p>
                 </Box>
-              )}
+              </Box>
 
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
@@ -515,6 +500,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </Box>
                 
                 <Box className="detail-line-box-item">
+                  {detailData.hardware_status.toUpperCase() === 'ITU' ? (
+                    <>
                     <FormLabel>고객사 E-mail :</FormLabel> 
                     {isEdit ? 
                       <TextField
@@ -528,6 +515,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                         error={!!errors.customerEmail}
                       /> : 
                       <p>{watch("customerEmail")}</p>}
+                    </>
+                  ) : (
+                    <>
+                    <FormLabel>CFID :</FormLabel> <p>{detailData.cfid}</p>
+                    </>
+                  )}
                   </Box>
               </Box>
               {detailData.hardware_status.toUpperCase() === 'ITU' && (

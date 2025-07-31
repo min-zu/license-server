@@ -12,7 +12,7 @@ export async function GET(request:NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { state, searchField, searchData, log, hardware_serial, action_date } = await request.json();
+    const { state, searchField, searchData, log, hardware_serial, action_date, license_key } = await request.json();
     const clientIp = request.headers.get('x-forwarded-for')?.split(':').pop() || null;
 
     if(state === 'addLog') {
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
             await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [item.hardware_serial]);
             if(item.action_type === 'license' && item.desc === '라이센스 키 만료 처리') {
               await query(`UPDATE license SET reg_auto = 4 WHERE hardware_serial = ?;`, [item.hardware_serial]);
+              await query(`UPDATE log_detail SET license_key = ? WHERE hardware_serial = ?;`, [item.license_key, item.hardware_serial]);
             }
           }
           return NextResponse.json(result);
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
           await query(`INSERT INTO log_detail SELECT *, NOW() FROM license WHERE hardware_serial = ?;`, [log[0].hardware_serial]);
           if(log[0].action_type === 'license' && log[0].desc === '라이센스 키 만료 처리') {
             await query(`UPDATE license SET reg_auto = 4 WHERE hardware_serial = ?;`, [log[0].hardware_serial]);
+            await query(`UPDATE log_detail SET license_key = ? WHERE hardware_serial = ?;`, [log[0].license_key, log[0].hardware_serial]);
           }
         }
         return NextResponse.json(result);

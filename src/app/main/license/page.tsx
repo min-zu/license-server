@@ -369,11 +369,13 @@ export default function LicensePage() {
   };
 
   const handleExpiration = (data: any) => {
+    console.log('data', data);
     data.forEach((item: any) => {
       try {
         const logs = [{
           hardware_serial: item.hardware_serial,
           customer: item.customer,
+          license_key: item.license_key,
           user: name + '(' + id + ')',
           ip: '',
           action_type: 'license',
@@ -386,6 +388,7 @@ export default function LicensePage() {
         const logs = [{
           hardware_serial: item.hardware_serial,
           customer: item.customer,
+          license_key: item.license_key,
           user: name + '(' + id + ')',
           ip: '',
           action_type: 'license',
