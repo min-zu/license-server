@@ -102,8 +102,6 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     hardwareCode: z.string().optional(),
   }).superRefine((data, ctx) => {
     const { hardwareStatus, customerEmail, projectName, hardwareSerial, limitTimeStart, limitTimeEnd } = data;
-    // console.log('limitTimeStart', limitTimeStart);
-    // console.log('limitTimeEnd', limitTimeEnd);
     const isITU = hardwareStatus === 'ITU';
     const emailRegex = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 
@@ -131,7 +129,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
       ctx.addIssue({
         path: ["limitTimeEnd"],
         code: z.ZodIssueCode.custom,
-        message: '만료일을 다시 설정해주세요.',
+        message: '유효기간을을 다시 설정해주세요.',
       });
     } else if (today <= limitTimeEnd) {
       clearErrors("limitTimeEnd");

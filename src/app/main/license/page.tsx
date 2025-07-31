@@ -369,7 +369,6 @@ export default function LicensePage() {
   };
 
   const handleExpiration = (data: any) => {
-    console.log('data', data);
     data.forEach((item: any) => {
       try {
         const logs = [{

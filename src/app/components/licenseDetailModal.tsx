@@ -102,20 +102,16 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         }
       // }
     }
-    const start = new Date(data.limitTimeStart);
-    const end = new Date(data.limitTimeEnd);
 
-    if (start > end) {
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+    if (data.limitTimeStart > data.limitTimeEnd) {
       ctx.addIssue({
-        path: ['limitTimeStart'],
+        path: ["limitTimeEnd"],
         code: z.ZodIssueCode.custom,
-        message: '유효기간(시작)이 만료일보다 늦을 수 없습니다.',
+        message: '유효기간을 다시 설정해주세요.',
       });
-      ctx.addIssue({
-        path: ['limitTimeEnd'],
-        code: z.ZodIssueCode.custom,
-        message: '유효기간(만료)은 시작일 이전일 수 없습니다.',
-      });
+    } else if(today <= data.limitTimeEnd) {
+      clearErrors("limitTimeEnd");
     }
   })
   
@@ -152,12 +148,15 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     handleSubmit, 
     formState: { errors },
     setError,
+    clearErrors,
     reset,
     watch,
     setValue,
+    trigger,
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     mode: 'onChange',
+    shouldUnregister: false,
     defaultValues,
   });
 
@@ -244,44 +243,32 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       });
       
       const result = await res.json();
-      
+
       if (res.ok) {
-        if(result.changedKeyInfo.length > 0 && result.status) {
-          await fetch('/api/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              state: "addLog",
-              log: [{
-                hardware_serial: result.updated[0].hardware_serial,
-                customer: result.updated[0].customer,
-                user: name + '(' + id + ')',
-                ip: '',
-                action_type: 'license',
-                action: "success",
-                desc: (result.isITU ? "ITU" : "ITM") + (result.status === "issued_reg" ? `라이센스 발급: ${result.changedKeyInfo}` : `라이센스 재발급: ${result.changedKeyInfo}`),
-              }]
-            })
-          });
+        const changed = []
+        if(result.changedKeyInfo.length > 0) {
+          changed.push(result.changedKeyInfo);
         }
-        else {
-          await fetch('/api/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              state: "addLog",
-              log: [{
-                hardware_serial: result.updated[0].hardware_serial,
-                customer: result.updated[0].customer,
-                user: name + '(' + id + ')',
-                ip: '',
-                action_type: 'license',
-                action: "success",
-                desc: (result.isITU ? "ITU" : "ITM") + `라이센스 정보 수정: ${result.changedInfo}`,
-              }]
-            })
-          });
+        if(result.changedInfo.length > 0) {
+          changed.push(result.changedInfo);
         }
+
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            state: "addLog",
+            log: [{
+              hardware_serial: result.updated[0].hardware_serial,
+              customer: result.updated[0].customer,
+              user: name + '(' + id + ')',
+              ip: '',
+              action_type: 'license',
+              action: "success",
+              desc: (result.isITU ? "ITU" : "ITM") + (result.status === "issued_reg" ? '라이센스 발급 : ' : result.status === "reissued_reg" ? '라이센스 재발급 : ' : '라이센스 정보 수정 : ') + changed.join(', '),
+            }]
+          })
+        });
         
         showToast("라이센스 정보 수정이 완료되었습니다.", "success");
         setIsEdit(false); // 저장 후 수정 모드 종료
@@ -396,11 +383,13 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       error={!!errors.limitTimeStart}
                       onChange={(e) => {
                         const value = e.target.value;
+                        setValue("limitTimeStart", value);
                         if (userType === 'demo' && detailData.reg_auto === 2) {
                           if (value) {
                             setValue("limitTimeEnd", addOneMonth(value));
                           }
                         }
+                        trigger();
                       }}
                     /> : 
                     <p>{watch("limitTimeStart")}</p>}
