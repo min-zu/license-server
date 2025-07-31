@@ -27,6 +27,13 @@
   /* padding-left: 10px !important; */
 }
 
+.cell-style-checkbox {
+  text-align: center !important;
+  font-size: 11px !important;
+  text-overflow: clip !important;
+  overflow: visible !important;    /* 넘침 숨기지 않음 */
+}
+
 
 /* 알림창 관련 css */
 .alert-modal-content {

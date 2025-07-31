@@ -137,7 +137,7 @@ export default function LicensePage() {
       field: item as keyof License,
       headerName: item === 'license_s2' ? '행안부' : item === 'license_ot' ? '산업용 프로토콜' : item === 'license_zt' ? 'ITUz' : item.split('_')[1].toUpperCase(),
       headerStyle: { textAlign: 'center', fontSize: '10px', padding: '0px' },
-      cellClass: 'cell-style',
+      cellClass: 'cell-style-checkbox',
       flex: 1,
       cellRenderer: (params: any) => {
         if(params.data?.hardware_status === 'ITU') {
