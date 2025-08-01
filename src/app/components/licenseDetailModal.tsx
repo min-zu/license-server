@@ -34,6 +34,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   // ITU 장비 여부 판단: 시리얼 번호가 ITU로 시작하는지 확인
   const isITU = license?.hardware_serial?.startsWith("ITU");
 
+  // ITM 장비 관리 대수
+  const [itmCount, setItmCount] = useState<number>(0);
+
   // 라이선스 키 관리
   const [licenseDate, setLicenseDate] = useState<string>(license.license_date || "");
   const [licenseKey, setLicenseKey] = useState<string>(license.license_key || "");
@@ -87,7 +90,21 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     regRequest: z.string().min(1, { message: '발급요청사를 입력해주세요.' }),
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
     hardwareSerial: z.string().optional(),
-    hardwareCode: z.string().optional(),
+    hardwareCode: z.string().optional()
+    .superRefine((value, ctx) => {        
+        // 16진수 검증 (0-9, A-F, a-f만 허용)
+        const hexRegex = /^[0-9A-Fa-f]{40}$/;
+      if (value && value.trim() !== '') {
+        // 40자리 검증
+        if (value.length !== 40 && !hexRegex.test(value)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '올바른 형식의 하드웨어 인증키가 아닙니다.',
+          });
+          return;
+        }
+      }
+    }), 
     projectName: z.string().optional().nullable(),
     customerEmail: z.string().optional().nullable(),
   }).superRefine((data, ctx) => {
@@ -161,6 +178,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
   });
 
   useEffect(() => {
+    if(detailData.hardware_status.toUpperCase() === 'ITM') {
+      const serials = detailData.hardware_serial.split('-')[2].slice(4, 8);
+      // serials는 16진수 문자열이므로 10진수로 변환
+      const serialsDecimal = parseInt(serials, 16);
+      setItmCount(serialsDecimal);
+    }
     if (defaultValues && detailData) {
       reset(defaultValues);
     }
@@ -432,7 +455,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                   </>
                 ) : (
                   <>
-                  <FormLabel>CPU명 :</FormLabel> <p>{detailData.cpu_name}</p>
+                    <FormLabel>관리 대수 :</FormLabel> <p>{itmCount}</p>
                   </>
                 )}
                 </Box>
@@ -507,7 +530,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                     </>
                   ) : (
                     <>
-                    <FormLabel>CFID :</FormLabel> <p>{detailData.cfid}</p>
+                    {/* <FormLabel>CFID :</FormLabel> <p>{detailData.cfid}</p> */}
                     </>
                   )}
                   </Box>

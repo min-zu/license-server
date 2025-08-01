@@ -99,7 +99,21 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
     projectName: z.string(),
     customerEmail: z.string(),
-    hardwareCode: z.string().optional(),
+    hardwareCode: z.string().optional()
+      .superRefine((value, ctx) => {        
+          // 16진수 검증 (0-9, A-F, a-f만 허용)
+          const hexRegex = /^[0-9A-Fa-f]{40}$/;
+        if (value && value.trim() !== '') {
+          // 40자리 검증
+          if (value.length !== 40 && !hexRegex.test(value)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '올바른 형식의 하드웨어 인증키가 아닙니다.',
+            });
+            return;
+          }
+        }
+      }),
   }).superRefine((data, ctx) => {
     const { hardwareStatus, customerEmail, projectName, hardwareSerial, limitTimeStart, limitTimeEnd } = data;
     const isITU = hardwareStatus === 'ITU';

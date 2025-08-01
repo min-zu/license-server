@@ -230,6 +230,7 @@ export default function LicensePage() {
 
   // 라이센스 데이터 조회
   const loadLicenses = async () => {
+    console.log('loadLicenses');
     setIsLoading(true);
     try {
       const data = await fetchLicenses();
@@ -464,6 +465,7 @@ export default function LicensePage() {
 
   const applyRowClasses = () => {
     // 데이터 업데이트 후 클래스 적용
+    setTimeout(() => {
       const rows = document.querySelectorAll('.ag-row');
       rows.forEach((row) => {
         const rowId = row.getAttribute('row-id');
@@ -484,6 +486,7 @@ export default function LicensePage() {
           }
         }
       });
+    }, 100);
   };
 
   const onRowDataUpdated = useCallback(() => {
