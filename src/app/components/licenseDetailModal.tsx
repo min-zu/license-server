@@ -234,12 +234,12 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       return;
     }
 
-    if(data.hardwareCode === '' || data.hardwareCode === null || data.hardwareCode === undefined) {
-      if(licenseKey !== '' && licenseKey !== null && licenseKey !== undefined) {
-        showToast("하드웨어 인증키를 입력해주세요.", "warning");
-        return;
-      }
-    }
+    // if(data.hardwareCode === '' || data.hardwareCode === null || data.hardwareCode === undefined) {
+    //   if(licenseKey !== '' && licenseKey !== null && licenseKey !== undefined) {
+    //     showToast("하드웨어 인증키를 입력해주세요.", "warning");
+    //     return;
+    //   }
+    // }
 
     if (data.hardwareCode) {
       if(data.hardwareCode !== defaultValues.hardwareCode) {
@@ -462,7 +462,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 <Box className="detail-line-box-item">
                   <FormLabel>발급자 :</FormLabel> 
                   {isEdit ? 
-                    <TextField
+                    <TextField 
                       size="small"
                       {...register("regUser", {
                         onChange: (e) => {
@@ -476,8 +476,8 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                 </Box>  
                 <Box className="detail-line-box-item">
                   <FormLabel>IP :</FormLabel> <p>{ip}</p>
-                </Box>
-              </Box>
+                </Box> 
+              </Box> 
 
               <Box className="detail-line-box">
                 <Box className="detail-line-box-item">
