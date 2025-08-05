@@ -106,7 +106,22 @@ export default function AdminPage() {
           isRowSelectable: (rowNode) => rowNode.data ? rowNode.data.role !== 3 : false,
     }
   }, []);
-  
+
+  const onRowClicked = (event: any) => {
+    if (event.column.getColId() === 'number' || event.column.getColId() === 'expiration') {
+      // No, 만료 컬럼 클릭 시 모달 안 열기
+      return;
+    }
+    setEditTarget(event.data);
+    // 세션 정보(session?.user?.id)와 편집 대상(data.id) 비교
+    if (session?.user?.id === event.data?.id) {
+      setUpsertMode('self');   // 본인 계정이면 'self'
+    } else {
+      setUpsertMode('other');  // 타인이면 'other'
+    }
+    setOpenUpsert(true);
+  };
+
   // ag-Grid에 표시할 컬럼 정의 목록
   const columnDefs: ColDef<Admin>[] = [
     { field: 'id', headerName: '아이디', headerClass: 'header-style', cellClass: 'cell-style' },
@@ -276,6 +291,7 @@ export default function AdminPage() {
             paginationPageSize={pageSize}
             onPaginationChanged={handlePaginationChanged}
             ref={gridRef}
+            onCellClicked={onRowClicked}
           />
         </div>
 

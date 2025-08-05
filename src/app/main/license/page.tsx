@@ -23,6 +23,7 @@ import { addLog } from '@/app/api/log/log';
 
 // toast
 import { useToastState } from '@/app/components/useToast';
+import { exportLicenseToCSV } from '@/lib/csvExport';
 
 
 interface License {
@@ -111,7 +112,7 @@ export default function LicensePage() {
   const getDataRange = () => {
     const startIndex = (currentPage - 1) * pageSize + 1;
     const endIndex = Math.min(currentPage * pageSize, licenses.length);
-    return licenses.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    return licenses.length > 0 ? `${startIndex.toLocaleString()}-${endIndex.toLocaleString()}` : '0';
   };
 
   // 모달 닫기 함수
@@ -230,7 +231,6 @@ export default function LicensePage() {
 
   // 라이센스 데이터 조회
   const loadLicenses = async () => {
-    console.log('loadLicenses');
     setIsLoading(true);
     try {
       const data = await fetchLicenses();
@@ -341,30 +341,46 @@ export default function LicensePage() {
   };
 
   const handleSelectedRows = (type: string) => {
-    const word = type === 'del' ? '삭제' : '만료';
+    const word = type === 'del' ? '삭제' : type === 'exp' ? '만료' : '내보내기';
     if(selectedRows.length === 0) {
       showToast(`${word}할 라이센스를 선택해주세요.`, 'warning');
       return;
     }
 
-    if(userType === 'demo' && !selectedRows.every((item) => item.reg_auto === 2)) {
-      showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
-      return;
-    } else if(userType !== 'monitor' && userType !== 'demo' && type === 'exp' && selectedRows.some((item) => item.reg_auto === 2)) {
-      showToast(`데모 라이센스가 포함되어있습니다.`, 'warning');
-      return;
-    }
-
-    if(type === 'del') {
-      setDeleteIds(selectedRows.map((row) => row.hardware_serial));
-      setIsDeleteModalOpen(true);
-    } else if(type === 'exp') {
-      if(selectedRows.length > 0 && selectedRows.every((item) => item.reg_auto !== 4 && item.reg_auto !== 3 && item.license_key !== null)) {
-        setExpirationType('multiple');
-        setExpirationData(selectedRows);
-        setIsExpirationModalOpen(true); 
-      } else {
-        showToast('미발급 / 만료된 라이센스는 선택할 수 없습니다.', 'warning');          
+    if(type === 'download') {
+      // 내보내기
+      const rowsWithOptions = selectedRows.map((row) => {
+        const softwareValues: any = {};
+        if(row.hardware_status === 'ITU') {
+          softwareOptions.forEach((option) => {
+            softwareValues[option] = (row as any)[option];
+          });
+        }
+        return softwareValues;
+      });
+      
+      exportLicenseToCSV(selectedRows, rowsWithOptions);
+    } else {
+      // 삭제 및 만료
+      if(userType === 'demo' && !selectedRows.every((item) => item.reg_auto === 2)) {
+        showToast('데모 라이센스만 선택할 수 있습니다.', 'warning');
+        return;
+      } else if(userType !== 'monitor' && userType !== 'demo' && type === 'exp' && selectedRows.some((item) => item.reg_auto === 2)) {
+        showToast(`데모 라이센스가 포함되어있습니다.`, 'warning');
+        return;
+      }
+  
+      if(type === 'del') {
+        setDeleteIds(selectedRows.map((row) => row.hardware_serial));
+        setIsDeleteModalOpen(true);
+      } else if(type === 'exp') {
+        if(selectedRows.length > 0 && selectedRows.every((item) => item.reg_auto !== 4 && item.reg_auto !== 3 && item.license_key !== null)) {
+          setExpirationType('multiple');
+          setExpirationData(selectedRows);
+          setIsExpirationModalOpen(true); 
+        } else {
+          showToast('미발급 / 만료된 라이센스는 선택할 수 없습니다.', 'warning');          
+        }
       }
     }
   };
@@ -708,6 +724,7 @@ export default function LicensePage() {
         </div>
 
         <footer className="flex justify-between items-center mt-4">
+          <Button className="default-btn" size="small" onClick={() => handleSelectedRows('download')}>내보내기</Button>
           <div className="flex justify-center flex-grow">
             <Pagenation 
               props={{
@@ -718,7 +735,7 @@ export default function LicensePage() {
             />
           </div>
           <span className='text-13 text-black'>
-            {getDataRange()} / 총 {licenses.length}개
+            {getDataRange()} / 총 {licenses.length.toLocaleString()}개
           </span>
         </footer>
 

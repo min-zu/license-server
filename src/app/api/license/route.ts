@@ -43,8 +43,18 @@ export async function POST(request: NextRequest) {
       } else {
         // 일반 텍스트 검색
         const searchText = searchData as string;
-        sql += ` ${searchField} LIKE ? `;
-        params.push(`%${searchText}%`);
+        if(searchText.includes(',')) {
+          const searchTexts = searchText.split(',');
+          for(let i = 0; i < searchTexts.length; i++) {
+            if(searchTexts[i].trim() === '') continue;
+            if(i > 0) sql += ' OR';
+            sql += ` ${searchField} LIKE ?`;
+            params.push(`%${searchTexts[i].trim()}%`);
+          }
+        } else {
+          sql += ` ${searchField} LIKE ? `;
+          params.push(`%${searchText.trim()}%`);
+        }
       }
     }
 

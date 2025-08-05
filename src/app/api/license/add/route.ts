@@ -188,12 +188,11 @@ export async function POST(request: NextRequest) {
           ) VALUES (
             0, now(), 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
-            ?, ?, ?, ?, ?, ?, ?, ?
+            0, 0, 0, 0, 0, 0, 0, 0
           )`;
 
         params.push(
-          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer,
-          fw, vpn, s2, dpi, av, as, ot, zt
+          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, licenseKey, regUser, regRequest, customer
         );
       } else {
         sql = `INSERT INTO license (
@@ -203,12 +202,11 @@ export async function POST(request: NextRequest) {
           ) VALUES (
             0, now(), 0, 0, ${regAuto},
             ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0,
-            ?, ?, ?, ?, ?, ?, ?, ?
+            0, 0, 0, 0, 0, 0, 0, 0
           )`;
 
         params.push(
-          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer,
-          fw, vpn, s2, dpi, av, as, ot, zt
+          hardwareSerial, hardwareStatus, hardwareCode, limitTimeStart, limitTimeEnd, clientIp, regUser, regRequest, customer
         );
       }
     }

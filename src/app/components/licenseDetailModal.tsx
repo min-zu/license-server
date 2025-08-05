@@ -91,19 +91,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     customer: z.string().min(1, { message: '고객사명을 입력해주세요.' }),
     hardwareSerial: z.string().optional(),
     hardwareCode: z.string().optional()
-    .superRefine((value, ctx) => {        
-        // 16진수 검증 (0-9, A-F, a-f만 허용)
-        const hexRegex = /^[0-9A-Fa-f]{40}$/;
-      if (value && value.trim() !== '') {
-        // 40자리 검증
-        if (value.length !== 40 && !hexRegex.test(value)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: '올바른 형식의 하드웨어 인증키가 아닙니다.',
-          });
-          return;
-        }
-      }
+    .superRefine((value, ctx) => {     
     }), 
     projectName: z.string().optional().nullable(),
     customerEmail: z.string().optional().nullable(),
@@ -129,6 +117,20 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
       });
     } else if(today <= data.limitTimeEnd) {
       clearErrors("limitTimeEnd");
+    }
+
+    // 16진수 검증 (0-9, A-F, a-f만 허용)
+    const hexRegex = /^[0-9A-Fa-f]{40}$/;
+    if (!isITU && data.hardwareCode && data.hardwareCode.trim() !== '') {
+      // 40자리 검증
+      if (data.hardwareCode.length !== 40 && !hexRegex.test(data.hardwareCode)) {
+        ctx.addIssue({
+          path: ["hardwareCode"],
+          code: z.ZodIssueCode.custom,
+          message: '올바른 형식의 하드웨어 인증키가 아닙니다.',
+        });
+        return;
+      }
     }
   })
   

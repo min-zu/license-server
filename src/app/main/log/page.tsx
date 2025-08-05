@@ -83,7 +83,7 @@ export default function LogPage() {
   const getDataRange = () => {
     const startIndex = (currentPage - 1) * pageSize + 1;
     const endIndex = Math.min(currentPage * pageSize, logs.length);
-    return logs.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    return logs.length > 0 ? `${startIndex.toLocaleString()}-${endIndex.toLocaleString()}` : '0';
   };
 
   const [columnDefs] = useState<(ColDef<Log, any>)[]>([
@@ -378,7 +378,7 @@ export default function LogPage() {
           />
         </div>
         <span className='text-13 text-black'>
-          {getDataRange()} / 총 {logs.length}개
+          {getDataRange()} / 총 {logs.length.toLocaleString()}개
         </span>
       </footer>
       
