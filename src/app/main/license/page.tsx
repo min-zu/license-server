@@ -8,7 +8,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ClientSideRowModelModule, Module, ColDef, ColGroupDef, CellStyleModule, RowSelectionModule, GridApi, PaginationModule, RowApiModule } from 'ag-grid-community';
 
 // mui
-import { Button, FormControl, MenuItem, Modal, Select, TextField } from '@mui/material';
+import { Button, FormControl, MenuItem, Modal, Select, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 
 // 컴포넌트
@@ -56,6 +56,7 @@ export default function LicensePage() {
   ];
   // AG Grid API에 접근하기 위한 참조 객체
   const gridRef = useRef<any>(null);
+  const isResettingRef = useRef<boolean>(false);
 
   // session
   const { data: session } = useSession();
@@ -84,6 +85,7 @@ export default function LicensePage() {
   const [hardwareStatus, setHardwareStatus] = useState('all');
   const [searchStartDate, setSearchStartDate] = useState<string>('');
   const [searchEndDate, setSearchEndDate] = useState<string>('');
+  const [searchOpt, setSearchOpt] = useState<string[]>([]);
 
   // 모달 열기 상태
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false); // 라이센스 등록 모달 열기 상태 추가
@@ -298,26 +300,43 @@ export default function LicensePage() {
     setSearchStartDate('');
     setSearchEndDate('');
     setSearchField('hardware_serial');
+    setSearchOpt([]);
+    gridRef.current?.api?.paginationGoToPage?.(0);
   }, [hardwareStatus]);
   
   // 검색
   const handleSearch = async () => {
     const isDateField = searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end');
-    
-    if(!isDateField && searchText === '') {
+    const isOptField = searchField === 'software_opt';
+
+    if(!isDateField && !isOptField && searchText === '') {
       showToast('검색어가 입력되지 않았습니다.', 'warning');
-      loadLicenses();
+      // loadLicenses();
       return;
     }
 
     if(isDateField && (!searchStartDate || !searchEndDate)) {
-      showToast('시작일과 종료일을 모두 입력해주세요.', 'warning');
+      showToast('검색할 시작일과 종료일을 모두 입력해주세요.', 'warning');
       return;
     }
 
+    // if(isOptField && searchOpt.length === 0) {
+    //   showToast('검색할 소프트웨어 옵션을 선택해주세요.', 'warning');
+    //   return;
+    // }
+
     try {
-      const searchData = isDateField ? { startDate: searchStartDate, endDate: searchEndDate } : searchText;
+      let searchData: string | { startDate: string; endDate: string; };
+      if (isDateField) {
+        searchData = { startDate: searchStartDate, endDate: searchEndDate };
+      } else if (isOptField) {
+        // searchOpt가 string[] 타입이므로, string으로 변환
+        searchData = searchOpt.join(',');
+      } else {
+        searchData = searchText;
+      }
       const data = await searchLicenses(hardwareStatus, searchField, searchData);
+      
       setLicenses(data);
       setTotalPages(Math.ceil(data.length / pageSize));
       gridRef.current?.api?.paginationGoToPage?.(0);
@@ -473,6 +492,7 @@ export default function LicensePage() {
     loadLicenses();
     setHardwareStatus('all');
     setSearchText('');
+    setSearchOpt([]);
     setSearchField('hardware_serial');    
     setSearchStartDate('');
     setSearchEndDate('');
@@ -520,6 +540,7 @@ export default function LicensePage() {
 
   useEffect(() => {
     setSearchText('');    
+    setSearchOpt([]);
     setSearchStartDate('');
     setSearchEndDate('');
     if(searchField === 'reg_auto') {
@@ -572,7 +593,9 @@ export default function LicensePage() {
             <FormControl size="small" sx={{ width: 90 }}>
               <Select 
                 value={hardwareStatus} 
-                onChange={(e) => setHardwareStatus(e.target.value)}>
+                onChange={(e) => {
+                  setHardwareStatus(e.target.value);
+                }}>
                 <MenuItem value={'all'}>전체</MenuItem>
                 <MenuItem value={'ITU'}>ITU</MenuItem>
                 <MenuItem value={'ITM'}>ITM</MenuItem> 
@@ -591,6 +614,7 @@ export default function LicensePage() {
                       {item.headerName}
                     </MenuItem>
                 ))}
+                <MenuItem key={'software_opt'} value={'software_opt'}>소프트웨어옵션</MenuItem>
               </Select>
             </FormControl>
 
@@ -601,7 +625,7 @@ export default function LicensePage() {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
               >
-                <MenuItem value={'0'}>수동</MenuItem>
+                <MenuItem value={'0'}>수동</MenuItem> 
                 <MenuItem value={'1'}>자동</MenuItem>
                 <MenuItem value={'2'}>데모</MenuItem>
                 <MenuItem value={'3'}>미발급</MenuItem>
@@ -625,6 +649,18 @@ export default function LicensePage() {
                   placeholder="종료일"
                 />
               </div>
+            ) : searchField === 'software_opt' ? (
+              <ToggleButtonGroup
+                value={searchOpt}
+                onChange={(e, value) => {
+                  if (value !== null) setSearchOpt(value);
+                }}
+                aria-label="software_opt"
+              >
+                {softwareOptions.map((opt) => (
+                  <ToggleButton key={opt} value={opt} aria-label={opt}>{opt === 'license_s2' ? '행안부' : opt === 'license_ot' ? '산업용프로토콜' : opt === 'license_zt' ? 'ZT' : opt.split('_')[1].toUpperCase()}</ToggleButton>
+                ))}
+              </ToggleButtonGroup>
             ) : (
               <TextField
                 size="small"

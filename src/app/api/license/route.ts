@@ -21,42 +21,56 @@ export async function POST(request: NextRequest) {
     const params = [];
 
     if(hardwareStatus === "ITU" || hardwareStatus === "ITM") {
-      sql += `hardware_status = '${hardwareStatus}' AND`;
+      sql += `hardware_status = '${hardwareStatus}' AND `;
     }
 
-    if (searchData && searchField) {
-      if (searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end')) {
-        // 날짜 범위 검색
-        if (typeof searchData === 'object' && searchData.startDate && searchData.endDate) {
-          sql += ` ${searchField} BETWEEN ? AND ?`;
-          params.push(`${searchData.startDate} 00:00:00`, `${searchData.endDate} 23:59:59`);
-        } else {
-          // 단일 날짜 검색 (기존 로직)
-          const searchText = searchData as string;
-          sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
-          if(!searchText.includes('-')) {
-            params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
-          } else {
-            params.push(searchText);
-          }
-        }
+    if (searchField === 'software_opt') {
+      // 소프트웨어 검색 
+      if(searchData.length === 0) {
+        sql += ` (license_fw IS NULL OR license_fw = 0) AND (license_vpn IS NULL OR license_vpn = 0) AND (license_s2 IS NULL OR license_s2 = 0) AND (license_dpi IS NULL OR license_dpi = 0) AND (license_av IS NULL OR license_av = 0) AND (license_as IS NULL OR license_as = 0) AND (license_ot IS NULL OR license_ot = 0) AND (license_zt IS NULL OR license_zt = 0)`;
       } else {
-        // 일반 텍스트 검색
-        const searchText = searchData as string;
-        if(searchText.includes(',')) {
-          const searchTexts = searchText.split(',');
+        if(searchData.includes(',')) {
+          const searchTexts = searchData.split(',');
           for(let i = 0; i < searchTexts.length; i++) {
-            if(searchTexts[i].trim() === '') continue;
-            if(i > 0) sql += ' OR';
-            sql += ` ${searchField} LIKE ?`;
-            params.push(`%${searchTexts[i].trim()}%`);
+            if(i > 0) sql += ' AND';
+            sql += ` ${searchTexts[i]} = 1`;
           }
         } else {
-          sql += ` ${searchField} LIKE ? `;
-          params.push(`%${searchText.trim()}%`);
+          sql += `${searchData} = 1`;
         }
       }
+    } else if (searchField.includes('date') || searchField.includes('_start') || searchField.includes('_end')) {
+      // 날짜 범위 검색
+      if (typeof searchData === 'object' && searchData.startDate && searchData.endDate) {
+        sql += ` ${searchField} BETWEEN ? AND ?`;
+        params.push(`${searchData.startDate} 00:00:00`, `${searchData.endDate} 23:59:59`);
+      } else {
+        // 단일 날짜 검색 (기존 로직)
+        const searchText = searchData as string;
+        sql += ` DATE_FORMAT(${searchField}, '%Y-%m-%d') = ?`; 
+        if(!searchText.includes('-')) {
+          params.push(`${searchText.slice(0, 4)}-${searchText.slice(4, 6)}-${searchText.slice(6, 8)}`);
+        } else {
+          params.push(searchText);
+        }
+      }
+    } else {
+      // 일반 텍스트 검색
+      const searchText = searchData as string;
+      if(searchText.includes(',')) {
+        const searchTexts = searchText.split(',');
+        for(let i = 0; i < searchTexts.length; i++) {
+          if(searchTexts[i].trim() === '') continue;
+          if(i > 0) sql += ' OR';
+          sql += ` ${searchField} LIKE ?`;
+          params.push(`%${searchTexts[i].trim()}%`);
+        }
+      } else {
+        sql += ` ${searchField} LIKE ? `;
+        params.push(`%${searchText.trim()}%`);
+      }
     }
+    
 
     sql += " ORDER BY number DESC;";
     const rows = await query(sql, params);

@@ -36,7 +36,6 @@ export const exportLicenseToCSV = (selectedRows: LicenseData[], opts?: any[]) =>
     if(reg_auto === 2 && license_key === null) {
       return text + '(미발급)';
     }
-    console.log(text);
     return text;
   }
 
