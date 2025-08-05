@@ -68,8 +68,18 @@ export async function POST(request: NextRequest) {
           // desc 필드는 백틱으로 감싸기
           const searchText = searchData as string;
           const fieldName = searchField === 'desc' ? '`desc`' : searchField;
-          sql += ` ${fieldName} LIKE ? `;
-          params.push(`%${searchText}%`);
+          if(searchText.includes(',')) {
+            const searchTexts = searchText.split(',');
+            for(let i = 0; i < searchTexts.length; i++) {
+              if(searchTexts[i].trim() === '') continue;
+              if(i > 0) sql += ' OR';
+              sql += ` ${fieldName} LIKE ?`;
+              params.push(`%${searchTexts[i].trim()}%`);
+            }
+          } else {
+            sql += ` ${fieldName} LIKE ? `;
+            params.push(`%${searchText.trim()}%`);
+          }
         }
       }
       sql += " ORDER BY number DESC;";
