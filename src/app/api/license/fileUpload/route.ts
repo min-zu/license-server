@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
           demoStartDate.setMonth(demoStartDate.getMonth() + 1);
           limitTimeEnd = demoStartDate.toISOString().slice(0,10).replace(/-/g,'');
         } else {
-          limitTimeEnd = '20991231';
+          limitTimeEnd = '20361231';
         }
       }
 
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
           (Number(zt) || 0) * 128;
 
         const [y, m, d] = endDate.split("-").map(Number);
-        const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+        const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
         const hex_expire = Math.floor(expireDate).toString(16);
 
         if(clientIp === "1") {

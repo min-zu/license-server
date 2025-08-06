@@ -46,11 +46,13 @@ export async function GET(request: NextRequest) {
     (Number(license_zt) || 0) * 128;
 
   const today = new Date(); // 현재 날짜 객체
-  const endDate = new Date(); 
+  const endDate = new Date();
   endDate.setMonth(endDate.getMonth() + 1);
   endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
 
-  const expireDate = new Date(endDate).getTime()/1000;
+  const endText = endDate.toISOString().split("T")[0];
+  const [y, m, d] = endText.split("-").map(Number);
+  const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
   const hex_expire = Math.floor(expireDate).toString(16);
 
   let license_key: string | null = null;

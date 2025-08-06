@@ -57,15 +57,15 @@ export async function POST(request: NextRequest) {
     const functionMap = 
       fw * 1 +
       vpn * 2 +
-      s2 * 4 +
-      dpi * 8 +
-      av * 16 +
-      as * 32 +
+      dpi * 4 +
+      av * 8 +
+      as * 16 +
+      s2 * 32 +
       ot * 64 +
       zt * 128;
 
     const [y, m, d] = limitTimeEnd.split("-").map(Number);
-    const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+    const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
     const hex_expire = Math.floor(expireDate).toString(16);
 
     if(clientIp === "1") { // 로컬테스트 환경
@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       const cmd = `/home/future/license/license ${hardwareSerial} ${functionMap} ${hex_expire}`;
       const result = await execAsync(cmd);
       _ituKey = result.stdout.replace(/\n/g, '');
+
+
 
       // Log
       const logPath = "/home/future/license/log/add_itulicense.log";

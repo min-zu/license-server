@@ -57,8 +57,9 @@ export async function GET(request: NextRequest) {
         (Number(license_ot) || 0) * 64 +
         (Number(license_zt) || 0) * 128;
 
-      const [y, m, d] = date.split("-").map(Number);
-      const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+      const endText = limit_time_end.toISOString().split("T")[0];
+      const [y, m, d] = endText.split("-").map(Number);
+      const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
       const hex_expire = Math.floor(expireDate).toString(16);
 
       if(ip === "1") {

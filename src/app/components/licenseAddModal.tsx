@@ -87,10 +87,10 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
           });
         }
 
-        if(value > "2099-12-31") {
+        if(value > "2036-12-31") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '2099년 12월 31일까지',
+            message: '2036년 12월 31일까지',
           });
         }
       }),
@@ -179,7 +179,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         zt: 0,
       },
       limitTimeStart: new Date().toLocaleDateString('sv-SE', {timeZone: 'Asia/Seoul'}),
-      limitTimeEnd: "2099-12-31",
+      limitTimeEnd: "2036-12-31",
       regUser: "",
       regRequest: "",
       customer: "",
@@ -199,7 +199,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
         new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
       );
     } else {
-      setValue("limitTimeEnd", "2099-12-31");
+      setValue("limitTimeEnd", "2036-12-31");
     }
   }, [userType, setValue]);
 
@@ -439,7 +439,7 @@ export default function LicenseAddModal({ close, onUpdated }: { close: () => voi
                 disabled={userType === 'demo'}
                 {...register('limitTimeEnd')}
               />
-              {textFieldTooltip(userType === 'demo' ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2099년 12월 31일까지 가능합니다.')}
+              {textFieldTooltip(userType === 'demo' ? '만료일은 유효기간 시작일로부터 1개월입니다.' : '만료일은 최대 2036년 12월 31일까지 가능합니다.')}
             </Box>
 
             <Box display="flex" alignItems="center">

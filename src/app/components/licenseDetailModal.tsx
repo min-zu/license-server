@@ -73,10 +73,10 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     limitTimeEnd: z.string().min(1, { message: '유효기간(만료)을 입력해주세요.' })
       .superRefine((value, ctx) => {
         const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
-        if(value > "2099-12-31") {
+        if(value > "2036-12-31") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: '2099년 12월 31일까지',
+            message: '2036년 12월 31일까지',
           });
         }
         if(value < today) {

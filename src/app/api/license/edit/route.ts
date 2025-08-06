@@ -154,7 +154,7 @@ export async function PUT(request: NextRequest) {
           (Number(softwareOpt.ZT) || 0) * 128;
         
         const [y, m, d] = limitTimeEnd.split("-").map(Number);
-        const expireDate = new Date(y, m - 1, d, 0, 0, 0).getTime()/1000;
+        const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
         const hex_expire = Math.floor(expireDate).toString(16);
 
         if(clientIp === "1") { // 로컬테스트 환경
