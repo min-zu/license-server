@@ -86,6 +86,8 @@ export default function LicensePage() {
   const [searchStartDate, setSearchStartDate] = useState<string>('');
   const [searchEndDate, setSearchEndDate] = useState<string>('');
   const [searchOpt, setSearchOpt] = useState<string[]>([]);
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [originalSearchResults, setOriginalSearchResults] = useState<License[]>([]);
 
   // 모달 열기 상태
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false); // 라이센스 등록 모달 열기 상태 추가
@@ -280,27 +282,45 @@ export default function LicensePage() {
 
   // 장비 상태
   const handelStatusChange = useCallback(async (status: string) => {
-    const data = await fetchLicenses(); // 전체 라이센스 데이터 불러오기
-    if (status === 'all') {
-      setLicenses(data); // 모든 라이센스 데이터 설정
+    // 검색이 활성화되어 있으면 원본 검색 결과에서만 필터링
+    if (isSearchActive) {
+      if (status === 'all') {
+        // 원본 검색 결과로 복원
+        setLicenses(originalSearchResults);
+      } else {
+        // 원본 검색 결과에서 선택된 상태만 필터링
+        const filteredLicenses = originalSearchResults.filter((item: License) => {
+          if (item.hardware_status) {
+            return item.hardware_status.toUpperCase() === status;
+          }
+          return false;
+        });
+        setLicenses(filteredLicenses);
+      }
     } else {
-      const filteredLicenses = data.filter((item: License) => {
-        if (item.hardware_status) {
-          return item.hardware_status.toUpperCase() === status;
-        }
-        return false;
-      });
-      setLicenses(filteredLicenses); // 필터링된 라이센스 데이터 설정
+      // 검색이 비활성화되어 있으면 전체 데이터에서 필터링
+      const data = await fetchLicenses();
+      if (status === 'all') {
+        setLicenses(data);
+      } else {
+        const filteredLicenses = data.filter((item: License) => {
+          if (item.hardware_status) {
+            return item.hardware_status.toUpperCase() === status;
+          }
+          return false;
+        });
+        setLicenses(filteredLicenses);
+      }
     }
-  }, []);
+  }, [isSearchActive, originalSearchResults]);
 
   useEffect(() => {
     handelStatusChange(hardwareStatus);
-    setSearchText('');
-    setSearchStartDate('');
-    setSearchEndDate('');
-    setSearchField('hardware_serial');
-    setSearchOpt([]);
+    // setSearchText('');
+    // setSearchStartDate('');
+    // setSearchEndDate('');
+    // setSearchField('hardware_serial');
+    // setSearchOpt([]);
     gridRef.current?.api?.paginationGoToPage?.(0);
   }, [hardwareStatus]);
   
@@ -335,10 +355,26 @@ export default function LicensePage() {
       } else {
         searchData = searchText;
       }
-      const data = await searchLicenses(hardwareStatus, searchField, searchData);
+      // 검색할 때는 항상 전체 데이터에서 검색하여 모든 하드웨어 상태의 데이터를 포함
+      const data = await searchLicenses('all', searchField, searchData);
       
-      setLicenses(data);
-      setTotalPages(Math.ceil(data.length / pageSize));
+      setOriginalSearchResults(data); // 원본 검색 결과 저장 (전체 데이터)
+      
+      // 현재 설정된 hardwareStatus에 따라 필터링하여 표시
+      if (hardwareStatus === 'all') {
+        setLicenses(data);
+      } else {
+        const filteredData = data.filter((item: License) => {
+          if (item.hardware_status) {
+            return item.hardware_status.toUpperCase() === hardwareStatus;
+          }
+          return false;
+        });
+        setLicenses(filteredData);
+      }
+      
+      setTotalPages(Math.ceil(licenses.length / pageSize));
+      setIsSearchActive(true); // 검색 활성화 표시
       gridRef.current?.api?.paginationGoToPage?.(0);
     } catch (error) {
       console.error('검색 중 오류 발생:', error);
@@ -496,6 +532,8 @@ export default function LicensePage() {
     setSearchField('hardware_serial');    
     setSearchStartDate('');
     setSearchEndDate('');
+    setIsSearchActive(false); // 검색 활성화 상태 초기화
+    setOriginalSearchResults([]); // 원본 검색 결과 초기화
     gridRef.current?.api?.paginationGoToPage?.(0);
   }
 
