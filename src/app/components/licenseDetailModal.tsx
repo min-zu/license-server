@@ -339,7 +339,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
     // 편집 버튼 표시 여부를 결정하는 함수
     const shouldShowEditButton = () => {
       // 로그 모드이거나 만료된 경우 편집 불가
-      if (isLog || license.reg_auto === 4) {
+      if (isLog) {
         return false;
       }
       
@@ -348,9 +348,9 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
         return true;
       }
       
-      // 데모 사용자는 reg_auto가 2인 경우에만 편집 가능
+      // 데모 사용자는 reg_auto가 2 또는 4인 경우에만 편집 가능
       if (userType === 'demo') {
-        return license.reg_auto === 2;
+        return license.reg_auto === 2 || license.reg_auto === 4;
       }
 
       // 모니터 사용자는 편집 불가 
@@ -409,7 +409,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       onChange={(e) => {
                         const value = e.target.value;
                         setValue("limitTimeStart", value);
-                        if (userType === 'demo' && detailData.reg_auto === 2) {
+                        if (userType === 'demo') {
                           if (value) {
                             setValue("limitTimeEnd", addOneMonth(value));
                           }
@@ -427,7 +427,7 @@ const LicenseDetailModal: React.FC<LicenseDetailModalProps> = ({ close, license,
                       {...register("limitTimeEnd")}
                       type="date"
                       error={!!errors.limitTimeEnd}
-                      disabled={userType === 'demo' && detailData.reg_auto === 2}
+                      disabled={userType === 'demo'}
                     /> : 
                     <p>{watch("limitTimeEnd")}</p>}
                 </Box> 

@@ -263,7 +263,9 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                     placeholder="영문, 영문 숫자 혼합 4~32자"
                     value={id}
                     onChange={(e) => {
-                      setId(e.target.value);
+                      // 공백 제거
+                      const value = e.target.value.replace(/\s/g, '');
+                      setId(value);
                       setIdFormatError(null);
                       setIdDupMessage(null);
                       setIsIdAvailable(null);
@@ -366,7 +368,9 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   placeholder="영문 대/소문자, 숫자, 특수문자 포함, 8~32자"
                   value={passwd}
                   onChange={(e) => {
-                    setPasswd(e.target.value);
+                    // 공백 제거
+                    const value = e.target.value.replace(/\s/g, '');
+                    setPasswd(value);
                     if (passwdError) {
                       setPasswdError(null);
                     }
@@ -406,8 +410,8 @@ export default function UpsertModal({ open, onClose, mode, onAdded, target, sess
                   size="small"
                   value={confirmPasswd}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setConfirmPasswd(value);
+                    const value = e.target.value.replace(/\s/g, '');
+                    setConfirmPasswd(value.trim());
 
                     if (!value) {
                       setConfirmPasswdValid(null);

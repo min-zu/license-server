@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   endDate.setMonth(endDate.getMonth() + 1);
   endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
 
-  const expireDate = endDate.getTime();
+  const expireDate = endDate.getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
 
   let license_key: string | null = null;

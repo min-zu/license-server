@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       ot * 64 +
       zt * 128;
 
-    const expireDate = new Date(limitTimeEnd).getTime();
+    const expireDate = new Date(limitTimeEnd).getTime()/1000;
     const hex_expire = Math.floor(expireDate).toString(16);
 
     if(clientIp === "1") { // 로컬테스트 환경

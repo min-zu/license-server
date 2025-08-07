@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
           (Number(ot) || 0) * 64 +
           (Number(zt) || 0) * 128;
 
-        const expireDate = new Date(endDate).getTime();
+        const expireDate = new Date(endDate).getTime()/1000;
         const hex_expire = Math.floor(expireDate).toString(16);
 
         if(clientIp === "1") {
