@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
   if(check == 1) {
     const data = await query("SELECT hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?;", [hardwareSerial]);
     const { hardware_status, limit_time_start, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt } = (data as any[])[0];
-
     let licenseKey: string | null = null;
     let _ituKey = null;
     let _itmKey = null;
@@ -57,8 +56,8 @@ export async function GET(request: NextRequest) {
         (Number(license_ot) || 0) * 64 +
         (Number(license_zt) || 0) * 128;
 
-      const expireDate = new Date(limit_time_end).getTime()/1000;
-      console.log('expireDate',expireDate);
+      const dateString = limit_time_end.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+      const expireDate = new Date(dateString).getTime()/1000;
       const hex_expire = Math.floor(expireDate).toString(16);
 
       if(ip === "1") {
@@ -79,7 +78,8 @@ export async function GET(request: NextRequest) {
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      const endDate = limit_time_end.split('-').map(Number);
+      const dateString = limit_time_end.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+      const endDate = dateString.split('-').map(Number);
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
       if(ip === "1") {
@@ -130,7 +130,10 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-    return NextResponse.json(licenseKey);
+    return new NextResponse(licenseKey, {
+      status: 200,
+      headers: { "Content-Type": "text/plain" },
+    });
   } else {
     return NextResponse.json('');
   }
