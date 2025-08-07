@@ -46,11 +46,14 @@ export async function GET(request: NextRequest) {
     (Number(license_zt) || 0) * 128;
 
   const today = new Date(); // 현재 날짜 객체
+  console.log('today',today);
   const endDate = new Date();
   endDate.setMonth(endDate.getMonth() + 1);
   endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
+  console.log('endDate',endDate);
 
-  const expireDate = endDate.getTime()/1000;
+  const dateString = endDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+  const expireDate = new Date(dateString).getTime()/1000;
   const hex_expire = Math.floor(expireDate).toString(16);
 
   let license_key: string | null = null;
@@ -101,7 +104,10 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "fail", "데모 라이센스 키 자동 발급 실패: " + error, "license", row.customer]);
       }
-      return NextResponse.json(license_key);
+      return new NextResponse(license_key, {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      });
       } else {
         let comment = '';
         await query(`INSERT INTO license_reauth values(0, ?, ?, ?, ?, ?, ?, now());`, [hardwareSerial, hardwareCode, row.demo_cnt, row.project_name, row.customer_email, comment]);
