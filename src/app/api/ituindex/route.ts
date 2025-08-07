@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     let _ituKey = null;
     let _itmKey = null;
     let cmd = '';
-    const date = new Date(limit_time_end.getTime() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
+
 
     if (hardware_status.toUpperCase() === 'ITU') {          
       const function_map = 
@@ -57,9 +57,7 @@ export async function GET(request: NextRequest) {
         (Number(license_ot) || 0) * 64 +
         (Number(license_zt) || 0) * 128;
 
-      const endText = limit_time_end.toISOString().split("T")[0];
-      const [y, m, d] = endText.split("-").map(Number);
-      const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
+      const expireDate = new Date(limit_time_end).getTime();
       const hex_expire = Math.floor(expireDate).toString(16);
 
       if(ip === "1") {
@@ -80,7 +78,7 @@ export async function GET(request: NextRequest) {
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      const endDate = date.split('-').map(Number);
+      const endDate = limit_time_end.split('-').map(Number);
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
 
       if(ip === "1") {
@@ -101,7 +99,7 @@ export async function GET(request: NextRequest) {
           serial_num: ${hardwareSerial}
           uuid: ${uuid}
           hardware_key: ${hardwareCode}
-          enddate: ${date}
+          enddate: ${limit_time_end}
           ${cmd}
         `;
       try {
@@ -112,12 +110,11 @@ export async function GET(request: NextRequest) {
     }
 
     const rows2 = await query("SELECT hardware_serial, hardware_code, license_key, process, cpu_name, cfid, customer FROM license");
-    const today = new Date().toISOString().split('T')[0];
     
     for (const row of rows2 as any[]) {
       if (row.hardware_serial === hardwareSerial){
         if(row.license_key === '0') {
-          const result = await query(`UPDATE license SET license_key = ?, license_date = ?, reg_auto = ? WHERE hardware_serial = ?`, [licenseKey, today, 1, hardwareSerial]);
+          const result = await query(`UPDATE license SET license_key = ?, license_date = NOW(), reg_auto = ? WHERE hardware_serial = ?`, [licenseKey, 1, hardwareSerial]);
           if (result.affectedRows > 0) {
             try {
               await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "success", "라이센스 키 자동발급", "license", row.customer]);

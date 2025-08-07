@@ -100,9 +100,9 @@ export async function POST(request: NextRequest) {
           }
       }
 
-      const todayKST = new Date(Date.now() + 9*60*60*1000);
+      const todayKST = new Date();
       if(limitTimeStart === '') {
-        const todayYYYYMMDD = todayKST.toISOString().slice(0,10).replace(/-/g,'');
+        const todayYYYYMMDD = todayKST.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }).replace(/-/g, '');
         limitTimeStart = todayYYYYMMDD;
       }
 
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         if(role === 4) {
           const demoStartDate = new Date(limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
           demoStartDate.setMonth(demoStartDate.getMonth() + 1);
-          limitTimeEnd = demoStartDate.toISOString().slice(0,10).replace(/-/g,'');
+          limitTimeEnd = demoStartDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }).replace(/-/g, '');
         } else {
           limitTimeEnd = '20361231';
         }
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       if(role === 4) {
         const demoStartDate = new Date(limitTimeStart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
         const demoEndDate = new Date(limitTimeEnd.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
-        const oneMonthLater = new Date(demoStartDate);
+        const oneMonthLater = new Date(demoStartDate); // demoStartDate에 영향을 주지 않기 위해 복사
         oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
 
         if(demoEndDate > oneMonthLater) {
@@ -187,8 +187,7 @@ export async function POST(request: NextRequest) {
           (Number(ot) || 0) * 64 +
           (Number(zt) || 0) * 128;
 
-        const [y, m, d] = endDate.split("-").map(Number);
-        const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
+        const expireDate = new Date(endDate).getTime();
         const hex_expire = Math.floor(expireDate).toString(16);
 
         if(clientIp === "1") {

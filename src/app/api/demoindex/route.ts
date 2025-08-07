@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         await query(`UPDATE license SET hardware_code = ?, license_date = NOW(), ip = ?, demo_cnt = 0, reg_auto = 2, license_key = '0' WHERE hardware_serial = ?`, [hardwareCode, ip, hardwareSerial]);
         // return NextResponse.json({ success: true, message: "License updated successfully"});
       }
-    } 
+    }
   }
 
   const rows2 = await query("SELECT hardware_status, limit_time_end, license_fw, license_vpn, license_s2, license_dpi, license_av, license_as, license_ot, license_zt FROM license WHERE hardware_serial = ?", [hardwareSerial]);
@@ -50,9 +50,7 @@ export async function GET(request: NextRequest) {
   endDate.setMonth(endDate.getMonth() + 1);
   endDate.setHours(0, 0, 0, 0);  // 시간을 0시로 설정
 
-  const endText = endDate.toISOString().split("T")[0];
-  const [y, m, d] = endText.split("-").map(Number);
-  const expireDate = Date.UTC(y, m - 1, d, 0, 0, 0) / 1000 - (9 * 60 * 60);
+  const expireDate = endDate.getTime();
   const hex_expire = Math.floor(expireDate).toString(16);
 
   let license_key: string | null = null;
@@ -94,8 +92,8 @@ export async function GET(request: NextRequest) {
       if(row.license_key === '0') {
       await query(`UPDATE license SET hardware_code = ? WHERE hardware_serial = ?`, [hardwareCode, hardwareSerial]);
       await query(`UPDATE license SET limit_time_start = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
-      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_serial = ?`, [endDate.toISOString().split("T")[0], hardwareSerial]);
-      await query(`UPDATE license SET license_date = ? WHERE hardware_serial = ?`, [today, hardwareSerial]);
+      await query(`UPDATE license SET limit_time_end = ? WHERE hardware_serial = ?`, [endDate, hardwareSerial]);
+      await query(`UPDATE license SET license_date = NOW() WHERE hardware_serial = ?`, [hardwareSerial]);
       await query(`UPDATE license SET license_key = ? WHERE hardware_serial = ?`, [license_key, hardwareSerial]);
       try {
         await query("INSERT INTO license_log (action_date, hardware_serial, user, ip, action, `desc`, action_type, customer) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)", [hardwareSerial, ip, ip, "success", "데모 라이센스 키 자동 발급", "license", row.customer]);
