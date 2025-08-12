@@ -705,7 +705,7 @@ export default function LicensePage() {
                 size="small"
                 placeholder="검색어를 입력하세요"
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => setSearchText(searchField === 'hardware_code' || searchField === 'hardware_serial' ? e.target.value.replace(/\s/g, '') : e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleSearch();
