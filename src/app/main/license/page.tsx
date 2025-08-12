@@ -652,7 +652,8 @@ export default function LicensePage() {
                       {item.headerName}
                     </MenuItem>
                 ))}
-                <MenuItem key={'software_opt'} value={'software_opt'}>소프트웨어옵션</MenuItem>
+                <MenuItem key={'hardware_code'} value={'hardware_code'}>하드웨어 인증키</MenuItem>
+                <MenuItem key={'software_opt'} value={'software_opt'}>소프트웨어 옵션</MenuItem>
               </Select>
             </FormControl>
 
