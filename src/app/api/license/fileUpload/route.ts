@@ -43,10 +43,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: '파일이 비어있습니다.' }, { status: 400 });
     }
 
+    // 글자깨짐(인코딩 문제) 확인 로직 추가
+    // 각 row의 각 셀에 대해 깨진 글자가 있는지 검사 (대표적으로 '�' 문자)
+    for (let i = 0; i < filteredRows.length; i++) {
+      const row = filteredRows[i];
+      if (row.some(cell => cell.includes('�'))) {
+        return NextResponse.json({ message: `파일에 글자 깨짐(인코딩 문제)이 있습니다. UTF-8로 저장 후 다시 업로드 해주세요.` }, { status: 400 });
+      }
+    }
+
     const failedRows: string[][] = [];
 
     for(let i = 0; i < filteredRows.length; i++) {
-      const row = filteredRows[i];
+      const row = filteredRows[i]; 
       const trimmedRow = row.map(item => item.replace(/\r?\n|\r/g, '').trim());
       const errorMessages: string[] = [];
 
