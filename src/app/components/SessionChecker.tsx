@@ -22,9 +22,9 @@ export default function SessionChecker({
   const id = session?.user?.id;
   const name = session?.user?.name;
 
-  // 유휴 상태 감지 (10분 이상 아무 입력 없을 경우)
+  // 유휴 상태 감지 (15분 이상 아무 입력 없을 경우)
   useIdleTimer({
-    timeout: 1000 * 60 * 10, // 10분
+    timeout: 1000 * 60 * 15, // 15분
     onIdle: async () => {
       // 현재 페이지가 보이는 상태일 경우에만 세션만료 수행
       if (document.visibilityState === 'visible') {

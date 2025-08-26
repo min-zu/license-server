@@ -100,7 +100,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // 세션 설정 (JWT 기반)
   session: {
     strategy: "jwt", // JWT 기반 세션
-    maxAge: 900, // 세션 유효 시간: 900초 (15분)
+    maxAge: 9000, // 세션 유효 시간: 9000초 (150분)
+    updateAge: 600, // 세션 갱신 시간: 600초 (10분)
   },
   callbacks: {
     // JWT 콜백 함수: 로그인 성공 또는 세션 갱신 시 토큰 데이터를 설정하거나 갱신 
