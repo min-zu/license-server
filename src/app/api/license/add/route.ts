@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
         serial = `${codes[0]}-${codes[1]}-${codes[2]}`;
       }
 
-      const startDate = limitTimeStart.split('-').map(Number);
-      const endDate = limitTimeEnd.split('-').map(Number);
+      const startDate = limitTimeStart.split('-');
+      const endDate = limitTimeEnd.split('-');
 
       const startDateStr = `${startDate[0]}${startDate[1]}${startDate[2]}`;
       const endDateStr = `${endDate[0]}${endDate[1]}${endDate[2]}`;
